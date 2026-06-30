@@ -225,10 +225,20 @@ tr:hover td{background:var(--s2)}
 <script>
 function fmtDate(d){
   if(!d) return '';
-  var dt = new Date(d);
-  if(isNaN(dt)) return String(d).slice(0,10);
-  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return dt.getDate()+'-'+months[dt.getMonth()]+'-'+dt.getFullYear();
+  var s = String(d);
+  // If already yyyy-MM-dd format
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    var p=s.slice(0,10).split('-');
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return p[2]+'-'+months[parseInt(p[1])-1]+'-'+p[0];
+  }
+  // Try parsing
+  var dt=new Date(s);
+  if(!isNaN(dt)){
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return dt.getDate()+'-'+months[dt.getMonth()]+'-'+dt.getFullYear();
+  }
+  return s.slice(0,10);
 }
 var NSE_URL = "https://script.google.com/macros/s/AKfycbxf48IaOaZtOBtZWf_RT8vUyR_6GqJJjJrivpgESy5Ha5F2igauMrqdXtkNMkXd2CxsZw/exec";
 var US_URL  = "https://script.google.com/macros/s/AKfycbwcmvvMvgzifuawd6cHOOuymyYJeswHzDqTmPl3EdNsYTeTx8HfP6l7UMJxQ4NG7koo/exec";
