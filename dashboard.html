@@ -172,11 +172,9 @@ tr:hover td{background:var(--s2)}
 
 <div class="wrap">
   <aside class="sb">
-    <div class="cfg">
-      <strong>⚙ Web App URLs</strong>
-      <input type="text" id="nseUrl" placeholder="NSE Web App URL">
-      <input type="text" id="usUrl" placeholder="US Web App URL">
-      <button class="btn-cfg" onclick="saveConfig()">Save &amp; Load</button>
+    <div class="cfg" style="display:none">
+      <input type="text" id="nseUrl">
+      <input type="text" id="usUrl">
     </div>
     <div class="sb-sec">
       <div class="sb-lbl">Signal</div>
@@ -307,8 +305,12 @@ setInterval(tick,1000);tick();
 var CFG='ai_cfg4';
 function loadConfig(){try{return JSON.parse(sessionStorage.getItem(CFG)||localStorage.getItem(CFG)||'{}');}catch(e){return{};}}
 function saveConfig(){var cfg=JSON.stringify({nseUrl:document.getElementById("nseUrl").value.trim(),usUrl:document.getElementById("usUrl").value.trim()});sessionStorage.setItem(CFG,cfg);localStorage.setItem(CFG,cfg);loadData();}
-function getUrl(){var c=loadConfig();return MARKET==='NSE'?c.nseUrl:c.usUrl;}
-function prefillUrls(){var c=loadConfig();if(c.nseUrl)document.getElementById('nseUrl').value=c.nseUrl;if(c.usUrl)document.getElementById('usUrl').value=c.usUrl;}
+// ── HARDCODED URLs — change these if Web App URL changes ──
+var NSE_URL = "https://script.google.com/macros/s/AKfycbxf48IaOaZtOBtZWf_RT8vUyR_6GqJJjJrivpgESy5Ha5F2igauMrqdXtkNMkXd2CxsZw/exec";
+var US_URL  = "https://script.google.com/macros/s/AKfycbwcmvvMvgzifuawd6cHOOuymyYJeswHzDqTmPl3EdNsYTeTx8HfP6l7UMJxQ4NG7koo/exec";
+
+function getUrl(){return MARKET==='NSE' ? NSE_URL : US_URL;}
+function prefillUrls(){}
 
 // ── MARKET SWITCH ──
 function switchMkt(mkt,btn){
@@ -317,6 +319,10 @@ function switchMkt(mkt,btn){
   btn.classList.add('active');
   ACTIVE_TAB='ALL';
   D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
+  // URL mein market save karo taaki new tab mein bhi same market khule
+  var url=new URL(window.location.href);
+  url.searchParams.set('m', mkt.toLowerCase());
+  window.history.replaceState({}, '', url.toString());
   buildTabbar();
   loadData();
 }
@@ -325,10 +331,6 @@ function switchMkt(mkt,btn){
 function loadData(){
   var url=getUrl();
   var mc=document.getElementById('mainContent');
-  if(!url){
-    mc.innerHTML='<div class="empty"><div style="color:var(--orange);font-weight:600;font-size:14px;margin-bottom:8px">⚙ URL Setup Karo</div><div style="font-size:12px;line-height:1.9">Sidebar mein '+MARKET+' Web App URL paste karo → Save &amp; Load</div></div>';
-    return;
-  }
   mc.innerHTML='<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:4rem;color:var(--muted)"><div class="spin"></div> Sheet se data load ho raha hai...</div>';
   fetch(url)
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
@@ -704,6 +706,17 @@ function exportCSV(){
 }
 
 // ── INIT ──
+// URL se market read karo (?m=nse ya ?m=us)
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var m = params.get('m');
+  if(m && m.toUpperCase()==='US'){
+    MARKET='US';
+    document.querySelectorAll('.mkt-btn').forEach(function(b){b.classList.remove('active');});
+    var usBtn=document.querySelector('.mkt-btn:last-child');
+    if(usBtn) usBtn.classList.add('active');
+  }
+})();
 prefillUrls();
 buildTabbar();
 loadData();
