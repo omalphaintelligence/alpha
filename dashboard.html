@@ -54,7 +54,34 @@ body{background:var(--bg);color:var(--text)}
 .stab[data-t="LOG"].active{border-bottom-color:var(--muted);color:var(--text)}
 
 .wrap{display:grid;grid-template-columns:205px 1fr;min-height:calc(100vh - 94px)}
-.sb{background:var(--s1);border-right:1px solid var(--b1);padding:10px;overflow-y:auto;position:sticky;top:94px;height:calc(100vh - 94px)}
+.sb{background:var(--s1);border-right:1px solid var(--b1);padding:10px;overflow-y:auto;position:sticky;top:94px;height:calc(100vh - 94px);transition:all .25s}
+.sb.collapsed{width:0;padding:0;overflow:hidden;border:none}
+.wrap.sb-collapsed{grid-template-columns:0 1fr}
+
+/* Mobile */
+@media(max-width:768px){
+  .wrap{grid-template-columns:1fr}
+  .sb{position:fixed;top:0;left:0;width:280px;height:100vh;z-index:500;transform:translateX(-100%);transition:transform .25s;padding-top:50px}
+  .sb.open{transform:translateX(0)}
+  .sb-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:499}
+  .sb-overlay.show{display:block}
+  .content{padding:8px}
+  .kpis{grid-template-columns:repeat(3,1fr);gap:4px}
+  .kpi{padding:6px 8px}
+  .kpi-v{font-size:14px}
+  .topbar{padding:0 10px}
+  .logo{font-size:12px}
+  .mkt-btn{padding:3px 8px;font-size:10px}
+  .theme-row .lbl{display:none}
+  #clock{display:none}
+  .stab{padding:6px 10px;font-size:10px}
+  th{font-size:9px;padding:5px 6px}
+  td{font-size:11px;padding:5px 6px}
+}
+@media(min-width:769px){
+  .sb-overlay{display:none!important}
+  .filter-toggle-mobile{display:none!important}
+}
 .sb-sec{margin-bottom:12px}
 .sb-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
 select,input[type=text],input[type=number]{width:100%;padding:5px 7px;background:var(--s2);border:1px solid var(--b1);border-radius:4px;color:var(--text);font-size:12px;outline:none;margin-bottom:4px}
@@ -148,8 +175,12 @@ tr:hover td{background:var(--s2)}
 </head>
 <body class="t-dark">
 
+<div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
 <header class="topbar">
-  <div class="logo">Alpha Intelligence</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button onclick="toggleSb()" style="background:var(--s2);border:1px solid var(--b1);color:var(--text);border-radius:4px;padding:5px 8px;cursor:pointer;font-size:14px;line-height:1" title="Filters">☰</button>
+    <div class="logo">Alpha Intelligence</div>
+  </div>
   <div class="mkt-tabs">
     <button class="mkt-btn active" onclick="switchMkt('NSE',this)">🇮🇳 NSE India</button>
     <button class="mkt-btn" onclick="switchMkt('US',this)">🇺🇸 US Market</button>
@@ -171,7 +202,8 @@ tr:hover td{background:var(--s2)}
 <div class="tabbar" id="tabbar"></div>
 
 <div class="wrap">
-  <aside class="sb">
+  <aside class="sb" id="sidebar">
+    <button onclick="closeSb()" style="display:none;position:absolute;top:8px;right:8px;background:var(--s2);border:1px solid var(--b1);color:var(--muted);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:16px" id="sbClose">✕</button>
     <div class="cfg" style="display:none">
       <input type="text" id="nseUrl">
       <input type="text" id="usUrl">
@@ -703,6 +735,34 @@ function exportCSV(){
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(function(r){return r.join(',');}).join('\n'));
   a.download=MARKET+'_'+ACTIVE_TAB+'_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
+}
+
+// ── SIDEBAR TOGGLE ──
+function toggleSb(){
+  var isMobile = window.innerWidth <= 768;
+  if(isMobile){
+    var sb = document.getElementById('sidebar');
+    var overlay = document.getElementById('sbOverlay');
+    var closeBtn = document.getElementById('sbClose');
+    sb.classList.toggle('open');
+    overlay.classList.toggle('show');
+    if(closeBtn) closeBtn.style.display = sb.classList.contains('open') ? 'block' : 'none';
+  } else {
+    var sb = document.getElementById('sidebar');
+    var wrap = sb.parentElement;
+    sb.classList.toggle('collapsed');
+    wrap.classList.toggle('sb-collapsed');
+  }
+}
+function closeSb(){
+  var sb = document.getElementById('sidebar');
+  var overlay = document.getElementById('sbOverlay');
+  var closeBtn = document.getElementById('sbClose');
+  sb.classList.remove('open','collapsed');
+  overlay.classList.remove('show');
+  if(closeBtn) closeBtn.style.display='none';
+  var wrap=sb.parentElement;
+  wrap.classList.remove('sb-collapsed');
 }
 
 // ── INIT ──
