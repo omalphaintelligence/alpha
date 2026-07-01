@@ -204,26 +204,19 @@ tr:hover td{background:var(--s2)}
 var NSE_URL="https://script.google.com/macros/s/AKfycbxf48IaOaZtOBtZWf_RT8vUyR_6GqJJjJrivpgESy5Ha5F2igauMrqdXtkNMkXd2CxsZw/exec";
 var US_URL="https://script.google.com/macros/s/AKfycbwcmvvMvgzifuawd6cHOOuymyYJeswHzDqTmPl3EdNsYTeTx8HfP6l7UMJxQ4NG7koo/exec";
 var D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
-var CACHE={};
-var PRICE_CACHE={};
-var CACHE_TTL=60*60*1000; // 60 min for screener data
-var PRICE_TTL=60*1000;    // 60 sec for live prices
+var CACHE_TTL=60*60*1000; // 60 min
 
 function getCached(key){
-  var c=CACHE[key];
-  if(c&&(Date.now()-c.ts)<CACHE_TTL) return c.data;
+  try{
+    var c=JSON.parse(sessionStorage.getItem("ai_"+key));
+    if(c&&(Date.now()-c.ts)<CACHE_TTL) return c.data;
+  }catch(e){}
   return null;
 }
 function setCached(key,data){
-  CACHE[key]={data:data,ts:Date.now()};
-}
-function getPriceCached(sym){
-  var c=PRICE_CACHE[sym];
-  if(c&&(Date.now()-c.ts)<PRICE_TTL) return c.data;
-  return null;
-}
-function setPriceCached(sym,data){
-  PRICE_CACHE[sym]={data:data,ts:Date.now()};
+  try{
+    sessionStorage.setItem("ai_"+key, JSON.stringify({data:data,ts:Date.now()}));
+  }catch(e){}
 }
 var FILTERED=[],ACTIVE_SECTOR="",MARKET="NSE",ACTIVE_TAB="ALL";
 var NSE_TABS=[
@@ -330,7 +323,6 @@ function loadData(){
   }
 
   var quotes=[
-    "The market is not your enemy. Your emotions are. — Mark Douglas",
     "Anything can happen. — Mark Douglas",
     "You don't need to know what is going to happen next to make money. — Mark Douglas",
     "Think in probabilities, not certainties. — Mark Douglas",
@@ -340,13 +332,104 @@ function loadData(){
     "Risk is just the possibility of an adverse outcome. Accept it. — Mark Douglas",
     "The market doesn't know you exist. Trade accordingly. — Mark Douglas",
     "Your edge doesn't guarantee any single trade. It works over time. — Mark Douglas",
-    "Cut your losses short. Let your profits run. — Jesse Livermore",
-    "The trend is your friend until it ends. — Ed Seykota",
-    "Markets are never wrong. Opinions often are. — Jesse Livermore",
-    "It never was my thinking that made the big money. It was my sitting. — Jesse Livermore",
-    "The goal of a successful trader is to make the best trades. Money is secondary. — Alexander Elder"
+    "The market is not your enemy. Your emotions are. — Mark Douglas",
+    "Winners think in terms of probability, losers think in terms of certainty. — Mark Douglas",
+    "When you achieve the state of mind where you believe in your own ability to act, you are in the zone. — Mark Douglas",
+    "The most important quality for a trader is mental flexibility. — Mark Douglas",
+    "If you don't learn to control your emotions, they will control your trading. — Mark Douglas",
+    "A probabilistic mindset pertaining to trading consists of five fundamental truths. — Mark Douglas",
+    "The hard part of trading is not the analysis. It's controlling your own mind. — Mark Douglas",
+    "Most traders take random approaches to the market and then wonder why they get random results. — Mark Douglas",
+    "You have to be willing to be wrong in order to find out what is right. — Mark Douglas",
+    "The market does not care about your opinion. Only your position matters. — Mark Douglas",
+    "Trading is not about being smart. It is about being disciplined. — Mark Douglas",
+    "To be a great trader, you must have the ability to respond to what the market is telling you. — Mark Douglas",
+    "Your ability to trust your edge is what separates consistent winners from consistent losers. — Mark Douglas",
+    "The market rewards patience and punishes impatience. — Mark Douglas",
+    "Every trade is just one of many in a series of probable outcomes. — Mark Douglas",
+    "When you stop trying to predict and start reacting, everything changes. — Mark Douglas",
+    "The market will always do what it wants. Your job is to follow, not to fight. — Mark Douglas",
+    "Fear and greed are the two biggest enemies of the trader. — Mark Douglas",
+    "A trader who can manage his emotions will always outperform one who cannot. — Mark Douglas",
+    "Losses are the cost of doing business in trading. Accept them. — Mark Douglas",
+    "Trading without a plan is planning to fail. — Mark Douglas",
+    "The best trade setup means nothing without the discipline to execute it. — Mark Douglas",
+    "You can be wrong about the market and still make money. You just need proper risk management. — Mark Douglas",
+    "Consistency comes from having a clear edge and the discipline to follow it. — Mark Douglas",
+    "The moment you start hoping the market will save you, you have already lost. — Mark Douglas",
+    "Your beliefs about trading determine your results more than any system ever will. — Mark Douglas",
+    "Most people want to be right. Successful traders want to make money. — Mark Douglas",
+    "The market is a mirror that reflects your own state of mind. — Mark Douglas",
+    "There is no such thing as a sure thing in trading. Only probabilities. — Mark Douglas",
+    "Patience is not passive. It is an active decision to wait for the right moment. — Mark Douglas",
+    "A losing trade does not mean you made a bad decision. — Mark Douglas",
+    "The trader who loses the least in bad times will win the most in good times. — Mark Douglas",
+    "Self-discipline is the bridge between your trading goals and your trading results. — Mark Douglas",
+    "Reacting to the market is strength. Predicting is ego. — Mark Douglas",
+    "If you are not comfortable being wrong, you will never be a great trader. — Mark Douglas",
+    "The market gives back what you put in — only in terms of discipline. — Mark Douglas",
+    "Learning to accept a small loss is the most important skill in trading. — Mark Douglas",
+    "Your entry is less important than your exit. — Mark Douglas",
+    "The difference between a professional and amateur is how they handle a loss. — Mark Douglas",
+    "A good trader is not someone who never loses. It is someone who loses small. — Mark Douglas",
+    "Confidence in trading comes from trusting your process, not from predicting outcomes. — Mark Douglas",
+    "You cannot force the market to give you money. You can only position yourself. — Mark Douglas",
+    "Trading is the art of being comfortable with uncertainty. — Mark Douglas",
+    "Every tick of the market is information. Most traders ignore it. — Mark Douglas",
+    "The way you talk to yourself about your trades shapes the results. — Mark Douglas",
+    "A system without discipline is just a theory. — Mark Douglas",
+    "The market will test every limit you set. Make sure those limits are real. — Mark Douglas",
+    "Your biggest competitor in trading is your past self. — Mark Douglas",
+    "Mental clarity before market open is as important as any technical setup. — Mark Douglas",
+    "The trader who survives the longest wins the most. Stay in the game. — Mark Douglas",
+    "Emotional trading is expensive. Disciplined trading is profitable. — Mark Douglas",
+    "Being in sync with the market means removing your own bias. — Mark Douglas",
+    "Not every day is a trading day. Knowing when to sit out is an edge. — Mark Douglas",
+    "The best traders know what they don't know. — Mark Douglas",
+    "Your goal is not to be right about this trade. Your goal is to be profitable over 100 trades. — Mark Douglas",
+    "A large account does not make you a great trader. Consistent process does. — Mark Douglas",
+    "Mistakes in trading are how you learn — but only if you document them. — Mark Douglas",
+    "The market does not owe you anything. Come prepared. — Mark Douglas",
+    "Position sizing is not glamorous, but it is what separates pros from amateurs. — Mark Douglas",
+    "To win at trading you must first master yourself. — Mark Douglas",
+    "The market is always right. Adjust your view, not the facts. — Mark Douglas",
+    "Hope is not a trading strategy. — Mark Douglas",
+    "If you cannot sit with a small loss, you will take a catastrophic one. — Mark Douglas",
+    "Letting a winning trade run is harder than cutting a loss. Most traders get this backwards. — Mark Douglas",
+    "Every great trade starts with a great setup and ends with discipline. — Mark Douglas",
+    "The difference between a good day and a bad day is often just one decision. — Mark Douglas",
+    "Overtrading is a sign of impatience. Impatience is expensive. — Mark Douglas",
+    "Risk management is not about avoiding losses. It is about surviving them. — Mark Douglas",
+    "Journaling your trades is the single most underused edge in trading. — Mark Douglas",
+    "You will not find the perfect trade. You will find trades with good probability. Accept it. — Mark Douglas",
+    "Trade what you see, not what you think. — Mark Douglas",
+    "The chart never lies. Traders lie to themselves. — Mark Douglas",
+    "Boredom is a trader's best friend. It means you are waiting for the right setup. — Mark Douglas",
+    "Trust the process even when the results are temporarily disappointing. — Mark Douglas",
+    "A disciplined trader with a mediocre system beats an undisciplined trader with a great one. — Mark Douglas",
+    "Your account size means nothing if your mind is not right. — Mark Douglas",
+    "One of the greatest skills in trading is knowing when to do nothing. — Mark Douglas",
+    "Price action is the only truth in the market. Everything else is interpretation. — Mark Douglas",
+    "The trader you are today is the result of every trade you made before. — Mark Douglas",
+    "Letting emotions drive decisions is the fastest way to lose capital. — Mark Douglas",
+    "Think like a casino. They don't win every hand, but they always win over time. — Mark Douglas",
+    "Every loss is an opportunity to learn if you have the mental strength to look. — Mark Douglas",
+    "Great trades are not taken. They are recognized and acted upon with calm. — Mark Douglas",
+    "The moment you accept that you don't control outcomes, you gain control of your process. — Mark Douglas",
+    "Stop trying to avoid losses. Start trying to manage them. — Mark Douglas",
+    "A calm mind sees the market more clearly than a sharp intellect under stress. — Mark Douglas",
+    "The market is always in motion. Your job is to flow with it, not fight it. — Mark Douglas",
+    "Conviction without flexibility is stubbornness. In trading, stubbornness costs money. — Mark Douglas",
+    "The best trade of your life is the one you passed on because it didn't meet your criteria. — Mark Douglas",
+    "Treat every trade as a business decision, not a personal one. — Mark Douglas"
   ];
-  var q=quotes[Math.floor(Math.random()*quotes.length)];
+  
+  // Shuffle and track shown quotes to avoid repeats
+  if(!window._quoteIdx||window._quoteIdx>=window._quoteShuffle.length){
+    window._quoteShuffle=quotes.map(function(_,i){return i;}).sort(function(){return Math.random()-0.5;});
+    window._quoteIdx=0;
+  }
+  var q=quotes[window._quoteShuffle[window._quoteIdx++]];
   var parts=q.split("—");
   var quote=parts[0].trim();
   var author=parts[1]?parts[1].trim():"";
