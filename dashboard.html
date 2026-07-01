@@ -206,17 +206,31 @@ var US_URL="https://script.google.com/macros/s/AKfycbwcmvvMvgzifuawd6cHOOuymyYJe
 var D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
 var CACHE_TTL=60*60*1000; // 60 min
 
+var MEM_CACHE={};
+
 function getCached(key){
+  // Try memory first (fastest)
+  var mc=MEM_CACHE[key];
+  if(mc&&(Date.now()-mc.ts)<CACHE_TTL) return mc.data;
+  // Try sessionStorage
   try{
     var c=JSON.parse(sessionStorage.getItem("ai_"+key));
-    if(c&&(Date.now()-c.ts)<CACHE_TTL) return c.data;
+    if(c&&(Date.now()-c.ts)<CACHE_TTL){
+      MEM_CACHE[key]=c; // restore to memory
+      return c.data;
+    }
   }catch(e){}
   return null;
 }
 function setCached(key,data){
+  var entry={data:data,ts:Date.now()};
+  MEM_CACHE[key]=entry; // always save to memory
   try{
-    sessionStorage.setItem("ai_"+key, JSON.stringify({data:data,ts:Date.now()}));
-  }catch(e){}
+    sessionStorage.setItem("ai_"+key, JSON.stringify(entry));
+  }catch(e){
+    // sessionStorage full - clear old and retry
+    try{sessionStorage.clear();sessionStorage.setItem("ai_"+key,JSON.stringify(entry));}catch(e2){}
+  }
 }
 var FILTERED=[],ACTIVE_SECTOR="",MARKET="NSE",ACTIVE_TAB="ALL";
 var NSE_TABS=[
