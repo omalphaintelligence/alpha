@@ -204,6 +204,27 @@ tr:hover td{background:var(--s2)}
 var NSE_URL="https://script.google.com/macros/s/AKfycbxf48IaOaZtOBtZWf_RT8vUyR_6GqJJjJrivpgESy5Ha5F2igauMrqdXtkNMkXd2CxsZw/exec";
 var US_URL="https://script.google.com/macros/s/AKfycbwcmvvMvgzifuawd6cHOOuymyYJeswHzDqTmPl3EdNsYTeTx8HfP6l7UMJxQ4NG7koo/exec";
 var D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
+var CACHE={};
+var PRICE_CACHE={};
+var CACHE_TTL=60*60*1000; // 60 min for screener data
+var PRICE_TTL=60*1000;    // 60 sec for live prices
+
+function getCached(key){
+  var c=CACHE[key];
+  if(c&&(Date.now()-c.ts)<CACHE_TTL) return c.data;
+  return null;
+}
+function setCached(key,data){
+  CACHE[key]={data:data,ts:Date.now()};
+}
+function getPriceCached(sym){
+  var c=PRICE_CACHE[sym];
+  if(c&&(Date.now()-c.ts)<PRICE_TTL) return c.data;
+  return null;
+}
+function setPriceCached(sym,data){
+  PRICE_CACHE[sym]={data:data,ts:Date.now()};
+}
 var FILTERED=[],ACTIVE_SECTOR="",MARKET="NSE",ACTIVE_TAB="ALL";
 var NSE_TABS=[
   {id:"ALL",label:"ALL"},{id:"LC",label:"LARGE CAP"},{id:"MC",label:"MID CAP"},
@@ -289,8 +310,26 @@ function switchMkt(mkt,btn){
   loadData();
 }
 
+function forceLoad(){
+  // Clear screener cache for current market
+  delete CACHE[MARKET+"_data"];
+  loadData();
+}
+
 function loadData(){
   var mc=document.getElementById("mainContent");
+
+  // Check screener cache (60 min)
+  var cacheKey=MARKET+"_data";
+  var cached=getCached(cacheKey);
+  if(cached){
+    D=cached;
+    buildSectorSelect();
+    updateTabCounts();
+    renderTab();
+    return;
+  }
+
   var quotes=[
     "The market is not your enemy. Your emotions are. — Mark Douglas",
     "Anything can happen. — Mark Douglas",
@@ -327,6 +366,8 @@ function loadData(){
       if(!D.watchlist) D.watchlist=[];
       if(!D.journal) D.journal=[];
       if(!D.log) D.log="";
+      // Save to cache
+      setCached(MARKET+"_data", D);
       buildSectorSelect();
       updateTabCounts();
       renderTab();
@@ -507,7 +548,8 @@ function fetchLivePrices(){
       return;
     }
     var syms = batches[done].join(",");
-    fetch(url + "?action=live&symbols=" + encodeURIComponent(syms), {redirect:"follow"})
+    var syms2=batches[done].join(",");
+    fetch(url + "?action=live&symbols=" + encodeURIComponent(syms2), {redirect:"follow"})
       .then(function(r){ return r.json(); })
       .then(function(data){
         Object.keys(data).forEach(function(sym){
@@ -714,10 +756,14 @@ function exportCSV(){
   }
   buildTabbar();
   loadData();
-  // Auto refresh live prices every 60 seconds for US
+  // Auto refresh live prices every 60 seconds
   setInterval(function(){
-    if(document.getElementById("tbody")) fetchLivePrices();
-  }, 60000);
+    if(document.getElementById("tbody")){
+      // Clear price cache so fresh prices are fetched
+      PRICE_CACHE={};
+      fetchLivePrices();
+    }
+  }, 30000);
 })();
 </script>
 <script>
