@@ -302,12 +302,11 @@ function switchMkt(mkt,btn){
   document.querySelectorAll(".mkt-btn").forEach(function(b){b.classList.remove("active");});
   btn.classList.add("active");
   ACTIVE_TAB="ALL";
-  D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
   var url=new URL(window.location.href);
   url.searchParams.set("m",mkt.toLowerCase());
   window.history.replaceState({},"",url.toString());
   buildTabbar();
-  loadData();
+  loadData(); // loadData will use cache if available
 }
 
 function forceLoad(){
