@@ -204,7 +204,8 @@ tr:hover td{background:var(--s2)}
 var NSE_URL="https://script.google.com/macros/s/AKfycbxf48IaOaZtOBtZWf_RT8vUyR_6GqJJjJrivpgESy5Ha5F2igauMrqdXtkNMkXd2CxsZw/exec";
 var US_URL="https://script.google.com/macros/s/AKfycbwcmvvMvgzifuawd6cHOOuymyYJeswHzDqTmPl3EdNsYTeTx8HfP6l7UMJxQ4NG7koo/exec";
 var D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
-// No cache - always fresh data
+var dataNSE=null, dataUS=null;
+var priceTimer=null;
 var FILTERED=[],ACTIVE_SECTOR="",MARKET="NSE",ACTIVE_TAB="ALL";
 var NSE_TABS=[
   {id:"ALL",label:"ALL"},{id:"LC",label:"LARGE CAP"},{id:"MC",label:"MID CAP"},
@@ -291,12 +292,27 @@ function switchMkt(mkt,btn){
 
 function forceLoad(){
   // Clear screener cache for current market
-  delete CACHE[MARKET+"_data"];
+  loadData();
+}
+
+function forceReload(){
+  if(MARKET==="NSE") dataNSE=null; else dataUS=null;
   loadData();
 }
 
 function loadData(){
   var mc=document.getElementById("mainContent");
+
+  // Use stored data if available (instant, no reload)
+  var stored = MARKET==="NSE" ? dataNSE : dataUS;
+  if(stored){
+    D=stored;
+    buildSectorSelect();
+    updateTabCounts();
+    renderTab();
+    startPriceUpdates();
+    return;
+  }
 
   var quotes=[
     "Anything can happen. — Mark Douglas",
@@ -414,21 +430,27 @@ function loadData(){
     "<div style=\"font-size:18px;font-style:italic;color:var(--text);max-width:500px;line-height:1.6;margin-bottom:1rem\">\""+quote+"\"</div>"+
     "<div style=\"font-size:13px;font-weight:600;color:var(--gold)\">— "+author+"</div>"+
     "</div>";
-  fetch(getUrl())
+  var reqMkt=MARKET;
+  var reqUrl=getUrl();
+  fetch(reqUrl)
     .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
     .then(function(data){
-      // Verify market matches what we requested
-      if(data.market && data.market !== MARKET) return; // stale response, ignore
+      // Store in the correct holder based on the response's own market field
+      var respMkt = data.market || reqMkt;
+      if(!data.tabs) data.tabs={};
+      if(!data.modelPortfolio) data.modelPortfolio={positions:[],journal:[]};
+      if(!data.history) data.history=[];
+      if(!data.watchlist) data.watchlist=[];
+      if(!data.journal) data.journal=[];
+      if(!data.log) data.log="";
+      if(respMkt==="NSE") dataNSE=data; else dataUS=data;
+      // Only render if user is still on the market this response belongs to
+      if(respMkt!==MARKET) return;
       D=data;
-      if(!D.tabs) D.tabs={};
-      if(!D.modelPortfolio) D.modelPortfolio={positions:[],journal:[]};
-      if(!D.history) D.history=[];
-      if(!D.watchlist) D.watchlist=[];
-      if(!D.journal) D.journal=[];
-      if(!D.log) D.log="";
       buildSectorSelect();
       updateTabCounts();
       renderTab();
+      startPriceUpdates();
     })
     .catch(function(e){
       mc.innerHTML="<div class=\"err-box\" style=\"margin:1rem\"><strong>Error</strong><br>"+e.message+"</div>";
@@ -471,7 +493,7 @@ function renderScreenerShell(){
     "<div class=\"th-row\"><div class=\"th-ttl\" id=\"tTitle\">-</div>"+
     "<div class=\"th-acts\"><input class=\"srch\" id=\"srch\" placeholder=\"Search...\" oninput=\"applyFilters()\">"+
     "<button class=\"ibtn\" onclick=\"exportCSV()\">CSV</button>"+
-    "<button class=\"ibtn\" onclick=\"loadData()\">&#8635;</button></div></div>"+
+    "<button class=\"ibtn\" onclick=\"forceReload()\">&#8635;</button></div></div>"+
     "<div class=\"tw\"><table><thead><tr>"+
     "<th>Rank</th><th>Symbol</th><th>Price</th><th>Signal</th><th>Chart</th><th>Cap</th><th>Sector</th>"+
     "</tr></thead><tbody id=\"tbody\"></tbody></table></div>";
@@ -583,6 +605,19 @@ function paintTable(){
   if(tt) tt.textContent=FILTERED.length+" signals";
   // Auto-fetch live prices for US market
   fetchLivePrices(); // works for both NSE and US
+}
+
+function startPriceUpdates(){
+  // Clear any existing timer
+  if(priceTimer) clearInterval(priceTimer);
+  // Fetch immediately
+  fetchLivePrices();
+  // Then every 30 sec
+  priceTimer=setInterval(function(){
+    if(document.getElementById("tbody")||document.getElementById("mp-live-"+(D.modelPortfolio.positions[0]||{}).symbol)){
+      fetchLivePrices();
+    }
+  },30000);
 }
 
 function fetchLivePrices(){
@@ -818,7 +853,6 @@ function exportCSV(){
   setInterval(function(){
     if(document.getElementById("tbody")){
       // Clear price cache so fresh prices are fetched
-      PRICE_CACHE={};
       fetchLivePrices();
     }
   }, 30000);
