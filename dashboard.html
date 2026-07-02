@@ -310,7 +310,6 @@ function loadData(){
     buildSectorSelect();
     updateTabCounts();
     renderTab();
-    startPriceUpdates();
     return;
   }
 
@@ -450,7 +449,6 @@ function loadData(){
       buildSectorSelect();
       updateTabCounts();
       renderTab();
-      startPriceUpdates();
     })
     .catch(function(e){
       mc.innerHTML="<div class=\"err-box\" style=\"margin:1rem\"><strong>Error</strong><br>"+e.message+"</div>";
@@ -468,7 +466,7 @@ function renderTab(){
   var mc=document.getElementById("mainContent");
   if(ACTIVE_TAB==="SECTORS")   {mc.innerHTML=renderSectors();return;}
   if(ACTIVE_TAB==="PORTFOLIO") {mc.innerHTML=renderPortfolio();return;}
-  if(ACTIVE_TAB==="MODEL")     {mc.innerHTML=renderModel();return;}
+  if(ACTIVE_TAB==="MODEL")     {mc.innerHTML=renderModel();startPriceUpdates();return;}
   if(ACTIVE_TAB==="HISTORY")   {mc.innerHTML=renderHistory();return;}
   if(ACTIVE_TAB==="WATCHLIST") {mc.innerHTML=renderWatchlist();return;}
   if(ACTIVE_TAB==="JOURNAL")   {mc.innerHTML=renderJournal();return;}
@@ -476,6 +474,7 @@ function renderTab(){
   mc.innerHTML=renderScreenerShell();
   buildPills();
   applyFilters();
+  startPriceUpdates(); // background price updates, separate from screener
 }
 
 function getTabData(){return D.tabs[ACTIVE_TAB]||[];}
@@ -603,55 +602,54 @@ function paintTable(){
   }).join("");
   var tt=document.getElementById("tTitle");
   if(tt) tt.textContent=FILTERED.length+" signals";
-  // Auto-fetch live prices for US market
-  fetchLivePrices(); // works for both NSE and US
 }
 
 function startPriceUpdates(){
-  // Clear any existing timer
-  if(priceTimer) clearInterval(priceTimer);
-  // Fetch immediately
+  // Always clear old timer first (prevents overlap when switching tabs/markets)
+  if(priceTimer){ clearInterval(priceTimer); priceTimer=null; }
+  // Fetch once now (non-blocking, runs in background)
   fetchLivePrices();
-  // Then every 30 sec
-  priceTimer=setInterval(function(){
-    if(document.getElementById("tbody")||document.getElementById("mp-live-"+(D.modelPortfolio.positions[0]||{}).symbol)){
-      fetchLivePrices();
-    }
-  },30000);
+  // Then refresh every 30 sec
+  priceTimer=setInterval(fetchLivePrices, 30000);
 }
 
 function fetchLivePrices(){
-  var pool = getTabData();
-  if(!pool.length) return;
-  
-  var symbols = pool.map(function(s){ return s.symbol; });
-  var url     = getUrl(); // same Apps Script URL
-  var BATCH   = 50;
-  var priceMap = {};
-  var batches  = [];
-  
+  var reqMkt = MARKET;
+  var symbols;
+  if(ACTIVE_TAB==="MODEL"){
+    var pos=(D.modelPortfolio&&D.modelPortfolio.positions)||[];
+    if(!pos.length) return;
+    symbols=pos.map(function(p){return p.symbol;});
+  } else {
+    var pool = getTabData();
+    if(!pool.length) return;
+    symbols = pool.map(function(s){ return s.symbol; });
+  }
+  var url = getUrl();
+  var BATCH = 50;
+  var batches = [];
   for(var i=0; i<symbols.length; i+=BATCH){
     batches.push(symbols.slice(i, i+BATCH));
   }
-  
   var done = 0;
   function next(){
-    if(done >= batches.length){
-      updatePriceCells(priceMap);
-      return;
-    }
+    if(done >= batches.length) return;
+    // If user switched market mid-fetch, stop — don't paint wrong prices
+    if(MARKET !== reqMkt) return;
     var syms = batches[done].join(",");
-    var syms2=batches[done].join(",");
-    fetch(url + "?action=live&symbols=" + encodeURIComponent(syms2), {redirect:"follow"})
+    fetch(url + "?action=live&symbols=" + encodeURIComponent(syms), {redirect:"follow"})
       .then(function(r){ return r.json(); })
       .then(function(data){
+        if(MARKET !== reqMkt) return; // switched — ignore
+        var batch={};
         Object.keys(data).forEach(function(sym){
-          if(sym !== "_error") priceMap[sym] = data[sym];
+          if(sym !== "_error") batch[sym]=data[sym];
         });
+        updatePriceCells(batch); // paint this batch immediately
         done++;
-        setTimeout(next, 200);
+        setTimeout(next, 150);
       })
-      .catch(function(){ done++; setTimeout(next, 200); });
+      .catch(function(){ done++; setTimeout(next, 150); });
   }
   next();
 }
@@ -659,12 +657,17 @@ function fetchLivePrices(){
 function updatePriceCells(priceMap){
   var isN=MARKET==="NSE", cur=isN?"Rs.":"$";
   Object.keys(priceMap).forEach(function(sym){
-    var el=document.getElementById("live-"+sym);
     var d=priceMap[sym];
-    if(!el||!d||!d.price) return;
+    if(!d||!d.price) return;
     var color=d.chg>=0?"#10b981":"#ef4444";
     var sign=d.chg>=0?"+":"";
-    el.innerHTML="<span style='font-family:monospace;font-weight:600'>"+cur+d.price.toFixed(2)+"</span><span style='font-size:10px;color:"+color+"'> "+sign+d.chg.toFixed(1)+"%</span>";
+    var html="<span style='font-family:monospace;font-weight:600'>"+cur+d.price.toFixed(2)+"</span><span style='font-size:10px;color:"+color+"'> "+sign+d.chg.toFixed(1)+"%</span>";
+    // Screener table cell
+    var el=document.getElementById("live-"+sym);
+    if(el) el.innerHTML=html;
+    // Model portfolio cell
+    var mpEl=document.getElementById("mp-live-"+sym);
+    if(mpEl) mpEl.innerHTML=html;
   });
 }
 
@@ -737,8 +740,7 @@ function renderModel(){
       "<td style=\"color:var(--muted);font-size:11px\">"+j.notes+"</td>"+
       "<td class=\"dt\">"+fmtDate(j.date)+"</td></tr>";
   }).join("");
-  setTimeout(function(){fetchModelPrices(pos);},500);
-  return cards+
+    return cards+
     "<div class=\"tw\" style=\"margin-bottom:10px\"><table><thead><tr><th>Symbol</th><th>Live Price</th><th>P&L%</th><th>Status</th><th>Chart</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>"+posRows+"</tbody></table></div>"+
     "<div style=\"font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px\">Journal</div>"+
     "<div class=\"tw\"><table><thead><tr><th>Symbol</th><th>Action</th><th>Price</th><th>P&L%</th><th>Notes</th><th>Date</th></tr></thead><tbody>"+jRows+"</tbody></table></div>";
