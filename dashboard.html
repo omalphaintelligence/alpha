@@ -130,6 +130,12 @@ tr:hover td{background:var(--s2)}
   .content{padding:8px}
   #clock{display:none}.theme-row{display:none}
 }
+.status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
+.status-item{display:flex;align-items:center;gap:4px}
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.status-ok{background:var(--green)}
+.status-warn{background:var(--orange)}
+.status-bad{background:var(--red)}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--s1)}
 ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
@@ -160,6 +166,7 @@ tr:hover td{background:var(--s2)}
   </div>
 </header>
 <div class="tabbar" id="tabbar"></div>
+<div class="status-bar" id="statusBar"></div>
 <div class="wrap" id="wrap">
   <aside class="sb" id="sidebar">
     <div class="sb-sec">
@@ -212,15 +219,12 @@ var NSE_TABS=[
   {id:"ALL",label:"ALL"},{id:"LC",label:"LARGE CAP"},{id:"MC",label:"MID CAP"},
   {id:"SC",label:"SMALL CAP"},{id:"FO",label:"F&O"},{id:"ET",label:"ETF"},
   {id:"LM",label:"LARGE+MID"},{id:"MS",label:"MID+SMALL"},
-  {id:"SECTORS",label:"SECTORS"},{id:"PORTFOLIO",label:"PORTFOLIO"},
-  {id:"MODEL",label:"MODEL PF"},{id:"HISTORY",label:"HISTORY"},
-  {id:"WATCHLIST",label:"WATCHLIST"},{id:"LOG",label:"LOG"}
+  {id:"MODEL",label:"MODEL PF"},{id:"LOG",label:"LOG"}
 ];
 var US_TABS=[
   {id:"ALL",label:"ALL"},{id:"LC",label:"LARGE CAP"},{id:"MC",label:"MID CAP"},
-  {id:"SC",label:"SMALL CAP"},{id:"ET",label:"ETF"},{id:"SECTORS",label:"SECTORS"},
-  {id:"MODEL",label:"MODEL PF"},{id:"HISTORY",label:"RANK HISTORY"},
-  {id:"WATCHLIST",label:"WATCHLIST"},{id:"JOURNAL",label:"JOURNAL"},{id:"LOG",label:"LOG"}
+  {id:"SC",label:"SMALL CAP"},{id:"ET",label:"ETF"},
+  {id:"MODEL",label:"MODEL PF"},{id:"LOG",label:"LOG"}
 ];
 
 function updateDataUpdatedLabel(){
@@ -320,6 +324,7 @@ function loadData(){
     D=stored;
     buildSectorSelect();
     updateTabCounts();
+    renderStatusBar();
     renderTab();
     updateDataUpdatedLabel();
     return;
@@ -460,6 +465,7 @@ function loadData(){
       D=data;
       buildSectorSelect();
       updateTabCounts();
+      renderStatusBar();
       renderTab();
       updateDataUpdatedLabel();
     })
@@ -473,6 +479,39 @@ function buildSectorSelect(){
   (D.tabs.ALL||[]).forEach(function(s){if(s.sector) secs[s.sector]=true;});
   document.getElementById("fSec").innerHTML="<option value=\"\">All Sectors</option>"+
     Object.keys(secs).sort().map(function(s){return"<option>"+s+"</option>";}).join("");
+}
+
+function timeAgo(iso){
+  if(!iso) return "never";
+  var diff = Date.now() - new Date(iso).getTime();
+  var mins = Math.floor(diff/60000);
+  if(mins<1) return "just now";
+  if(mins<60) return mins+"m ago";
+  var hrs = Math.floor(mins/60);
+  if(hrs<24) return hrs+"h ago";
+  var days = Math.floor(hrs/24);
+  return days+"d ago";
+}
+function statusClass(iso, warnHrs, badHrs){
+  if(!iso) return "status-bad";
+  var hrs = (Date.now()-new Date(iso).getTime())/3600000;
+  if(hrs>badHrs) return "status-bad";
+  if(hrs>warnHrs) return "status-warn";
+  return "status-ok";
+}
+function renderStatusBar(){
+  var el = document.getElementById("statusBar");
+  if(!el) return;
+  var s = D.stepStatus;
+  if(!s){ el.innerHTML=""; return; }
+  var steps = MARKET==="NSE"
+    ? [["step1","Prices"],["step2","Signals"],["step3a","VCP Data"],["step3b","Model PF"]]
+    : [["step1","Prices"],["step2","Signals"],["step3a","VCP Data"],["step3b","Model PF"]];
+  el.innerHTML = steps.map(function(st){
+    var ts = s[st[0]];
+    var cls = statusClass(ts, 26, 48);
+    return '<span class="status-item"><span class="status-dot '+cls+'"></span>'+st[1]+': '+timeAgo(ts)+'</span>';
+  }).join("");
 }
 
 function renderTab(){
