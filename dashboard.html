@@ -154,6 +154,7 @@ tr:hover td{background:var(--s2)}
       <span class="td td-saffron" onclick="setTheme('saffron',this)" title="Saffron"></span>
       <span class="td td-light on" onclick="setTheme('light',this)" title="Light"></span>
     </div>
+    <span id="dataUpdated" style="font-size:11px;color:var(--muted)"></span>
     <span style="font-size:11px;color:var(--muted)"><span class="live-dot"></span></span>
     <span id="clock"></span>
   </div>
@@ -221,6 +222,16 @@ var US_TABS=[
   {id:"MODEL",label:"MODEL PF"},{id:"HISTORY",label:"RANK HISTORY"},
   {id:"WATCHLIST",label:"WATCHLIST"},{id:"JOURNAL",label:"JOURNAL"},{id:"LOG",label:"LOG"}
 ];
+
+function updateDataUpdatedLabel(){
+  var el=document.getElementById("dataUpdated");
+  if(!el) return;
+  if(D && D.updated){
+    el.textContent="Data: "+D.updated;
+  } else {
+    el.textContent="";
+  }
+}
 
 function fmtDate(d){
   if(!d) return "";
@@ -310,6 +321,7 @@ function loadData(){
     buildSectorSelect();
     updateTabCounts();
     renderTab();
+    updateDataUpdatedLabel();
     return;
   }
 
@@ -449,6 +461,7 @@ function loadData(){
       buildSectorSelect();
       updateTabCounts();
       renderTab();
+      updateDataUpdatedLabel();
     })
     .catch(function(e){
       mc.innerHTML="<div class=\"err-box\" style=\"margin:1rem\"><strong>Error</strong><br>"+e.message+"</div>";
