@@ -16,7 +16,7 @@
 <style>
 :root{--tab-accent:#0891b2}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{overflow-x:hidden;max-width:100vw}
+html,body{overflow-x:hidden;position:relative;width:100%}
 body{font-family:'Inter',system-ui,sans-serif;font-size:13px;min-height:100vh}
 .mono{font-family:'JetBrains Mono',monospace}
 body.t-dark{--bg:#0a0d13;--s1:#12161f;--s2:#1a2030;--b1:#232b3d;--b2:#2e3850;--text:#e8eaed;--muted:#7c8797;--accent:#4a9eff;--gold:#d4a947;--green:#00c896;--red:#ff5c7a;--purple:#8b7fe0;--orange:#ff9f5a;--cyan:#3ec9d6}
@@ -50,9 +50,9 @@ body{background:var(--bg);color:var(--text)}
 .stab .tc{font-size:9px;margin-left:2px;opacity:.5}
 .sb-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:499}
 .sb-overlay.show{display:block}
-.wrap{display:grid;grid-template-columns:1fr;min-height:calc(100vh - 92px)}
+.wrap{display:grid;grid-template-columns:1fr;min-height:calc(100vh - 92px);overflow-x:hidden;max-width:100%}
 .wrap.sb-open{grid-template-columns:200px 1fr}
-.sb{background:var(--s1);border-right:1px solid var(--b1);padding:10px;overflow-y:auto;position:fixed;top:92px;left:-210px;height:calc(100vh - 92px);width:200px;transition:left .25s;z-index:400}
+.sb{background:var(--s1);border-right:1px solid var(--b1);padding:10px;overflow-y:auto;overflow-x:hidden;position:fixed;top:92px;left:-210px;height:calc(100vh - 92px);width:200px;transition:left .25s;z-index:400}
 .wrap.sb-open .sb{left:0}
 .sb-sec{margin-bottom:12px}
 .sb-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
