@@ -16,6 +16,7 @@
 <style>
 :root{--tab-accent:#0891b2}
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100vw}
 body{font-family:'Inter',system-ui,sans-serif;font-size:13px;min-height:100vh}
 .mono{font-family:'JetBrains Mono',monospace}
 body.t-dark{--bg:#0a0d13;--s1:#12161f;--s2:#1a2030;--b1:#232b3d;--b2:#2e3850;--text:#e8eaed;--muted:#7c8797;--accent:#4a9eff;--gold:#d4a947;--green:#00c896;--red:#ff5c7a;--purple:#8b7fe0;--orange:#ff9f5a;--cyan:#3ec9d6}
@@ -24,8 +25,8 @@ body.t-green{--bg:#0a1a0f;--s1:#0d1f12;--s2:#132918;--b1:#1a4a28;--b2:#22623a;--
 body.t-saffron{--bg:#1a0f00;--s1:#1f1200;--s2:#2d1a00;--b1:#5c3500;--b2:#7a4800;--text:#fef3c7;--muted:#92714a;--accent:#f59e0b;--gold:#fbbf24;--green:#86efac;--red:#fca5a5;--purple:#c4b5fd;--orange:#fb923c;--cyan:#67e8f9}
 body.t-light{--bg:#ffffff;--s1:#ffffff;--s2:#f5f5f5;--b1:#e2e2e2;--b2:#c8c8c8;--text:#000000;--muted:#5c5c5c;--accent:#0044cc;--gold:#b8860b;--green:#0d7d3b;--red:#c8102e;--purple:#5b3fa0;--orange:#c65911;--cyan:#0077a3}
 body{background:var(--bg);color:var(--text)}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:52px;background:var(--s1);border-bottom:2px solid var(--text);position:sticky;top:0;z-index:300}
-.topbar-l{display:flex;align-items:center;gap:8px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:52px;background:var(--s1);border-bottom:2px solid var(--text);position:sticky;top:0;z-index:300;overflow:hidden;gap:6px}
+.topbar-l{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .logo{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--text);letter-spacing:-.3px;display:flex;align-items:center;gap:2px}
 .logo-mark{display:none}
 .logo b{color:var(--text);font-weight:700}
@@ -33,7 +34,7 @@ body{background:var(--bg);color:var(--text)}
 .mkt-tabs{display:flex;gap:3px}
 .mkt-btn{padding:4px 10px;border-radius:4px;border:1px solid var(--b1);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
 .mkt-btn.active{background:var(--s2);border-color:var(--accent);color:var(--accent)}
-.topbar-r{display:flex;align-items:center;gap:6px}
+.topbar-r{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 #clock{font-family:monospace;font-size:11px;color:var(--muted)}
@@ -131,10 +132,23 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
   .kpi{padding:6px 8px}.kpi-v{font-size:14px}
   .content{padding:8px}
   #clock{display:none}.theme-row{display:none}
+  .clock-wrap{display:none}
+  .data-updated-lbl{display:none}
+  .ticker-status-txt{display:none}
+  .ticker-indices{max-width:45%}
+  .ticker-item{padding:7px 12px}
+  .ticker-label{font-size:10px}
+  .ticker-price{font-size:12px}
+  .ticker-chg{font-size:10px}
+  .mkt-tabs{gap:2px}
+  .mkt-btn{padding:3px 7px;font-size:10px}
+  .topbar{padding:0 8px}
+  .logo{font-size:15px}
 }
 .status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
 .ticker-outer{display:flex;align-items:center;background:#0a0a0a;position:relative}
-.ticker-indices{display:flex;gap:8px;flex-shrink:0;padding:9px 10px;border-right:1px solid #2a2a2a}
+.ticker-indices{display:flex;gap:8px;flex-shrink:1;min-width:0;max-width:55%;overflow-x:auto;padding:9px 10px;border-right:1px solid #2a2a2a;-webkit-overflow-scrolling:touch}
+.ticker-indices::-webkit-scrollbar{display:none}
 .ticker-scroll-wrap{flex:1;overflow:hidden;position:relative;min-width:0}
 .ticker-stocks{display:flex;gap:8px;white-space:nowrap;padding:9px 10px;width:max-content;animation:tickerScroll 28s linear infinite}
 .ticker-scroll-wrap:hover .ticker-stocks{animation-play-state:paused}
@@ -217,7 +231,7 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
       <span class="td td-saffron" onclick="setTheme('saffron',this)" title="Saffron"></span>
       <span class="td td-light on" onclick="setTheme('light',this)" title="Light"></span>
     </div>
-    <span id="dataUpdated" style="font-size:11px;color:var(--muted)"></span>
+    <span id="dataUpdated" class="data-updated-lbl" style="font-size:11px;color:var(--muted)"></span>
     <span style="font-size:11px;color:var(--muted)"><span class="live-dot"></span></span>
     <span id="clock"></span>
   </div>
@@ -1231,6 +1245,7 @@ function renderTicker(list, targetId, duplicateForScroll){
     el.innerHTML = "<span class=\"ticker-loading\">No data</span>";
     return;
   }
+  var cur = MARKET==="NSE" ? "\u20b9" : "$";
   var itemsHtml = list.map(function(idx){
     if(idx.price==null) return "";
     var up = idx.chg >= 0;
@@ -1243,7 +1258,7 @@ function renderTicker(list, targetId, duplicateForScroll){
     PREV_TICKER_PRICES[idx.label] = idx.price;
     return "<div class=\"ticker-item"+flashCls+"\" data-label=\""+idx.label+"\">"+
       "<span class=\"ticker-label\">"+idx.label+"</span>"+
-      "<span class=\"ticker-price\">$"+idx.price.toLocaleString()+"</span>"+
+      "<span class=\"ticker-price\">"+cur+idx.price.toLocaleString()+"</span>"+
       "<span class=\"ticker-chg "+(up?"up":"down")+"\">"+arrow+" "+Math.abs(idx.chg).toFixed(2)+"%</span>"+
       "</div>";
   }).join("");
