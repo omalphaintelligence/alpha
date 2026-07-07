@@ -153,6 +153,10 @@ tr:hover td{background:var(--s2)}
 @keyframes tickerPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(61,220,132,.5)}50%{opacity:.6;box-shadow:0 0 0 4px rgba(61,220,132,0)}}
 @keyframes tickerBlinkSlow{0%,100%{opacity:1}50%{opacity:.25}}
 .ticker-status-txt{font-size:9.5px;font-weight:700;letter-spacing:.5px;color:#ffffff;white-space:nowrap}
+.clock-wrap{display:flex;align-items:center;gap:5px;margin-left:8px;padding-left:10px;border-left:1px solid #2a2a2a;white-space:nowrap}
+.clock-day{font-size:9px;font-weight:700;color:#8a8a8a;letter-spacing:.4px}
+.clock-time{font-size:11.5px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#ffffff}
+.clock-tz{font-size:8.5px;font-weight:700;color:#8a8a8a;letter-spacing:.3px}
 .ticker-strip{display:flex;gap:10px;white-space:nowrap;animation:tickerScroll 45s linear infinite;padding:9px 10px}
 .ticker-outer:hover .ticker-strip{animation-play-state:paused}
 @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -232,6 +236,7 @@ tr:hover td{background:var(--s2)}
   <div class="ticker-status">
     <span class="ticker-status-dot" id="marketStatusDot"></span>
     <span class="ticker-status-txt" id="marketStatusTxt">-</span>
+    <span class="clock-wrap" id="liveClock"></span>
   </div>
   <div class="ticker-strip" id="tickerStrip"><span class="ticker-loading">Loading market data...</span></div>
 </div>
@@ -1058,48 +1063,80 @@ var TICKER_SYMBOLS = [
   {label:"AMD",        sym:"AMD"},
   {label:"INTC",       sym:"INTC"},
   {label:"TSM",        sym:"TSM"},
-  {label:"AVGO",       sym:"AVGO"}
+  {label:"AVGO",       sym:"AVGO"},
+  {label:"NIKKEI 225", sym:"EWJ"},
+  {label:"HANG SENG",  sym:"EWH"},
+  {label:"FTSE 100",   sym:"EWU"},
+  {label:"DAX",        sym:"EWG"},
+  {label:"CAC 40",     sym:"EWQ"}
 ];
+// Note: Nikkei/Hang Seng/FTSE/DAX/CAC use the closest liquid US-listed
+// country ETF as a proxy (EWJ/EWH/EWU/EWG/EWQ) — Finnhub's free tier
+// doesn't carry the actual foreign exchange tickers directly.
 
 var tickerTimer = null;
 
 var PREV_TICKER_PRICES = {};
 
-function isUSMarketOpen(){
-  // Convert current time to US Eastern using Intl, then check Mon-Fri 9:30-16:00 ET
+function isMarketOpenGeneric(tz, weekdayList, openMins, closeMins){
   var now = new Date();
-  var etStr = now.toLocaleString("en-US", {timeZone:"America/New_York", hour12:false,
+  var str = now.toLocaleString("en-US", {timeZone:tz, hour12:false,
     weekday:"short", hour:"2-digit", minute:"2-digit"});
-  var parts = etStr.split(", ");
+  var parts = str.split(", ");
   var weekday = parts[0];
   var hm = parts[1].split(":");
   var h = parseInt(hm[0],10), m = parseInt(hm[1],10);
   var mins = h*60+m;
-  var isWeekday = ["Mon","Tue","Wed","Thu","Fri"].indexOf(weekday) !== -1;
-  var duringHours = mins >= (9*60+30) && mins < (16*60);
-  return isWeekday && duringHours;
+  var isWeekday = weekdayList.indexOf(weekday) !== -1;
+  return isWeekday && mins >= openMins && mins < closeMins;
+}
+
+function isUSMarketOpen(){
+  return isMarketOpenGeneric("America/New_York", ["Mon","Tue","Wed","Thu","Fri"], 9*60+30, 16*60);
+}
+function isNSEMarketOpen(){
+  return isMarketOpenGeneric("Asia/Kolkata", ["Mon","Tue","Wed","Thu","Fri"], 9*60+15, 15*60+30);
 }
 
 function updateMarketStatus(){
   var dot = document.getElementById("marketStatusDot");
   var txt = document.getElementById("marketStatusTxt");
   if(!dot||!txt) return;
-  var open = isUSMarketOpen();
+  var open = MARKET==="NSE" ? isNSEMarketOpen() : isUSMarketOpen();
   dot.className = "ticker-status-dot " + (open?"live":"closed");
   txt.textContent = open ? "MARKET LIVE" : "MARKET CLOSED";
+}
+
+// ── LIVE CLOCK — Pacific Time for US, IST for India, blinking seconds ──
+var clockBlinkOn = true;
+function updateLiveClock(){
+  var el = document.getElementById("liveClock");
+  if(!el) return;
+  var tz    = MARKET==="NSE" ? "Asia/Kolkata" : "America/Los_Angeles";
+  var label = MARKET==="NSE" ? "IST" : "PT";
+  var now = new Date();
+  var str = now.toLocaleString("en-US", {timeZone:tz, hour12:false,
+    weekday:"short", hour:"2-digit", minute:"2-digit", second:"2-digit"});
+  var parts = str.split(", "); // "Mon, 14:32:07"
+  var day = parts[0];
+  var hms = parts[1].split(":");
+  clockBlinkOn = !clockBlinkOn;
+  var sep = clockBlinkOn ? ":" : " ";
+  el.innerHTML = "<span class=\"clock-day\">"+day.toUpperCase()+"</span>"+
+    "<span class=\"clock-time\">"+hms[0]+sep+hms[1]+sep+hms[2]+"</span>"+
+    "<span class=\"clock-tz\">"+label+"</span>";
 }
 
 function fetchMarketTicker(){
   var outer = document.getElementById("tickerOuter");
   if(!outer) return;
-
-  // NSE has no reliable free real-time index API — ticker hidden for NSE
-  if(MARKET !== "US"){
-    outer.style.display = "none";
-    return;
-  }
   outer.style.display = "flex";
   updateMarketStatus();
+
+  if(MARKET === "NSE"){
+    fetchNSETicker();
+    return;
+  }
 
   if(!FINNHUB_API_KEY || FINNHUB_API_KEY === "YOUR_FINNHUB_API_KEY_HERE"){
     document.getElementById("tickerStrip").innerHTML = "<span class=\"ticker-loading\">Add your free Finnhub API key in dashboard code to enable live index ticker</span>";
@@ -1118,6 +1155,23 @@ function fetchMarketTicker(){
     if(MARKET !== reqMkt) return; // market switched mid-fetch, ignore
     renderMarketTicker(results);
   });
+}
+
+function fetchNSETicker(){
+  // NSE indices come from the sheet's GOOGLEFINANCE-based endpoint —
+  // same {label,price,chg} shape as the US ticker, so renderMarketTicker
+  // and the flash-on-change animation both work identically here.
+  var reqMkt = MARKET;
+  fetch(getUrl() + "?action=indices", {redirect:"follow"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(MARKET !== reqMkt) return;
+      renderMarketTicker(data);
+    })
+    .catch(function(){
+      var el = document.getElementById("tickerStrip");
+      if(el) el.innerHTML = "<span class=\"ticker-loading\">NSE index data unavailable</span>";
+    });
 }
 
 function renderMarketTicker(list){
@@ -1157,8 +1211,10 @@ function renderMarketTicker(list){
 function startTickerRefresh(){
   if(tickerTimer) clearInterval(tickerTimer);
   fetchMarketTicker();
-  tickerTimer = setInterval(fetchMarketTicker, 20000);
+  tickerTimer = setInterval(fetchMarketTicker, 30000);
   setInterval(updateMarketStatus, 60000);
+  updateLiveClock();
+  setInterval(updateLiveClock, 1000);
 }
 
 function drawTrend(s){
