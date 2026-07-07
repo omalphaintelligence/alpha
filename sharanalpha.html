@@ -334,9 +334,19 @@ var TAB_COLORS = {
   MODEL:"#b8860b", LOG:"#5c5c5c"
 };
 
+function hexToRgba(hex, alpha){
+  hex = hex.replace("#","");
+  var r = parseInt(hex.substring(0,2),16);
+  var g = parseInt(hex.substring(2,4),16);
+  var b = parseInt(hex.substring(4,6),16);
+  return "rgba("+r+","+g+","+b+","+alpha+")";
+}
+
 function applyTabAccent(id){
   var color = TAB_COLORS[id] || "#0891b2";
   document.documentElement.style.setProperty("--tab-accent", color);
+  var mc = document.getElementById("mainContent");
+  if(mc) mc.style.backgroundColor = hexToRgba(color, 0.12);
 }
 
 function buildTabbar(){
