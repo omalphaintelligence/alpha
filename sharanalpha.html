@@ -145,12 +145,23 @@ tr:hover td{background:var(--s2)}
   #clock{display:none}.theme-row{display:none}
 }
 .status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
-.ticker-strip{display:flex;gap:6px;overflow-x:auto;background:#0a0a0a;padding:8px 10px;white-space:nowrap}
-.ticker-strip::-webkit-scrollbar{display:none}
-.ticker-item{display:flex;align-items:center;gap:7px;padding:6px 12px;background:#1c1c1c;border-radius:3px;flex-shrink:0}
-.ticker-label{font-size:10px;font-weight:700;color:#ffffff;letter-spacing:.3px}
-.ticker-price{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#ffffff}
-.ticker-chg{font-size:10.5px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-flex;align-items:center;gap:2px}
+.ticker-outer{display:flex;align-items:center;background:#0a0a0a;overflow:hidden;position:relative}
+.ticker-status{display:flex;align-items:center;gap:6px;padding:8px 12px;flex-shrink:0;border-right:1px solid #2a2a2a;z-index:2;background:#0a0a0a}
+.ticker-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ticker-status-dot.live{background:#3ddc84;animation:tickerPulse 1.6s ease-in-out infinite}
+.ticker-status-dot.closed{background:#ff5c5c;animation:tickerBlinkSlow 2.4s ease-in-out infinite}
+@keyframes tickerPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(61,220,132,.5)}50%{opacity:.6;box-shadow:0 0 0 4px rgba(61,220,132,0)}}
+@keyframes tickerBlinkSlow{0%,100%{opacity:1}50%{opacity:.25}}
+.ticker-status-txt{font-size:9.5px;font-weight:700;letter-spacing:.5px;color:#ffffff;white-space:nowrap}
+.ticker-strip{display:flex;gap:10px;white-space:nowrap;animation:tickerScroll 45s linear infinite;padding:9px 10px}
+.ticker-outer:hover .ticker-strip{animation-play-state:paused}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{display:flex;align-items:center;gap:8px;padding:7px 16px;background:#1c1c1c;border-radius:4px;flex-shrink:0;transition:background-color .3s}
+.ticker-item.flash-up{background-color:#0d7d3b}
+.ticker-item.flash-down{background-color:#c8102e}
+.ticker-label{font-size:10.5px;font-weight:700;color:#ffffff;letter-spacing:.3px}
+.ticker-price{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#ffffff}
+.ticker-chg{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-flex;align-items:center;gap:2px}
 .ticker-chg.up{color:#3ddc84}
 .ticker-chg.down{color:#ff5c5c}
 .ticker-loading{color:var(--muted);font-size:11px;padding:8px 14px}
@@ -217,7 +228,13 @@ tr:hover td{background:var(--s2)}
     <span id="clock"></span>
   </div>
 </header>
-<div class="ticker-strip" id="tickerStrip"><span class="ticker-loading">Loading market data...</span></div>
+<div class="ticker-outer" id="tickerOuter" style="display:none">
+  <div class="ticker-status">
+    <span class="ticker-status-dot" id="marketStatusDot"></span>
+    <span class="ticker-status-txt" id="marketStatusTxt">-</span>
+  </div>
+  <div class="ticker-strip" id="tickerStrip"><span class="ticker-loading">Loading market data...</span></div>
+</div>
 <div class="tabbar" id="tabbar"></div>
 <div class="status-bar" id="statusBar"></div>
 <div class="wrap" id="wrap">
@@ -1027,29 +1044,65 @@ function closeDetail(){
 var FINNHUB_API_KEY = "d9646b1r01qik59mdhq0d9646b1r01qik59mdhqg";
 
 var TICKER_SYMBOLS = [
-  {label:"S&P 500",    sym:"SPY"},
-  {label:"NASDAQ 100",  sym:"QQQ"},
-  {label:"DOW JONES",   sym:"DIA"},
-  {label:"RUSSELL 2K",  sym:"IWM"},
-  {label:"VIX",         sym:"VIXY"}
+  {label:"S&P 500",   sym:"SPY"},
+  {label:"NASDAQ 100", sym:"QQQ"},
+  {label:"DOW JONES",  sym:"DIA"},
+  {label:"VIX",        sym:"VIXY"},
+  {label:"GOLD",       sym:"GLD"},
+  {label:"AAPL",       sym:"AAPL"},
+  {label:"MSFT",       sym:"MSFT"},
+  {label:"GOOGL",      sym:"GOOGL"},
+  {label:"AMZN",       sym:"AMZN"},
+  {label:"META",       sym:"META"},
+  {label:"NVDA",       sym:"NVDA"},
+  {label:"AMD",        sym:"AMD"},
+  {label:"INTC",       sym:"INTC"},
+  {label:"TSM",        sym:"TSM"},
+  {label:"AVGO",       sym:"AVGO"}
 ];
 
 var tickerTimer = null;
 
+var PREV_TICKER_PRICES = {};
+
+function isUSMarketOpen(){
+  // Convert current time to US Eastern using Intl, then check Mon-Fri 9:30-16:00 ET
+  var now = new Date();
+  var etStr = now.toLocaleString("en-US", {timeZone:"America/New_York", hour12:false,
+    weekday:"short", hour:"2-digit", minute:"2-digit"});
+  var parts = etStr.split(", ");
+  var weekday = parts[0];
+  var hm = parts[1].split(":");
+  var h = parseInt(hm[0],10), m = parseInt(hm[1],10);
+  var mins = h*60+m;
+  var isWeekday = ["Mon","Tue","Wed","Thu","Fri"].indexOf(weekday) !== -1;
+  var duringHours = mins >= (9*60+30) && mins < (16*60);
+  return isWeekday && duringHours;
+}
+
+function updateMarketStatus(){
+  var dot = document.getElementById("marketStatusDot");
+  var txt = document.getElementById("marketStatusTxt");
+  if(!dot||!txt) return;
+  var open = isUSMarketOpen();
+  dot.className = "ticker-status-dot " + (open?"live":"closed");
+  txt.textContent = open ? "MARKET LIVE" : "MARKET CLOSED";
+}
+
 function fetchMarketTicker(){
-  var el = document.getElementById("tickerStrip");
-  if(!el) return;
+  var outer = document.getElementById("tickerOuter");
+  if(!outer) return;
 
   // NSE has no reliable free real-time index API — ticker hidden for NSE
   if(MARKET !== "US"){
-    el.innerHTML = "";
-    el.style.display = "none";
+    outer.style.display = "none";
     return;
   }
-  el.style.display = "flex";
+  outer.style.display = "flex";
+  updateMarketStatus();
 
   if(!FINNHUB_API_KEY || FINNHUB_API_KEY === "YOUR_FINNHUB_API_KEY_HERE"){
-    el.innerHTML = "<span class=\"ticker-loading\">Add your free Finnhub API key in dashboard code to enable live index ticker</span>";
+    document.getElementById("tickerStrip").innerHTML = "<span class=\"ticker-loading\">Add your free Finnhub API key in dashboard code to enable live index ticker</span>";
     return;
   }
 
@@ -1074,22 +1127,38 @@ function renderMarketTicker(list){
     el.innerHTML = "<span class=\"ticker-loading\">No market data</span>";
     return;
   }
-  el.innerHTML = list.map(function(idx){
+  var itemsHtml = list.map(function(idx){
     if(idx.price==null) return "";
     var up = idx.chg >= 0;
     var arrow = up ? "&#9650;" : "&#9660;";
-    return "<div class=\"ticker-item\">"+
+    var prev = PREV_TICKER_PRICES[idx.label];
+    var flashCls = "";
+    if(prev!=null && prev !== idx.price){
+      flashCls = idx.price > prev ? " flash-up" : " flash-down";
+    }
+    PREV_TICKER_PRICES[idx.label] = idx.price;
+    return "<div class=\"ticker-item"+flashCls+"\" data-label=\""+idx.label+"\">"+
       "<span class=\"ticker-label\">"+idx.label+"</span>"+
       "<span class=\"ticker-price\">$"+idx.price.toLocaleString()+"</span>"+
       "<span class=\"ticker-chg "+(up?"up":"down")+"\">"+arrow+" "+Math.abs(idx.chg).toFixed(2)+"%</span>"+
       "</div>";
   }).join("");
+  // Duplicate content so the CSS marquee (translateX -50%) loops seamlessly
+  el.innerHTML = itemsHtml + itemsHtml;
+
+  // Clear the brief flash highlight after it's had a moment to be seen
+  setTimeout(function(){
+    document.querySelectorAll(".ticker-item.flash-up,.ticker-item.flash-down").forEach(function(it){
+      it.classList.remove("flash-up","flash-down");
+    });
+  }, 900);
 }
 
 function startTickerRefresh(){
   if(tickerTimer) clearInterval(tickerTimer);
   fetchMarketTicker();
   tickerTimer = setInterval(fetchMarketTicker, 20000);
+  setInterval(updateMarketStatus, 60000);
 }
 
 function drawTrend(s){
