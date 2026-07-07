@@ -1111,12 +1111,13 @@ var PREV_TICKER_PRICES = {};
 
 function isMarketOpenGeneric(tz, weekdayList, openMins, closeMins){
   var now = new Date();
-  var str = now.toLocaleString("en-US", {timeZone:tz, hour12:false,
+  var fmt = new Intl.DateTimeFormat("en-US", {timeZone:tz, hour12:false,
     weekday:"short", hour:"2-digit", minute:"2-digit"});
-  var parts = str.split(", ");
-  var weekday = parts[0];
-  var hm = parts[1].split(":");
-  var h = parseInt(hm[0],10), m = parseInt(hm[1],10);
+  var map = {};
+  fmt.formatToParts(now).forEach(function(p){ map[p.type] = p.value; });
+  var weekday = map.weekday;
+  var h = parseInt(map.hour,10) % 24; // some locales give "24" for midnight hour
+  var m = parseInt(map.minute,10);
   var mins = h*60+m;
   var isWeekday = weekdayList.indexOf(weekday) !== -1;
   return isWeekday && mins >= openMins && mins < closeMins;
@@ -1146,15 +1147,17 @@ function updateLiveClock(){
   var tz    = MARKET==="NSE" ? "Asia/Kolkata" : "America/Los_Angeles";
   var label = MARKET==="NSE" ? "IST" : "PT";
   var now = new Date();
-  var str = now.toLocaleString("en-US", {timeZone:tz, hour12:false,
+  var fmt = new Intl.DateTimeFormat("en-US", {timeZone:tz, hour12:false,
     weekday:"short", hour:"2-digit", minute:"2-digit", second:"2-digit"});
-  var parts = str.split(", "); // "Mon, 14:32:07"
-  var day = parts[0];
-  var hms = parts[1].split(":");
+  var map = {};
+  fmt.formatToParts(now).forEach(function(p){ map[p.type] = p.value; });
+  var day = map.weekday;
+  var hh = (parseInt(map.hour,10)%24).toString().padStart(2,"0");
+  var mm = map.minute, ss = map.second;
   clockBlinkOn = !clockBlinkOn;
   var sep = clockBlinkOn ? ":" : " ";
   el.innerHTML = "<span class=\"clock-day\">"+day.toUpperCase()+"</span>"+
-    "<span class=\"clock-time\">"+hms[0]+sep+hms[1]+sep+hms[2]+"</span>"+
+    "<span class=\"clock-time\">"+hh+sep+mm+sep+ss+"</span>"+
     "<span class=\"clock-tz\">"+label+"</span>";
 }
 
