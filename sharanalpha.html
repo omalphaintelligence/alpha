@@ -317,7 +317,14 @@ function updateDataUpdatedLabel(){
   var el=document.getElementById("dataUpdated");
   if(!el) return;
   if(D && D.updated){
-    el.textContent="Data: "+D.updated;
+    var dt = new Date(D.updated);
+    if(!isNaN(dt.getTime())){
+      var istStr = dt.toLocaleTimeString("en-IN", {timeZone:"Asia/Kolkata", hour:"2-digit", minute:"2-digit", hour12:true});
+      var ptStr  = dt.toLocaleTimeString("en-US", {timeZone:"America/Los_Angeles", hour:"2-digit", minute:"2-digit", hour12:true});
+      el.textContent = "Data: "+istStr+" IST \u00b7 "+ptStr+" PT";
+    } else {
+      el.textContent = "Data: "+D.updated;
+    }
   } else {
     el.textContent="";
   }
