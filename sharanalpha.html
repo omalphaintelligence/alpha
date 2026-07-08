@@ -143,15 +143,18 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
   .logo{font-size:15px}
 }
 .status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
-.ticker-outer{display:flex;align-items:center;background:#0a0a0a;position:relative}
+.ticker-outer{display:grid;grid-template-columns:auto auto 1fr;align-items:center;background:#0a0a0a;position:relative}
 @media(max-width:600px){
-  .ticker-outer{flex-direction:column;align-items:stretch}
+  .ticker-outer{grid-template-columns:1fr}
   .ticker-status{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
   .ticker-indices{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
 }
-.ticker-indices{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a;flex-shrink:0}
-.ticker-stocks{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px;flex-shrink:0}
-.ticker-status{display:flex;align-items:center;gap:6px;padding:8px 12px;flex-shrink:0;border-right:1px solid #2a2a2a;z-index:2;background:#0a0a0a}
+.ticker-indices{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a}
+.ticker-stocks-wrap{overflow:hidden;min-width:0;position:relative}
+.ticker-stocks{display:flex;gap:8px;white-space:nowrap;padding:9px 10px;width:max-content;animation:tickerScroll 28s linear infinite}
+.ticker-stocks-wrap:hover .ticker-stocks{animation-play-state:paused}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-status{display:flex;align-items:center;gap:6px;padding:8px 12px;border-right:1px solid #2a2a2a;z-index:2;background:#0a0a0a}
 .ticker-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .ticker-status-dot.live{background:#3ddc84;animation:tickerPulse 1.6s ease-in-out infinite}
 .ticker-status-dot.closed{background:#ff5c5c;animation:tickerBlinkSlow 2.4s ease-in-out infinite}
@@ -241,7 +244,9 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
     <span class="clock-wrap" id="liveClock"></span>
   </div>
   <div class="ticker-indices" id="tickerIndices"><span class="ticker-loading">Loading...</span></div>
-  <div class="ticker-stocks" id="tickerStocks"></div>
+  <div class="ticker-stocks-wrap">
+    <div class="ticker-stocks" id="tickerStocks"></div>
+  </div>
 </div>
 <div class="tabbar" id="tabbar"></div>
 <div class="status-bar" id="statusBar"></div>
@@ -1272,7 +1277,7 @@ function renderTicker(list, targetId){
       "<span class=\"ticker-chg "+(up?"up":"down")+"\">"+arrow+" "+Math.abs(idx.chg).toFixed(2)+"%</span>"+
       "</div>";
   }).join("");
-  el.innerHTML = itemsHtml;
+  el.innerHTML = (targetId==="tickerStocks") ? (itemsHtml + itemsHtml) : itemsHtml;
 
   // Clear the brief flash highlight after it's had a moment to be seen
   setTimeout(function(){
