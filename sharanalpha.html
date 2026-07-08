@@ -132,10 +132,7 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
   .kpi{padding:6px 8px}.kpi-v{font-size:14px}
   .content{padding:8px}
   #clock{display:none}.theme-row{display:none}
-  .clock-wrap{display:none}
   .data-updated-lbl{display:none}
-  .ticker-status-txt{display:none}
-  .ticker-indices{max-width:45%}
   .ticker-item{padding:7px 12px}
   .ticker-label{font-size:10px}
   .ticker-price{font-size:12px}
@@ -146,13 +143,16 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
   .logo{font-size:15px}
 }
 .status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
-.ticker-outer{display:flex;align-items:center;background:#0a0a0a;position:relative}
-.ticker-indices{display:flex;gap:8px;flex-shrink:1;min-width:0;max-width:55%;overflow-x:auto;padding:9px 10px;border-right:1px solid #2a2a2a;-webkit-overflow-scrolling:touch}
-.ticker-indices::-webkit-scrollbar{display:none}
-.ticker-scroll-wrap{flex:1;overflow:hidden;position:relative;min-width:0}
-.ticker-stocks{display:flex;gap:8px;white-space:nowrap;padding:9px 10px;width:max-content;animation:tickerScroll 28s linear infinite}
-.ticker-scroll-wrap:hover .ticker-stocks{animation-play-state:paused}
-@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-outer{display:flex;flex-wrap:wrap;align-items:center;background:#0a0a0a;position:relative}
+@media(max-width:600px){
+  .ticker-outer{flex-direction:column;align-items:stretch}
+  .ticker-status{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
+  .ticker-indices{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
+  .ticker-scroll-wrap{min-width:100%}
+}
+.ticker-indices{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a}
+.ticker-scroll-wrap{flex:1;min-width:200px;overflow:visible;position:relative}
+.ticker-stocks{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px}
 .ticker-status{display:flex;align-items:center;gap:6px;padding:8px 12px;flex-shrink:0;border-right:1px solid #2a2a2a;z-index:2;background:#0a0a0a}
 .ticker-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .ticker-status-dot.live{background:#3ddc84;animation:tickerPulse 1.6s ease-in-out infinite}
@@ -1211,11 +1211,11 @@ function fetchMarketTicker(){
 
   fetchList(TICKER_INDICES).then(function(results){
     if(MARKET !== reqMkt) return;
-    renderTicker(results, "tickerIndices", false);
+    renderTicker(results, "tickerIndices");
   });
   fetchList(TICKER_STOCKS).then(function(results){
     if(MARKET !== reqMkt) return;
-    renderTicker(results, "tickerStocks", true);
+    renderTicker(results, "tickerStocks");
   });
 }
 
@@ -1230,7 +1230,7 @@ function fetchNSETicker(){
     .then(function(r){ return r.json(); })
     .then(function(data){
       if(MARKET !== reqMkt) return;
-      renderTicker(data, "tickerIndices", false);
+      renderTicker(data, "tickerIndices");
     })
     .catch(function(){
       var el = document.getElementById("tickerIndices");
@@ -1238,7 +1238,7 @@ function fetchNSETicker(){
     });
 }
 
-function renderTicker(list, targetId, duplicateForScroll){
+function renderTicker(list, targetId){
   var el = document.getElementById(targetId);
   if(!el) return;
   if(!list || !list.length){
@@ -1262,10 +1262,7 @@ function renderTicker(list, targetId, duplicateForScroll){
       "<span class=\"ticker-chg "+(up?"up":"down")+"\">"+arrow+" "+Math.abs(idx.chg).toFixed(2)+"%</span>"+
       "</div>";
   }).join("");
-  // The scrolling stocks lane duplicates its content once so the CSS
-  // marquee (translateX -50%) loops seamlessly; the static indices
-  // column does not need this.
-  el.innerHTML = duplicateForScroll ? (itemsHtml + itemsHtml) : itemsHtml;
+  el.innerHTML = itemsHtml;
 
   // Clear the brief flash highlight after it's had a moment to be seen
   setTimeout(function(){
