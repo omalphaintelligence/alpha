@@ -143,16 +143,16 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
   .logo{font-size:15px}
 }
 .status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
-.ticker-outer{display:flex;flex-wrap:wrap;align-items:center;background:#0a0a0a;position:relative}
+.ticker-outer{display:flex;align-items:center;background:#0a0a0a;position:relative}
 @media(max-width:600px){
   .ticker-outer{flex-direction:column;align-items:stretch}
   .ticker-status{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
   .ticker-indices{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
   .ticker-scroll-wrap{min-width:100%}
 }
-.ticker-indices{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a}
-.ticker-scroll-wrap{flex:1;min-width:200px;overflow:visible;position:relative}
-.ticker-stocks{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px}
+.ticker-indices{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a;flex-shrink:0}
+.ticker-scroll-wrap{flex:1;min-width:0;overflow:visible;position:relative;width:100%}
+.ticker-stocks{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:8px;padding:9px 10px;width:100%}
 .ticker-status{display:flex;align-items:center;gap:6px;padding:8px 12px;flex-shrink:0;border-right:1px solid #2a2a2a;z-index:2;background:#0a0a0a}
 .ticker-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .ticker-status-dot.live{background:#3ddc84;animation:tickerPulse 1.6s ease-in-out infinite}
@@ -1209,14 +1209,28 @@ function fetchMarketTicker(){
     }));
   }
 
+  document.getElementById("tickerStocks").innerHTML = "<span class=\"ticker-loading\">Loading...</span>";
+
   fetchList(TICKER_INDICES).then(function(results){
     if(MARKET !== reqMkt) return;
     renderTicker(results, "tickerIndices");
   });
-  fetchList(TICKER_STOCKS).then(function(results){
+
+  // Staggered slightly after indices so all 20 requests don't fire in
+  // the exact same instant (some mobile/PWA network stacks throttle
+  // many simultaneous connections)
+  setTimeout(function(){
     if(MARKET !== reqMkt) return;
-    renderTicker(results, "tickerStocks");
-  });
+    fetchList(TICKER_STOCKS).then(function(results){
+      if(MARKET !== reqMkt) return;
+      var anyData = results.some(function(r){return r.price!=null;});
+      if(!anyData){
+        document.getElementById("tickerStocks").innerHTML = "<span class=\"ticker-loading\">Stocks unavailable — check Finnhub key/quota</span>";
+        return;
+      }
+      renderTicker(results, "tickerStocks");
+    });
+  }, 400);
 }
 
 function fetchNSETicker(){
