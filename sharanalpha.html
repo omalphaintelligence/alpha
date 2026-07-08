@@ -149,7 +149,8 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
   .ticker-status{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
   .ticker-indices{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
 }
-.ticker-indices{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a}
+.ticker-indices{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a;-webkit-overflow-scrolling:touch}
+.ticker-indices::-webkit-scrollbar{display:none}
 .ticker-stocks-wrap{overflow:hidden;min-width:0;position:relative}
 .ticker-stocks{display:flex;gap:8px;white-space:nowrap;padding:9px 10px;width:max-content;animation:tickerScroll 28s linear infinite}
 .ticker-stocks-wrap:hover .ticker-stocks{animation-play-state:paused}
