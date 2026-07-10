@@ -153,13 +153,13 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
   .ticker-indices{border-right:none;justify-content:flex-start;width:100%}
   .ticker-stocks-wrap{display:none}
 }
-.ticker-indices{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a;-webkit-overflow-scrolling:touch}
+.ticker-indices{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:0;padding:0;border-right:1px solid #2a2a2a;-webkit-overflow-scrolling:touch}
 .ticker-indices::-webkit-scrollbar{display:none}
 .ticker-stocks-wrap{overflow:hidden;min-width:0;position:relative}
-.ticker-stocks{display:flex;gap:8px;white-space:nowrap;padding:9px 10px;width:max-content;animation:tickerScroll 28s linear infinite}
+.ticker-stocks{display:flex;gap:0;white-space:nowrap;padding:0;width:max-content;animation:tickerScroll 28s linear infinite}
 .ticker-stocks-wrap:hover .ticker-stocks{animation-play-state:paused}
 @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ticker-status{display:flex;align-items:center;gap:6px;padding:8px 12px;border-right:1px solid #2a2a2a;z-index:2;background:#0a0a0a}
+.ticker-status{display:flex;align-items:center;gap:6px;padding:6px 12px;border-right:1px solid #2a2a2a;z-index:2;background:#0a0a0a}
 .ticker-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .ticker-status-dot.live{background:#3ddc84;animation:tickerPulse 1.6s ease-in-out infinite}
 .ticker-status-dot.closed{background:#ff5c5c;animation:tickerBlinkSlow 2.4s ease-in-out infinite}
@@ -170,14 +170,19 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
 .clock-day{font-size:9px;font-weight:700;color:#8a8a8a;letter-spacing:.4px}
 .clock-time{font-size:11.5px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#ffffff}
 .clock-tz{font-size:8.5px;font-weight:700;color:#8a8a8a;letter-spacing:.3px}
-.ticker-item{display:flex;align-items:center;gap:9px;padding:9px 18px;background:#1c1c1c;border-radius:5px;flex-shrink:0;white-space:nowrap;transition:background-color .3s}
-.ticker-item.flash-up{background-color:#0d7d3b}
-.ticker-item.flash-down{background-color:#c8102e}
-.ticker-label{font-size:11.5px;font-weight:700;color:#ffffff;letter-spacing:.3px}
-.ticker-price{font-size:14.5px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#ffffff}
-.ticker-chg{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-flex;align-items:center;gap:2px}
+.ticker-item{display:flex;flex-direction:column;justify-content:center;gap:1px;padding:5px 12px;background:transparent;border-right:1px solid #2a2a2a;flex-shrink:0;white-space:nowrap;transition:background-color .3s;line-height:1.25}
+.ticker-item:last-child{border-right:none}
+.ticker-item.flash-up{background-color:rgba(13,125,59,.35)}
+.ticker-item.flash-down{background-color:rgba(200,16,46,.35)}
+.ticker-line1{display:flex;align-items:center;gap:5px}
+.ticker-label{font-size:9.5px;font-weight:700;color:#ffffff;letter-spacing:.2px}
+.ticker-price{font-size:9.5px;font-weight:600;font-family:'JetBrains Mono',monospace;color:#8a8a8a}
+.ticker-chg{font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-flex;align-items:center;gap:1px}
 .ticker-chg.up{color:#3ddc84}
 .ticker-chg.down{color:#ff5c5c}
+.ticker-abschg{font-size:9px;font-family:'JetBrains Mono',monospace}
+.ticker-abschg.up{color:#3ddc84}
+.ticker-abschg.down{color:#ff5c5c}
 .ticker-loading{color:var(--muted);font-size:11px;padding:8px 14px}
 .status-item{display:flex;align-items:center;gap:4px}
 .status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
@@ -1329,10 +1334,16 @@ function renderTicker(list, targetId){
       flashCls = idx.price > prev ? " flash-up" : " flash-down";
     }
     PREV_TICKER_PRICES[idx.label] = idx.price;
+    // Derive absolute change from price + %change (works for both
+    // Finnhub US quotes and the sheet-based NSE index feed alike)
+    var prevClose = idx.chg !== 0 ? idx.price/(1+idx.chg/100) : idx.price;
+    var absChange = idx.price - prevClose;
+    var absSign = absChange >= 0 ? "+" : "";
     return "<div class=\"ticker-item"+flashCls+"\" data-label=\""+idx.label+"\">"+
-      "<span class=\"ticker-label\">"+idx.label+"</span>"+
-      "<span class=\"ticker-price\">"+cur+idx.price.toLocaleString()+"</span>"+
-      "<span class=\"ticker-chg "+(up?"up":"down")+"\">"+arrow+" "+Math.abs(idx.chg).toFixed(2)+"%</span>"+
+      "<div class=\"ticker-line1\"><span class=\"ticker-label\">"+idx.label+"</span>"+
+      "<span class=\"ticker-chg "+(up?"up":"down")+"\">"+arrow+Math.abs(idx.chg).toFixed(2)+"%</span></div>"+
+      "<div class=\"ticker-line1\"><span class=\"ticker-price\">"+cur+idx.price.toLocaleString()+"</span>"+
+      "<span class=\"ticker-abschg "+(up?"up":"down")+"\">"+absSign+absChange.toFixed(2)+"</span></div>"+
       "</div>";
   }).join("");
   el.innerHTML = (targetId==="tickerStocks") ? (itemsHtml + itemsHtml) : itemsHtml;
