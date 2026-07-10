@@ -107,6 +107,9 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
 .new-t{font-size:9px;background:rgba(139,92,246,.2);color:#a78bfa;padding:1px 3px;border-radius:3px;margin-left:2px;font-weight:700}
 .own-t{font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;padding:1px 3px;border-radius:3px;margin-left:2px;font-weight:700}
 .fno-t{font-size:9px;color:var(--cyan);font-weight:700;margin-left:2px}
+.lev-tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700;text-decoration:none;font-family:'JetBrains Mono',monospace}
+.lev-tag.bull{background:rgba(13,125,59,.15);color:var(--green)}
+.lev-tag.bear{background:rgba(200,16,46,.15);color:var(--red)}
 .tv{color:var(--accent);text-decoration:none;font-size:13px;font-weight:700}
 .price{font-family:monospace;font-weight:600}
 .pos{color:var(--green);font-family:monospace;font-size:11px}
@@ -145,9 +148,10 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
 .status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
 .ticker-outer{display:grid;grid-template-columns:auto auto 1fr;align-items:center;background:#0a0a0a;position:relative}
 @media(max-width:600px){
-  .ticker-outer{grid-template-columns:1fr}
-  .ticker-status{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
-  .ticker-indices{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start}
+  .ticker-outer{display:flex;flex-direction:column;align-items:stretch}
+  .ticker-status{border-right:none;border-bottom:1px solid #2a2a2a;justify-content:flex-start;width:100%}
+  .ticker-indices{border-right:none;justify-content:flex-start;width:100%}
+  .ticker-stocks-wrap{display:none}
 }
 .ticker-indices{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:9px 10px;border-right:1px solid #2a2a2a;-webkit-overflow-scrolling:touch}
 .ticker-indices::-webkit-scrollbar{display:none}
@@ -348,6 +352,43 @@ function fmtDate(d){
 }
 
 function currentTabs(){return MARKET==="NSE"?NSE_TABS:US_TABS;}
+
+// Leveraged / inverse single-stock ETF mapping — US market only (India's
+// SEBI does not permit single-stock leveraged/inverse ETFs, so this is
+// never shown for NSE). Verified against issuer sites as of July 2026 —
+// this space moves fast (new launches happen monthly), so treat this as
+// a helpful reference, not a guarantee — always confirm on the issuer's
+// site (Direxion, GraniteShares) before trading.
+// {bull: 2x/1.5x long ticker, bear: inverse/short ticker or null}
+var LEVERAGED_ETF_MAP = {
+  "AAPL":  {bull:"AAPU", bear:null},
+  "MSFT":  {bull:"MSFU", bear:null},
+  "GOOGL": {bull:"GGLL", bear:null},
+  "GOOG":  {bull:"GGLL", bear:null},
+  "AMZN":  {bull:"AMZU", bear:null},
+  "META":  {bull:"METU", bear:null},
+  "TSLA":  {bull:"TSLL", bear:"TSLS"},
+  "NVDA":  {bull:"NVDL", bear:null},
+  "AMD":   {bull:"AMDL", bear:null},
+  "AVGO":  {bull:"AVGU", bear:null},
+  "INTC":  {bull:"LINT", bear:null},
+  "MU":    {bull:"MUU",  bear:"MUD"},
+  "MRVL":  {bull:"MVLL", bear:null},
+  "COIN":  {bull:"CONX", bear:null},
+  "HOOD":  {bull:"HODU", bear:null},
+  "MSTR":  {bull:"MSTP", bear:null},
+  "ORCL":  {bull:"ORCU", bear:"ORCS"},
+  "BABA":  {bull:"BABX", bear:null},
+  "STX":   {bull:"SGL",  bear:"SGS"},
+  "DELL":  {bull:"DLLL", bear:null},
+  "MARA":  {bull:"MRAL", bear:null},
+  "LCID":  {bull:"LCDL", bear:null},
+  "ISRG":  {bull:"ISUL", bear:null},
+  "IONQ":  {bull:"IONL", bear:null},
+  "NOW":   {bull:"NOWL", bear:null},
+  "NBIS":  {bull:"NBIL", bear:null},
+  "BB":    {bull:"BBUL", bear:null}
+};
 
 var TAB_COLORS = {
   ALL:"#0891b2", LC:"#1d4ed8", MC:"#059669", SC:"#7c3aed",
@@ -700,6 +741,7 @@ function renderScreenerShell(){
     "<button class=\"ibtn\" onclick=\"forceReload()\">&#8635;</button></div></div>"+
     "<div class=\"tw\"><table><thead><tr>"+
     "<th>Rank</th><th>Symbol</th><th>Price</th><th>Signal</th><th>Chart</th><th>Cap</th><th>Sector</th>"+
+    (MARKET==="US" ? "<th title=\"2x/1.5x leveraged single-stock ETF, if one exists for this stock\">Lev/Inv ETF</th>" : "")+
     "</tr></thead><tbody id=\"tbody\"></tbody></table></div>";
 }
 
@@ -791,13 +833,15 @@ function resetFilters(){
 function paintTable(){
   var tb=document.getElementById("tbody");
   if(!tb) return;
+  var isN=MARKET==="NSE";
+  var colCount = isN ? 7 : 8;
   if(!FILTERED.length){
-    tb.innerHTML="<tr><td colspan=\"7\" class=\"empty\">No signals found</td></tr>";
+    tb.innerHTML="<tr><td colspan=\""+colCount+"\" class=\"empty\">No signals found</td></tr>";
     var tt=document.getElementById("tTitle");
     if(tt) tt.textContent="0 signals";
     return;
   }
-  var isN=MARKET==="NSE",cur=isN?"Rs.":"$";
+  var cur=isN?"Rs.":"$";
   tb.innerHTML=FILTERED.map(function(s,idx){
     var rk=s.rank>=90?"r90":s.rank>=80?"r80":"r70";
     var catMap={LC:"clc",MC:"cmc",SC:"csc",ET:"cet",FO:"clc",ALL:"clc"};
@@ -810,6 +854,18 @@ function paintTable(){
     var pr=s.price?s.price.toLocaleString():"--";
     var mBarColor = s.rank>=90?"var(--green)":s.rank>=80?"var(--accent)":"var(--purple)";
     var mBarPct = Math.max(6, Math.min(100, s.rank));
+    var levCell = "";
+    if(!isN){
+      var lev = LEVERAGED_ETF_MAP[s.symbol];
+      if(lev){
+        levCell = "<td>"+
+          "<a class=\"lev-tag bull\" href=\"https://www.tradingview.com/chart/?symbol="+lev.bull+"&interval=D\" target=\"_blank\" onclick=\"event.stopPropagation()\">"+lev.bull+"</a>"+
+          (lev.bear ? " <a class=\"lev-tag bear\" href=\"https://www.tradingview.com/chart/?symbol="+lev.bear+"&interval=D\" target=\"_blank\" onclick=\"event.stopPropagation()\">"+lev.bear+"</a>" : "")+
+          "</td>";
+      } else {
+        levCell = "<td style=\"color:var(--muted)\">\u2014</td>";
+      }
+    }
     return "<tr class=\"clickable-row\" onclick=\"openDetail("+idx+")\">"+
       "<td><div class=\"rank-cell\"><span class=\"rk "+rk+" mono\">"+s.rank+"</span>"+
         "<div class=\"mbar\"><div class=\"mbar-fill\" style=\"width:"+mBarPct+"%;background:"+mBarColor+"\"></div></div></div></td>"+
@@ -819,6 +875,7 @@ function paintTable(){
       "<td><a class=\"tv\" href=\"https://www.tradingview.com/chart/?symbol="+tvp+s.symbol+"&interval=D\" target=\"_blank\" onclick=\"event.stopPropagation()\">&#8599;</a></td>"+
       "<td><span class=\"cat "+cc+"\">"+cl+"</span></td>"+
       "<td style=\"color:var(--muted);max-width:90px;overflow:hidden;text-overflow:ellipsis\">"+s.sector+"</td>"+
+      levCell+
       "</tr>";
   }).join("");
   var tt=document.getElementById("tTitle");
