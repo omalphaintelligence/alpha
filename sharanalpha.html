@@ -148,6 +148,7 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
 .status-bar{display:flex;gap:14px;flex-wrap:wrap;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10.5px;color:var(--muted)}
 .ticker-outer{display:flex;flex-direction:column;background:#0a0a0a;position:relative}
 .ticker-row-static{display:flex;align-items:center;border-bottom:1px solid #2a2a2a}
+.ticker-row-static:last-child{border-bottom:none}
 .ticker-row-scroll{display:flex;align-items:stretch;border-bottom:1px solid #2a2a2a;overflow:hidden}
 .ticker-row-scroll:last-child{border-bottom:none}
 .ticker-row-lbl{flex-shrink:0;display:flex;align-items:center;padding:0 10px;font-size:8.5px;font-weight:700;letter-spacing:.6px;color:#6a6a6a;background:#111;border-right:1px solid #2a2a2a}
@@ -272,6 +273,10 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
       <div class="ticker-stocks" id="tickerStocks"></div>
     </div>
   </div>
+  <div class="ticker-row-static">
+    <div class="ticker-row-lbl">TOP MOVERS</div>
+    <div class="ticker-indices" id="tickerMovers"><span class="ticker-loading">Loading...</span></div>
+  </div>
 </div>
 <div class="tabbar" id="tabbar"></div>
 <div class="status-bar" id="statusBar"></div>
@@ -333,6 +338,7 @@ var US_URL="https://script.google.com/macros/s/AKfycbwO5ZwuvnWXZjsBLHR_AgTLod7HL
 var D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
 var dataNSE=null, dataUS=null;
 var priceTimer=null;
+var LIVE_PRICE_DATA={}; // symbol -> {price, chg} — accumulated from screener's own live fetch, used for the Top Movers strip
 var FILTERED=[],ACTIVE_SECTOR="",MARKET="NSE",ACTIVE_TAB="ALL";
 var NSE_TABS=[
   {id:"ALL",label:"ALL"},{id:"LC",label:"LARGE CAP"},{id:"MC",label:"MID CAP"},
@@ -957,6 +963,7 @@ function updatePriceCells(priceMap){
   Object.keys(priceMap).forEach(function(sym){
     var d=priceMap[sym];
     if(!d||!d.price) return;
+    LIVE_PRICE_DATA[sym]={price:d.price, chg:d.chg}; // accumulate for Top Movers
     var color=d.chg>=0?"#10b981":"#ef4444";
     var sign=d.chg>=0?"+":"";
     var html="<span style='font-family:monospace;font-weight:600'>"+cur+d.price.toFixed(2)+"</span><span style='font-size:10px;color:"+color+"'> "+sign+d.chg.toFixed(1)+"%</span>";
@@ -967,6 +974,23 @@ function updatePriceCells(priceMap){
     var mpEl=document.getElementById("mp-live-"+sym);
     if(mpEl) mpEl.innerHTML=html;
   });
+  updateTopMoversStrip();
+}
+
+function updateTopMoversStrip(){
+  var el=document.getElementById("tickerMovers");
+  if(!el) return;
+  var pool=getTabData();
+  if(!pool.length){ el.innerHTML="<span class=\"ticker-loading\">No data</span>"; return; }
+  var poolSymbols={};
+  pool.forEach(function(s){poolSymbols[s.symbol]=true;});
+  var movers=Object.keys(LIVE_PRICE_DATA)
+    .filter(function(sym){return poolSymbols[sym];})
+    .map(function(sym){return {label:sym, price:LIVE_PRICE_DATA[sym].price, chg:LIVE_PRICE_DATA[sym].chg};})
+    .sort(function(a,b){return b.chg-a.chg;})
+    .slice(0,5);
+  if(!movers.length){ el.innerHTML="<span class=\"ticker-loading\">Loading top movers...</span>"; return; }
+  renderTicker(movers, "tickerMovers");
 }
 
 function renderSectors(){
