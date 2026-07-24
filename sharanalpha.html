@@ -664,7 +664,10 @@ function loadData(){
     "</tr></thead><tbody>"+skelRows+"</tbody></table></div>";
   var reqMkt=MARKET;
   var reqUrl=getUrl();
-  fetch(reqUrl)
+  var timeoutPromise=new Promise(function(_,reject){
+    setTimeout(function(){reject(new Error("Request timed out — tap Retry"));},15000);
+  });
+  Promise.race([fetch(reqUrl,{redirect:"follow"}), timeoutPromise])
     .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
     .then(function(data){
       // Store in the correct holder based on the response's own market field
@@ -686,7 +689,7 @@ function loadData(){
       updateDataUpdatedLabel();
     })
     .catch(function(e){
-      mc.innerHTML="<div class=\"err-box\" style=\"margin:1rem\"><strong>Error</strong><br>"+e.message+"</div>";
+      mc.innerHTML="<div class=\"err-box\" style=\"margin:1rem\"><strong>Error</strong><br>"+e.message+"<br><button class=\"btn-a\" style=\"margin-top:10px;width:auto;padding:8px 16px\" onclick=\"forceReload()\">Retry</button></div>";
     });
 }
 
@@ -1057,7 +1060,7 @@ function renderModel(){
       "<td style=\"color:var(--red);font-family:monospace;font-size:11px\">"+cur+(p.stopLoss||0).toFixed(2)+"</td>"+
       "<td style=\"color:var(--green);font-family:monospace;font-size:11px\">"+cur+(p.target||0).toFixed(2)+"</td></tr>";
   }).join("");
-  var jRows=jrnl.slice(-10).reverse().map(function(j){
+  var jRows=jrnl.slice().reverse().map(function(j){
     var ac=j.action==="ENTRY"?"<span class=\"bb\" style=\"font-size:10px\">ENTRY</span>":j.action==="TARGET HIT"?"<span class=\"st-hit\" style=\"font-size:10px\">HIT</span>":"<span class=\"st-stop\" style=\"font-size:10px\">STOP</span>";
     return "<tr><td class=\"sym\">"+j.symbol+"</td><td>"+ac+"</td>"+
       "<td class=\"price\">"+cur+(j.price||0).toFixed(2)+"</td>"+
