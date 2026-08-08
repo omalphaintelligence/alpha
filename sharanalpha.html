@@ -1201,13 +1201,13 @@ function renderModel(){
     var unrealClr = perf.unrealizedPnl>=0 ? "var(--green)" : "var(--red)";
     var totalTrades = perf.realizedCount + perf.unrealizedCount;
     perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
-      "<div class=\"card\"><div class=\"card-l\">CAGR</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
-      "<div class=\"card\"><div class=\"card-l\">XIRR</div><div class=\"card-v\" style=\"color:"+xirrClr+"\">"+xirrTxt+"</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">CAGR*</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">XIRR*</div><div class=\"card-v\" style=\"color:"+xirrClr+"\">"+xirrTxt+"</div></div>"+
       "<div class=\"card\"><div class=\"card-l\">Realized P&L ("+perf.realizedCount+" closed)</div><div class=\"card-v\" style=\"color:"+realClr+"\">"+cur+Math.round(perf.realizedPnl).toLocaleString()+"</div></div>"+
       "<div class=\"card\"><div class=\"card-l\">Unrealized P&L ("+perf.unrealizedCount+" open)</div><div class=\"card-v\" style=\"color:"+unrealClr+"\">"+cur+Math.round(perf.unrealizedPnl).toLocaleString()+"</div></div>"+
       "<div class=\"card\"><div class=\"card-l\">Trades / Span</div><div class=\"card-v\" style=\"color:var(--muted);font-size:13px\">"+totalTrades+" \u00b7 "+perf.years.toFixed(2)+"y</div></div>"+
       "</div>"+
-      "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Assumes "+cur+perf.tradeAmount.toLocaleString()+" per trade.</div>";
+      "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">*CAGR/XIRR reflect only July onward. Assumes "+cur+perf.tradeAmount.toLocaleString()+" per trade. See equity curve below for full data incl. prior trades.</div>";
 
     if(perf.equityCurve && perf.equityCurve.length>=2){
       var ddClr = perf.drawdownFromPeak>0.5 ? "var(--red)" : "var(--green)";
