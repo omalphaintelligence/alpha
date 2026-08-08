@@ -16,6 +16,16 @@
 <style>
 :root{--tab-accent:#0891b2}
 *{box-sizing:border-box;margin:0;padding:0}
+.pin-lock{position:fixed;inset:0;background:#0a0d13;z-index:9999;display:flex;align-items:center;justify-content:center}
+.pin-box{text-align:center;padding:24px}
+.pin-logo{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:6px}
+.pin-logo b{color:#d4a947}
+.pin-msg{color:#8a8a8a;font-size:13px;margin-bottom:18px}
+.pin-input{width:160px;text-align:center;font-size:28px;letter-spacing:14px;padding:12px 0 12px 14px;border-radius:8px;border:1px solid #333;background:#161a22;color:#fff;font-family:'JetBrains Mono',monospace}
+.pin-input:focus{outline:none;border-color:#d4a947}
+.pin-err{color:#ff5c5c;font-size:12px;margin-top:10px}
+.pin-btn{margin-top:18px;padding:9px 28px;border-radius:6px;border:none;background:#d4a947;color:#0a0d13;font-weight:700;font-size:13px;cursor:pointer;display:block;margin-left:auto;margin-right:auto}
+.pin-btn:hover{opacity:.9}
 html,body{overflow-x:hidden;position:relative;width:100%}
 body{font-family:'Inter',system-ui,sans-serif;font-size:13px;min-height:100vh}
 .mono{font-family:'JetBrains Mono',monospace}
@@ -232,6 +242,15 @@ tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
 </style>
 </head>
 <body class="t-light">
+<div class="pin-lock" id="pinLock" style="display:none">
+  <div class="pin-box">
+    <div class="pin-logo">Alpha<b>Intel</b></div>
+    <div class="pin-msg">Enter 4-digit access code</div>
+    <input type="password" id="pinInput" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+    <div class="pin-err" id="pinErr" style="display:none">Incorrect code, try again.</div>
+    <button class="pin-btn" onclick="checkPin()">Unlock</button>
+  </div>
+</div>
 <div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
 <header class="topbar">
   <div class="topbar-l">
@@ -1194,7 +1213,10 @@ function renderModel(){
       var ddClr = perf.drawdownFromPeak>0.5 ? "var(--red)" : "var(--green)";
       perfHtml += "<div style=\"background:var(--s1);border:1px solid var(--b1);border-top:3px solid var(--tab-accent,var(--gold));border-radius:4px;padding:14px 16px 12px;margin-bottom:10px;width:100%\">"+
         "<div style=\"font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px\">Equity Curve — Cumulative Realized P&L</div>"+
-        "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:180px;display:block\"></canvas>"+
+        "<div style=\"position:relative\">"+
+        "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:180px;display:block;cursor:crosshair\"></canvas>"+
+        "<div id=\"equityCurveTooltip\" style=\"display:none;position:absolute;background:var(--text);color:var(--bg);padding:4px 8px;border-radius:4px;font-size:10px;font-family:'JetBrains Mono',monospace;white-space:nowrap;pointer-events:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.25)\"></div>"+
+        "</div>"+
         "<div style=\"font-size:10.5px;color:var(--muted);margin-top:8px\">"+
           (perf.priorPnl ? "Previous Trades: <b style=\"color:var(--text)\">"+cur+Math.round(perf.priorPnl).toLocaleString()+"</b> &middot; " : "")+
           "Peak reached: <b style=\"color:var(--green)\">"+cur+Math.round(perf.peakEquity).toLocaleString()+"</b>"+
@@ -1368,6 +1390,50 @@ var PRIOR_PERFORMANCE = {
   NSE: { period: "Last 1 Year (broker order book, verified)", gainAmount: 120000 },        // rupee amount
   US:  { period: "Last 1 Year (broker order book, verified)", gainAmount: 3000, gainPct: 40 } // actual $ amount used for the curve; % shown alongside
 };
+
+// ACCESS PIN — shown only to visitors detected as being in India.
+// Client-side only (this is a static site, no real server), so it's a
+// casual gate, not real security — a VPN can bypass it either way.
+var ACCESS_PIN = "1234"; // change this to your own 4-digit code
+
+function initAccessGate(){
+  fetch("https://ipapi.co/json/")
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.country_code === "IN") showPinGate();
+    })
+    .catch(function(){
+      // If geolocation fails, err on the side of showing the gate
+      showPinGate();
+    });
+}
+
+function showPinGate(){
+  if(sessionStorage.getItem("ai_pin_ok")==="1") return; // already unlocked this session
+  var el = document.getElementById("pinLock");
+  if(el){
+    el.style.display = "flex";
+    var inp = document.getElementById("pinInput");
+    if(inp){
+      inp.focus();
+      inp.addEventListener("keydown", function(e){ if(e.key==="Enter") checkPin(); });
+    }
+  }
+}
+
+function checkPin(){
+  var inp = document.getElementById("pinInput");
+  var err = document.getElementById("pinErr");
+  if(!inp) return;
+  if(inp.value === ACCESS_PIN){
+    sessionStorage.setItem("ai_pin_ok","1");
+    document.getElementById("pinLock").style.display = "none";
+  } else {
+    if(err) err.style.display = "block";
+    inp.value = "";
+    inp.focus();
+  }
+}
 
 var FINNHUB_API_KEY = "d9646b1r01qik59mdhq0d9646b1r01qik59mdhqg";
 
@@ -1593,12 +1659,12 @@ function startTickerRefresh(){
 
 function drawEquityCurve(curve){
   var cv = document.getElementById("equityCurveCanvas");
+  var tip = document.getElementById("equityCurveTooltip");
   if(!cv || !curve || curve.length<2) return;
   var dpr = window.devicePixelRatio || 1;
   var w = cv.clientWidth, h = 180;
   cv.width = w*dpr; cv.height = h*dpr;
   var ctx = cv.getContext("2d");
-  ctx.scale(dpr,dpr);
 
   var vals = curve.map(function(p){return p.cum;});
   var min = Math.min(0, Math.min.apply(null, vals));
@@ -1606,86 +1672,128 @@ function drawEquityCurve(curve){
   var range = (max-min) || 1;
 
   var isN = MARKET==="NSE", curSym = isN?"\u20b9":"$";
-  function fmtVal(v){
-    var s = Math.round(v).toLocaleString();
-    return curSym + s;
+  function fmtVal(v){ return curSym + Math.round(v).toLocaleString(); }
+  function fmtDateShort(d){
+    var mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return mo[d.getMonth()]+" "+d.getDate()+", '"+String(d.getFullYear()).slice(2);
   }
 
   var padL=54, padR=8, padT=10, padB=20;
   var plotW = w-padL-padR, plotH = h-padT-padB;
   var stepX = curve.length>1 ? plotW/(curve.length-1) : plotW;
-
   function yOf(v){ return padT + plotH * (1 - (v-min)/range); }
   function xOf(i){ return padL + i*stepX; }
 
   var mutedColor = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#888';
-  ctx.font = "10px monospace";
-  ctx.fillStyle = mutedColor;
-  ctx.textBaseline = "middle";
-
-  // Y-axis: max, zero, min labels + faint gridlines
-  [max, 0, min].forEach(function(v){
-    if(v===0 && (max===0||min===0)) return; // avoid dup label at edge
-    var y = yOf(v);
-    ctx.strokeStyle = "rgba(128,128,128,.15)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w-padR, y); ctx.stroke();
-    ctx.textAlign = "right";
-    ctx.fillText(fmtVal(v), padL-6, y);
-  });
-
-  // zero line (bolder)
-  var zeroY = yOf(0);
-  ctx.strokeStyle = "rgba(128,128,128,.4)";
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(padL, zeroY); ctx.lineTo(w-padR, zeroY); ctx.stroke();
-
   var green = getComputedStyle(document.body).getPropertyValue('--green').trim() || '#10b981';
   var red   = getComputedStyle(document.body).getPropertyValue('--red').trim()   || '#ef4444';
   var lineColor = vals[vals.length-1] >= 0 ? green : red;
 
-  // Mark where the prior-performance baseline ends and actual tracked
-  // trades begin
-  if(curve[0].isPrior && curve.length>1){
-    var markX = xOf(1);
-    ctx.save();
-    ctx.setLineDash([3,3]);
-    ctx.strokeStyle = "rgba(146,64,14,.5)";
+  function render(hoverIdx){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.scale(dpr,dpr);
+
+    ctx.font = "10px monospace";
+    ctx.textBaseline = "middle";
+    [max, 0, min].forEach(function(v){
+      if(v===0 && (max===0||min===0)) return;
+      var y = yOf(v);
+      ctx.strokeStyle = "rgba(128,128,128,.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w-padR, y); ctx.stroke();
+      ctx.fillStyle = mutedColor;
+      ctx.textAlign = "right";
+      ctx.fillText(fmtVal(v), padL-6, y);
+    });
+
+    var zeroY = yOf(0);
+    ctx.strokeStyle = "rgba(128,128,128,.4)";
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(markX, padT); ctx.lineTo(markX, h-padB); ctx.stroke();
-    ctx.restore();
+    ctx.beginPath(); ctx.moveTo(padL, zeroY); ctx.lineTo(w-padR, zeroY); ctx.stroke();
+
+    if(curve[0].isPrior && curve.length>1){
+      var markX = xOf(1);
+      ctx.save();
+      ctx.setLineDash([3,3]);
+      ctx.strokeStyle = "rgba(146,64,14,.5)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(markX, padT); ctx.lineTo(markX, h-padB); ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.beginPath();
+    curve.forEach(function(p,i){
+      var x = xOf(i), y = yOf(p.cum);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = "round";
+    ctx.stroke();
+
+    ctx.lineTo(xOf(curve.length-1), zeroY);
+    ctx.lineTo(xOf(0), zeroY);
+    ctx.closePath();
+    ctx.globalAlpha = 0.10;
+    ctx.fillStyle = lineColor;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = mutedColor;
+    ctx.textBaseline = "top";
+    ctx.textAlign = "left";
+    ctx.fillText(fmtDateShort(curve[0].date), padL, h-padB+4);
+    ctx.textAlign = "right";
+    ctx.fillText(fmtDateShort(curve[curve.length-1].date), w-padR, h-padB+4);
+
+    // Hover marker — vertical guide line + dot at the nearest point
+    if(hoverIdx!=null && hoverIdx>=0 && hoverIdx<curve.length){
+      var hx = xOf(hoverIdx), hy = yOf(curve[hoverIdx].cum);
+      ctx.save();
+      ctx.setLineDash([2,2]);
+      ctx.strokeStyle = "rgba(128,128,128,.5)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hx, padT); ctx.lineTo(hx, h-padB); ctx.stroke();
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(hx, hy, 4, 0, Math.PI*2);
+      ctx.fillStyle = lineColor;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
   }
 
-  ctx.beginPath();
-  curve.forEach(function(p,i){
-    var x = xOf(i), y = yOf(p.cum);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  });
-  ctx.strokeStyle = lineColor;
-  ctx.lineWidth = 2;
-  ctx.lineJoin = "round";
-  ctx.stroke();
+  render(-1);
 
-  // fill under curve for visual weight
-  ctx.lineTo(xOf(curve.length-1), zeroY);
-  ctx.lineTo(xOf(0), zeroY);
-  ctx.closePath();
-  ctx.globalAlpha = 0.10;
-  ctx.fillStyle = lineColor;
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  // X-axis: first and last date labels
-  ctx.fillStyle = mutedColor;
-  ctx.textBaseline = "top";
-  function fmtDateShort(d){
-    var mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return mo[d.getMonth()]+" '"+String(d.getFullYear()).slice(2);
+  function handleMove(clientX, clientY){
+    var rect = cv.getBoundingClientRect();
+    var mx = clientX - rect.left;
+    var idx = Math.round((mx - padL) / stepX);
+    if(idx<0) idx=0;
+    if(idx>curve.length-1) idx=curve.length-1;
+    render(idx);
+    if(tip){
+      var p = curve[idx];
+      var sign = p.cum>=0 ? "+" : "";
+      tip.style.display = "block";
+      tip.innerHTML = "<b>"+fmtDateShort(p.date)+"</b><br>"+sign+fmtVal(p.cum)+(p.isPrior?" <span style='opacity:.7'>(prior)</span>":"");
+      var tipLeft = Math.min(Math.max(xOf(idx)-40, 0), w-90);
+      tip.style.left = tipLeft+"px";
+      tip.style.top = "-4px";
+    }
   }
-  ctx.textAlign = "left";
-  ctx.fillText(fmtDateShort(curve[0].date), padL, h-padB+4);
-  ctx.textAlign = "right";
-  ctx.fillText(fmtDateShort(curve[curve.length-1].date), w-padR, h-padB+4);
+  function handleLeave(){
+    render(-1);
+    if(tip) tip.style.display = "none";
+  }
+
+  cv.onmousemove = function(e){ handleMove(e.clientX, e.clientY); };
+  cv.onmouseleave = handleLeave;
+  cv.ontouchmove = function(e){ if(e.touches[0]) { handleMove(e.touches[0].clientX); e.preventDefault(); } };
+  cv.ontouchend = handleLeave;
 }
 
 function drawTrend(s){
