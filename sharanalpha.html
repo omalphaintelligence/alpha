@@ -1081,6 +1081,7 @@ function computeXIRR(cashFlows){
 
 function computeJournalPerformance(journal, positions){
   var flows=[];
+  var realizedPnl=0, realizedCount=0;
   (journal||[]).forEach(function(j){
     var d=new Date(j.date);
     if(isNaN(d.getTime())) return;
@@ -1089,12 +1090,18 @@ function computeJournalPerformance(journal, positions){
     } else if(j.action==="STOPPED OUT" || j.action==="TARGET HIT"){
       var val=JOURNAL_TRADE_AMOUNT*(1+(j.pnlPct||0)/100);
       flows.push({date:d, amount:val});
+      realizedPnl += (val - JOURNAL_TRADE_AMOUNT);
+      realizedCount++;
     }
   });
+  var unrealizedPnl=0, unrealizedCount=0;
   (positions||[]).forEach(function(p){
     if(p.status==="OPEN" && p.currPrice && p.entryPrice){
       var pnlPct=(p.currPrice-p.entryPrice)/p.entryPrice*100;
-      flows.push({date:new Date(), amount:JOURNAL_TRADE_AMOUNT*(1+pnlPct/100)});
+      var val=JOURNAL_TRADE_AMOUNT*(1+pnlPct/100);
+      flows.push({date:new Date(), amount:val});
+      unrealizedPnl += (val - JOURNAL_TRADE_AMOUNT);
+      unrealizedCount++;
     }
   });
   if(flows.length<2) return null;
@@ -1108,6 +1115,8 @@ function computeJournalPerformance(journal, positions){
 
   return {
     cagr: cagr, xirr: xirr, invested: invested, returned: returned,
+    realizedPnl: realizedPnl, realizedCount: realizedCount,
+    unrealizedPnl: unrealizedPnl, unrealizedCount: unrealizedCount,
     netPnl: returned-invested, years: years, tradeCount: flows.length
   };
 }
@@ -1132,14 +1141,17 @@ function renderModel(){
     var xirrTxt = perf.xirr!=null ? (perf.xirr*100).toFixed(1)+"%" : "\u2014";
     var cagrClr = perf.cagr>=0 ? "var(--green)" : "var(--red)";
     var xirrClr = perf.xirr>=0 ? "var(--green)" : "var(--red)";
-    var pnlClr  = perf.netPnl>=0 ? "var(--green)" : "var(--red)";
+    var realClr = perf.realizedPnl>=0 ? "var(--green)" : "var(--red)";
+    var unrealClr = perf.unrealizedPnl>=0 ? "var(--green)" : "var(--red)";
+    var totalTrades = perf.realizedCount + perf.unrealizedCount;
     perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
       "<div class=\"card\"><div class=\"card-l\">CAGR</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
       "<div class=\"card\"><div class=\"card-l\">XIRR</div><div class=\"card-v\" style=\"color:"+xirrClr+"\">"+xirrTxt+"</div></div>"+
-      "<div class=\"card\"><div class=\"card-l\">Net P&L (\u20b9"+JOURNAL_TRADE_AMOUNT.toLocaleString()+"/trade)</div><div class=\"card-v\" style=\"color:"+pnlClr+"\">"+cur+Math.round(perf.netPnl).toLocaleString()+"</div></div>"+
-      "<div class=\"card\"><div class=\"card-l\">Trades / Span</div><div class=\"card-v\" style=\"color:var(--muted);font-size:13px\">"+perf.tradeCount+" \u00b7 "+perf.years.toFixed(2)+"y</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">Realized P&L ("+perf.realizedCount+" closed)</div><div class=\"card-v\" style=\"color:"+realClr+"\">"+cur+Math.round(perf.realizedPnl).toLocaleString()+"</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">Unrealized P&L ("+perf.unrealizedCount+" open)</div><div class=\"card-v\" style=\"color:"+unrealClr+"\">"+cur+Math.round(perf.unrealizedPnl).toLocaleString()+"</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">Trades / Span</div><div class=\"card-v\" style=\"color:var(--muted);font-size:13px\">"+totalTrades+" \u00b7 "+perf.years.toFixed(2)+"y</div></div>"+
       "</div>"+
-      "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Hypothetical — assumes \u20b9"+JOURNAL_TRADE_AMOUNT.toLocaleString()+" per trade based on journal entry/exit history. Open positions marked-to-market at current price.</div>";
+      "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Hypothetical — assumes \u20b9"+JOURNAL_TRADE_AMOUNT.toLocaleString()+" per trade. Realized = closed trades (STOPPED OUT / TARGET HIT), guaranteed. Unrealized = still-OPEN positions marked-to-market at current price — can still change before actually closing.</div>";
   }
   var posRows=pos.map(function(p){
     var st=p.status==="OPEN"?"<span class=\"st-open\">OPEN</span>":p.status==="TARGET HIT"?"<span class=\"st-hit\">HIT</span>":"<span class=\"st-stop\">STOP</span>";
