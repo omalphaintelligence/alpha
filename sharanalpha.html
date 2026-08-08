@@ -1036,6 +1036,82 @@ function renderPortfolio(){
   return cards+"<div class=\"tw\"><table><thead><tr><th>Symbol</th><th>Sector</th><th>Qty</th><th>Buy</th><th>Current</th><th>P&L</th><th>P&L%</th><th>Chart</th></tr></thead><tbody>"+rows+"</tbody></table></div>";
 }
 
+// ── PERFORMANCE STATS — CAGR & XIRR from the journal's entry/exit history ──
+// Assumes a fixed hypothetical amount per trade (same sizing logic used
+// for the Dhan auto-trade sync). Every ENTRY is an outflow, every
+// STOPPED OUT / TARGET HIT is an inflow at that trade's actual P&L%.
+// Still-OPEN positions are marked-to-market using their current live
+// price as a synthetic "as of today" inflow, so the stats reflect
+// unrealized gains/losses too, not just closed trades.
+var JOURNAL_TRADE_AMOUNT = 10000;
+
+function computeXIRR(cashFlows){
+  // cashFlows: [{date:Date, amount:Number}, ...] — Newton-Raphson solve
+  if(cashFlows.length < 2) return null;
+  var d0 = cashFlows[0].date.getTime();
+  var MS_YEAR = 365.25*24*3600*1000;
+  function npv(rate){
+    var sum=0;
+    for(var i=0;i<cashFlows.length;i++){
+      var yrs=(cashFlows[i].date.getTime()-d0)/MS_YEAR;
+      sum += cashFlows[i].amount / Math.pow(1+rate, yrs);
+    }
+    return sum;
+  }
+  function dnpv(rate){
+    var sum=0;
+    for(var i=0;i<cashFlows.length;i++){
+      var yrs=(cashFlows[i].date.getTime()-d0)/MS_YEAR;
+      if(yrs===0) continue;
+      sum += -yrs*cashFlows[i].amount / Math.pow(1+rate, yrs+1);
+    }
+    return sum;
+  }
+  var rate=0.15;
+  for(var iter=0; iter<100; iter++){
+    var f=npv(rate), fp=dnpv(rate);
+    if(Math.abs(fp) < 1e-9) break;
+    var next = rate - f/fp;
+    if(next < -0.99) next = -0.99;
+    if(Math.abs(next-rate) < 1e-7){ rate=next; break; }
+    rate=next;
+  }
+  return isFinite(rate) ? rate : null;
+}
+
+function computeJournalPerformance(journal, positions){
+  var flows=[];
+  (journal||[]).forEach(function(j){
+    var d=new Date(j.date);
+    if(isNaN(d.getTime())) return;
+    if(j.action==="ENTRY"){
+      flows.push({date:d, amount:-JOURNAL_TRADE_AMOUNT});
+    } else if(j.action==="STOPPED OUT" || j.action==="TARGET HIT"){
+      var val=JOURNAL_TRADE_AMOUNT*(1+(j.pnlPct||0)/100);
+      flows.push({date:d, amount:val});
+    }
+  });
+  (positions||[]).forEach(function(p){
+    if(p.status==="OPEN" && p.currPrice && p.entryPrice){
+      var pnlPct=(p.currPrice-p.entryPrice)/p.entryPrice*100;
+      flows.push({date:new Date(), amount:JOURNAL_TRADE_AMOUNT*(1+pnlPct/100)});
+    }
+  });
+  if(flows.length<2) return null;
+  flows.sort(function(a,b){return a.date-b.date;});
+
+  var invested=0, returned=0;
+  flows.forEach(function(f){ if(f.amount<0) invested+=-f.amount; else returned+=f.amount; });
+  var years=(flows[flows.length-1].date - flows[0].date)/(365.25*24*3600*1000);
+  var cagr = (years>0.02 && invested>0) ? (Math.pow(returned/invested, 1/years)-1) : null;
+  var xirr = computeXIRR(flows);
+
+  return {
+    cagr: cagr, xirr: xirr, invested: invested, returned: returned,
+    netPnl: returned-invested, years: years, tradeCount: flows.length
+  };
+}
+
 function renderModel(){
   var mp=D.modelPortfolio||{positions:[],journal:[]};
   var pos=mp.positions||[],jrnl=mp.journal||[];
@@ -1048,6 +1124,23 @@ function renderModel(){
     "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+pos.filter(function(p){return p.status==="STOPPED OUT";}).length+"</div></div>"+
     "<div class=\"card\"><div class=\"card-l\">Journal</div><div class=\"card-v\" style=\"color:var(--gold)\">"+jrnl.length+"</div></div>"+
     "</div>";
+
+  var perf = computeJournalPerformance(jrnl, pos);
+  var perfHtml = "";
+  if(perf){
+    var cagrTxt = perf.cagr!=null ? (perf.cagr*100).toFixed(1)+"%" : "\u2014";
+    var xirrTxt = perf.xirr!=null ? (perf.xirr*100).toFixed(1)+"%" : "\u2014";
+    var cagrClr = perf.cagr>=0 ? "var(--green)" : "var(--red)";
+    var xirrClr = perf.xirr>=0 ? "var(--green)" : "var(--red)";
+    var pnlClr  = perf.netPnl>=0 ? "var(--green)" : "var(--red)";
+    perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
+      "<div class=\"card\"><div class=\"card-l\">CAGR</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">XIRR</div><div class=\"card-v\" style=\"color:"+xirrClr+"\">"+xirrTxt+"</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">Net P&L (\u20b9"+JOURNAL_TRADE_AMOUNT.toLocaleString()+"/trade)</div><div class=\"card-v\" style=\"color:"+pnlClr+"\">"+cur+Math.round(perf.netPnl).toLocaleString()+"</div></div>"+
+      "<div class=\"card\"><div class=\"card-l\">Trades / Span</div><div class=\"card-v\" style=\"color:var(--muted);font-size:13px\">"+perf.tradeCount+" \u00b7 "+perf.years.toFixed(2)+"y</div></div>"+
+      "</div>"+
+      "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Hypothetical — assumes \u20b9"+JOURNAL_TRADE_AMOUNT.toLocaleString()+" per trade based on journal entry/exit history. Open positions marked-to-market at current price.</div>";
+  }
   var posRows=pos.map(function(p){
     var st=p.status==="OPEN"?"<span class=\"st-open\">OPEN</span>":p.status==="TARGET HIT"?"<span class=\"st-hit\">HIT</span>":"<span class=\"st-stop\">STOP</span>";
     return "<tr><td class=\"sym\" id=\"mp-"+p.symbol+"\">"+p.symbol+"</td>"+
@@ -1068,7 +1161,7 @@ function renderModel(){
       "<td style=\"color:var(--muted);font-size:11px\">"+j.notes+"</td>"+
       "<td class=\"dt\">"+fmtDate(j.date)+"</td></tr>";
   }).join("");
-    return cards+
+    return cards+perfHtml+
     "<div class=\"tw\" style=\"margin-bottom:10px\"><table><thead><tr><th>Symbol</th><th>Live Price</th><th>P&L%</th><th>Status</th><th>Chart</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>"+posRows+"</tbody></table></div>"+
     "<div style=\"font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px\">Journal</div>"+
     "<div class=\"tw\"><table><thead><tr><th>Symbol</th><th>Action</th><th>Price</th><th>P&L%</th><th>Notes</th><th>Date</th></tr></thead><tbody>"+jRows+"</tbody></table></div>";
