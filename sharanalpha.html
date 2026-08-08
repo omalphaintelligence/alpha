@@ -1170,15 +1170,6 @@ function renderModel(){
     "</div>";
 
   var priorHtml = "";
-  var pp = PRIOR_PERFORMANCE[MARKET];
-  if(pp && (pp.gainAmount || pp.gainPct)){
-    var ppVal = pp.gainAmount!=null ? (cur+Number(pp.gainAmount).toLocaleString()+(pp.gainPct!=null?" ("+pp.gainPct+"%)":"")) : (pp.gainPct+"%");
-    priorHtml = "<div style=\"background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:8px 12px;margin-bottom:8px;font-size:11px\">"+
-      "<b style=\"color:#92400e\">\u26a0\ufe0f Prior performance (manual entry, broker order book — verified, not auto-tracked):</b> "+
-      pp.period+" &mdash; <b style=\"color:#92400e\">"+ppVal+"</b>"+
-      "<div style=\"color:#92400e;opacity:.8;margin-top:2px\">Prior gains — shown as the equity curve's starting point.</div>"+
-      "</div>";
-  }
 
   var perf = computeJournalPerformance(jrnl, pos);
   var perfHtml = "";
@@ -1205,6 +1196,7 @@ function renderModel(){
         "<div style=\"font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px\">Equity Curve — Cumulative Realized P&L</div>"+
         "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:180px;display:block\"></canvas>"+
         "<div style=\"font-size:10.5px;color:var(--muted);margin-top:8px\">"+
+          (perf.priorPnl ? "Previous Trades: <b style=\"color:var(--text)\">"+cur+Math.round(perf.priorPnl).toLocaleString()+"</b> &middot; " : "")+
           "Peak reached: <b style=\"color:var(--green)\">"+cur+Math.round(perf.peakEquity).toLocaleString()+"</b>"+
           " &middot; Current (incl. unrealized): <b style=\"color:"+(perf.currentTotal>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(perf.currentTotal).toLocaleString()+"</b>"+
           " &middot; Drawdown from peak: <b style=\"color:"+ddClr+"\">"+cur+Math.round(perf.drawdownFromPeak).toLocaleString()+"</b>"+
