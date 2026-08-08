@@ -1176,7 +1176,7 @@ function renderModel(){
     priorHtml = "<div style=\"background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:8px 12px;margin-bottom:8px;font-size:11px\">"+
       "<b style=\"color:#92400e\">\u26a0\ufe0f Prior performance (manual entry, broker order book — verified, not auto-tracked):</b> "+
       pp.period+" &mdash; <b style=\"color:#92400e\">"+ppVal+"</b>"+
-      "<div style=\"color:#92400e;opacity:.8;margin-top:2px\">Included as the starting point of the equity curve below"+(pp.gainPct!=null?" (converted to the per-trade basis used for tracking)":"")+" for visual continuity. CAGR/XIRR are still calculated only from the actual logged trades.</div>"+
+      "<div style=\"color:#92400e;opacity:.8;margin-top:2px\">Prior gains — shown as the equity curve's starting point.</div>"+
       "</div>";
   }
 
@@ -1197,13 +1197,13 @@ function renderModel(){
       "<div class=\"card\"><div class=\"card-l\">Unrealized P&L ("+perf.unrealizedCount+" open)</div><div class=\"card-v\" style=\"color:"+unrealClr+"\">"+cur+Math.round(perf.unrealizedPnl).toLocaleString()+"</div></div>"+
       "<div class=\"card\"><div class=\"card-l\">Trades / Span</div><div class=\"card-v\" style=\"color:var(--muted);font-size:13px\">"+totalTrades+" \u00b7 "+perf.years.toFixed(2)+"y</div></div>"+
       "</div>"+
-      "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Hypothetical — assumes "+cur+perf.tradeAmount.toLocaleString()+" per trade. Realized = closed trades (STOPPED OUT / TARGET HIT), guaranteed. Unrealized = still-OPEN positions marked-to-market at current price — can still change before actually closing.</div>";
+      "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Assumes "+cur+perf.tradeAmount.toLocaleString()+" per trade.</div>";
 
     if(perf.equityCurve && perf.equityCurve.length>=2){
       var ddClr = perf.drawdownFromPeak>0.5 ? "var(--red)" : "var(--green)";
       perfHtml += "<div class=\"card\" style=\"margin-bottom:8px\">"+
         "<div class=\"card-l\" style=\"margin-bottom:4px\">Equity Curve — Cumulative Realized P&L</div>"+
-        "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:90px;display:block\"></canvas>"+
+        "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:140px;display:block\"></canvas>"+
         "<div style=\"font-size:10px;color:var(--muted);margin-top:5px\">"+
           "Peak reached: <b style=\"color:var(--green)\">"+cur+Math.round(perf.peakEquity).toLocaleString()+"</b>"+
           " &middot; Current (incl. unrealized): <b style=\"color:"+(perf.currentTotal>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(perf.currentTotal).toLocaleString()+"</b>"+
@@ -1603,7 +1603,7 @@ function drawEquityCurve(curve){
   var cv = document.getElementById("equityCurveCanvas");
   if(!cv || !curve || curve.length<2) return;
   var dpr = window.devicePixelRatio || 1;
-  var w = cv.clientWidth, h = 90;
+  var w = cv.clientWidth, h = 140;
   cv.width = w*dpr; cv.height = h*dpr;
   var ctx = cv.getContext("2d");
   ctx.scale(dpr,dpr);
@@ -1612,36 +1612,61 @@ function drawEquityCurve(curve){
   var min = Math.min(0, Math.min.apply(null, vals));
   var max = Math.max(0, Math.max.apply(null, vals));
   var range = (max-min) || 1;
-  var padX=6, padY=8;
-  var stepX = (w-padX*2) / (curve.length-1);
 
-  function yOf(v){ return padY + (h-padY*2) * (1 - (v-min)/range); }
+  var isN = MARKET==="NSE", curSym = isN?"\u20b9":"$";
+  function fmtVal(v){
+    var s = Math.round(v).toLocaleString();
+    return curSym + s;
+  }
 
-  // zero line
+  var padL=54, padR=8, padT=10, padB=20;
+  var plotW = w-padL-padR, plotH = h-padT-padB;
+  var stepX = curve.length>1 ? plotW/(curve.length-1) : plotW;
+
+  function yOf(v){ return padT + plotH * (1 - (v-min)/range); }
+  function xOf(i){ return padL + i*stepX; }
+
+  var mutedColor = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#888';
+  ctx.font = "10px monospace";
+  ctx.fillStyle = mutedColor;
+  ctx.textBaseline = "middle";
+
+  // Y-axis: max, zero, min labels + faint gridlines
+  [max, 0, min].forEach(function(v){
+    if(v===0 && (max===0||min===0)) return; // avoid dup label at edge
+    var y = yOf(v);
+    ctx.strokeStyle = "rgba(128,128,128,.15)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w-padR, y); ctx.stroke();
+    ctx.textAlign = "right";
+    ctx.fillText(fmtVal(v), padL-6, y);
+  });
+
+  // zero line (bolder)
   var zeroY = yOf(0);
-  ctx.strokeStyle = "rgba(128,128,128,.35)";
+  ctx.strokeStyle = "rgba(128,128,128,.4)";
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(padX, zeroY); ctx.lineTo(w-padX, zeroY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(padL, zeroY); ctx.lineTo(w-padR, zeroY); ctx.stroke();
 
   var green = getComputedStyle(document.body).getPropertyValue('--green').trim() || '#10b981';
   var red   = getComputedStyle(document.body).getPropertyValue('--red').trim()   || '#ef4444';
   var lineColor = vals[vals.length-1] >= 0 ? green : red;
 
   // Mark where the prior-performance baseline ends and actual tracked
-  // trades begin (dashed vertical line at the 2nd point, index 1)
+  // trades begin
   if(curve[0].isPrior && curve.length>1){
-    var markX = padX + 1*stepX;
+    var markX = xOf(1);
     ctx.save();
     ctx.setLineDash([3,3]);
     ctx.strokeStyle = "rgba(146,64,14,.5)";
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(markX, padY); ctx.lineTo(markX, h-padY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(markX, padT); ctx.lineTo(markX, h-padB); ctx.stroke();
     ctx.restore();
   }
 
   ctx.beginPath();
   curve.forEach(function(p,i){
-    var x = padX + i*stepX, y = yOf(p.cum);
+    var x = xOf(i), y = yOf(p.cum);
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   });
   ctx.strokeStyle = lineColor;
@@ -1650,13 +1675,25 @@ function drawEquityCurve(curve){
   ctx.stroke();
 
   // fill under curve for visual weight
-  ctx.lineTo(padX+(curve.length-1)*stepX, zeroY);
-  ctx.lineTo(padX, zeroY);
+  ctx.lineTo(xOf(curve.length-1), zeroY);
+  ctx.lineTo(xOf(0), zeroY);
   ctx.closePath();
   ctx.globalAlpha = 0.10;
   ctx.fillStyle = lineColor;
   ctx.fill();
   ctx.globalAlpha = 1;
+
+  // X-axis: first and last date labels
+  ctx.fillStyle = mutedColor;
+  ctx.textBaseline = "top";
+  function fmtDateShort(d){
+    var mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return mo[d.getMonth()]+" '"+String(d.getFullYear()).slice(2);
+  }
+  ctx.textAlign = "left";
+  ctx.fillText(fmtDateShort(curve[0].date), padL, h-padB+4);
+  ctx.textAlign = "right";
+  ctx.fillText(fmtDateShort(curve[curve.length-1].date), w-padR, h-padB+4);
 }
 
 function drawTrend(s){
