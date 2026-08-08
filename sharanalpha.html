@@ -1082,6 +1082,7 @@ function computeXIRR(cashFlows){
 function computeJournalPerformance(journal, positions){
   var flows=[];
   var realizedPnl=0, realizedCount=0;
+  var closedTrades=[]; // {date, pnlAmt} in chronological order, for the equity curve
   (journal||[]).forEach(function(j){
     var d=new Date(j.date);
     if(isNaN(d.getTime())) return;
@@ -1090,8 +1091,10 @@ function computeJournalPerformance(journal, positions){
     } else if(j.action==="STOPPED OUT" || j.action==="TARGET HIT"){
       var val=JOURNAL_TRADE_AMOUNT*(1+(j.pnlPct||0)/100);
       flows.push({date:d, amount:val});
-      realizedPnl += (val - JOURNAL_TRADE_AMOUNT);
+      var pnlAmt = val - JOURNAL_TRADE_AMOUNT;
+      realizedPnl += pnlAmt;
       realizedCount++;
+      closedTrades.push({date:d, pnlAmt:pnlAmt});
     }
   });
   var unrealizedPnl=0, unrealizedCount=0;
@@ -1106,6 +1109,19 @@ function computeJournalPerformance(journal, positions){
   });
   if(flows.length<2) return null;
   flows.sort(function(a,b){return a.date-b.date;});
+  closedTrades.sort(function(a,b){return a.date-b.date;});
+
+  // Equity curve — running cumulative realized P&L over time. This is
+  // the honest "journey so far": it only moves when a trade actually
+  // closes, so it won't jump around day to day like unrealized P&L does.
+  var equityCurve=[]; var running=0; var peak=0;
+  closedTrades.forEach(function(t){
+    running += t.pnlAmt;
+    if(running>peak) peak=running;
+    equityCurve.push({date:t.date, cum:running});
+  });
+  var currentTotal = realizedPnl + unrealizedPnl;
+  var drawdownFromPeak = peak - currentTotal; // positive = currently below the best point reached
 
   var invested=0, returned=0;
   flows.forEach(function(f){ if(f.amount<0) invested+=-f.amount; else returned+=f.amount; });
@@ -1117,7 +1133,9 @@ function computeJournalPerformance(journal, positions){
     cagr: cagr, xirr: xirr, invested: invested, returned: returned,
     realizedPnl: realizedPnl, realizedCount: realizedCount,
     unrealizedPnl: unrealizedPnl, unrealizedCount: unrealizedCount,
-    netPnl: returned-invested, years: years, tradeCount: flows.length
+    netPnl: returned-invested, years: years, tradeCount: flows.length,
+    equityCurve: equityCurve, peakEquity: peak, currentTotal: currentTotal,
+    drawdownFromPeak: drawdownFromPeak
   };
 }
 
@@ -1133,6 +1151,17 @@ function renderModel(){
     "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+pos.filter(function(p){return p.status==="STOPPED OUT";}).length+"</div></div>"+
     "<div class=\"card\"><div class=\"card-l\">Journal</div><div class=\"card-v\" style=\"color:var(--gold)\">"+jrnl.length+"</div></div>"+
     "</div>";
+
+  var priorHtml = "";
+  var pp = PRIOR_PERFORMANCE[MARKET];
+  if(pp && (pp.gainAmount || pp.gainPct)){
+    var ppVal = pp.gainAmount!=null ? (cur+Number(pp.gainAmount).toLocaleString()) : (pp.gainPct+"%");
+    priorHtml = "<div style=\"background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:8px 12px;margin-bottom:8px;font-size:11px\">"+
+      "<b style=\"color:#92400e\">\u26a0\ufe0f Prior performance (manual entry, broker-verified — not tracked by this system):</b> "+
+      pp.period+" &mdash; <b style=\"color:#92400e\">"+ppVal+"</b>"+
+      "<div style=\"color:#92400e;opacity:.8;margin-top:2px\">This figure is self-reported from the broker's own order book and is separate from the automated equity curve below, which only reflects trades this system has logged since it started tracking.</div>"+
+      "</div>";
+  }
 
   var perf = computeJournalPerformance(jrnl, pos);
   var perfHtml = "";
@@ -1152,6 +1181,19 @@ function renderModel(){
       "<div class=\"card\"><div class=\"card-l\">Trades / Span</div><div class=\"card-v\" style=\"color:var(--muted);font-size:13px\">"+totalTrades+" \u00b7 "+perf.years.toFixed(2)+"y</div></div>"+
       "</div>"+
       "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Hypothetical — assumes \u20b9"+JOURNAL_TRADE_AMOUNT.toLocaleString()+" per trade. Realized = closed trades (STOPPED OUT / TARGET HIT), guaranteed. Unrealized = still-OPEN positions marked-to-market at current price — can still change before actually closing.</div>";
+
+    if(perf.equityCurve && perf.equityCurve.length>=2){
+      var ddClr = perf.drawdownFromPeak>0.5 ? "var(--red)" : "var(--green)";
+      perfHtml += "<div class=\"card\" style=\"margin-bottom:8px\">"+
+        "<div class=\"card-l\" style=\"margin-bottom:4px\">Equity Curve — Cumulative Realized P&L</div>"+
+        "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:90px;display:block\"></canvas>"+
+        "<div style=\"font-size:10px;color:var(--muted);margin-top:5px\">"+
+          "Peak reached: <b style=\"color:var(--green)\">"+cur+Math.round(perf.peakEquity).toLocaleString()+"</b>"+
+          " &middot; Current (incl. unrealized): <b style=\"color:"+(perf.currentTotal>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(perf.currentTotal).toLocaleString()+"</b>"+
+          " &middot; Drawdown from peak: <b style=\"color:"+ddClr+"\">"+cur+Math.round(perf.drawdownFromPeak).toLocaleString()+"</b>"+
+        "</div></div>";
+      setTimeout(function(){ drawEquityCurve(perf.equityCurve); }, 20);
+    }
   }
   var posRows=pos.map(function(p){
     var st=p.status==="OPEN"?"<span class=\"st-open\">OPEN</span>":p.status==="TARGET HIT"?"<span class=\"st-hit\">HIT</span>":"<span class=\"st-stop\">STOP</span>";
@@ -1173,7 +1215,7 @@ function renderModel(){
       "<td style=\"color:var(--muted);font-size:11px\">"+j.notes+"</td>"+
       "<td class=\"dt\">"+fmtDate(j.date)+"</td></tr>";
   }).join("");
-    return cards+perfHtml+
+    return cards+priorHtml+perfHtml+
     "<div class=\"tw\" style=\"margin-bottom:10px\"><table><thead><tr><th>Symbol</th><th>Live Price</th><th>P&L%</th><th>Status</th><th>Chart</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>"+posRows+"</tbody></table></div>"+
     "<div style=\"font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px\">Journal</div>"+
     "<div class=\"tw\"><table><thead><tr><th>Symbol</th><th>Action</th><th>Price</th><th>P&L%</th><th>Notes</th><th>Date</th></tr></thead><tbody>"+jRows+"</tbody></table></div>";
@@ -1310,6 +1352,14 @@ function closeDetail(){
 // Get a free API key at https://finnhub.io/register (30 sec signup)
 // and paste it below. Free tier allows 60 calls/min — plenty for 5
 // symbols refreshed every 20 seconds.
+// PRIOR PERFORMANCE — manual, broker-verified figures from BEFORE this
+// system started tracking. Edit these two values directly whenever you
+// have updated numbers — nothing reads this from the Google Sheet.
+var PRIOR_PERFORMANCE = {
+  NSE: { period: "Jan-Jun 2026", gainAmount: 50000 },  // rupee amount
+  US:  { period: "Jan-Jun 2026", gainPct: 20 }          // percent
+};
+
 var FINNHUB_API_KEY = "d9646b1r01qik59mdhq0d9646b1r01qik59mdhqg";
 
 var TICKER_INDICES = [
@@ -1530,6 +1580,54 @@ function startTickerRefresh(){
   setInterval(updateMarketStatus, 60000);
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
+}
+
+function drawEquityCurve(curve){
+  var cv = document.getElementById("equityCurveCanvas");
+  if(!cv || !curve || curve.length<2) return;
+  var dpr = window.devicePixelRatio || 1;
+  var w = cv.clientWidth, h = 90;
+  cv.width = w*dpr; cv.height = h*dpr;
+  var ctx = cv.getContext("2d");
+  ctx.scale(dpr,dpr);
+
+  var vals = curve.map(function(p){return p.cum;});
+  var min = Math.min(0, Math.min.apply(null, vals));
+  var max = Math.max(0, Math.max.apply(null, vals));
+  var range = (max-min) || 1;
+  var padX=6, padY=8;
+  var stepX = (w-padX*2) / (curve.length-1);
+
+  function yOf(v){ return padY + (h-padY*2) * (1 - (v-min)/range); }
+
+  // zero line
+  var zeroY = yOf(0);
+  ctx.strokeStyle = "rgba(128,128,128,.35)";
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padX, zeroY); ctx.lineTo(w-padX, zeroY); ctx.stroke();
+
+  var green = getComputedStyle(document.body).getPropertyValue('--green').trim() || '#10b981';
+  var red   = getComputedStyle(document.body).getPropertyValue('--red').trim()   || '#ef4444';
+  var lineColor = vals[vals.length-1] >= 0 ? green : red;
+
+  ctx.beginPath();
+  curve.forEach(function(p,i){
+    var x = padX + i*stepX, y = yOf(p.cum);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+
+  // fill under curve for visual weight
+  ctx.lineTo(padX+(curve.length-1)*stepX, zeroY);
+  ctx.lineTo(padX, zeroY);
+  ctx.closePath();
+  ctx.globalAlpha = 0.10;
+  ctx.fillStyle = lineColor;
+  ctx.fill();
+  ctx.globalAlpha = 1;
 }
 
 function drawTrend(s){
