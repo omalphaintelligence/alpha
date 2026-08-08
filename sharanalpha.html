@@ -1172,7 +1172,7 @@ function renderModel(){
   var priorHtml = "";
   var pp = PRIOR_PERFORMANCE[MARKET];
   if(pp && (pp.gainAmount || pp.gainPct)){
-    var ppVal = pp.gainAmount!=null ? (cur+Number(pp.gainAmount).toLocaleString()) : (pp.gainPct+"%");
+    var ppVal = pp.gainAmount!=null ? (cur+Number(pp.gainAmount).toLocaleString()+(pp.gainPct!=null?" ("+pp.gainPct+"%)":"")) : (pp.gainPct+"%");
     priorHtml = "<div style=\"background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:8px 12px;margin-bottom:8px;font-size:11px\">"+
       "<b style=\"color:#92400e\">\u26a0\ufe0f Prior performance (manual entry, broker order book — verified, not auto-tracked):</b> "+
       pp.period+" &mdash; <b style=\"color:#92400e\">"+ppVal+"</b>"+
@@ -1201,10 +1201,10 @@ function renderModel(){
 
     if(perf.equityCurve && perf.equityCurve.length>=2){
       var ddClr = perf.drawdownFromPeak>0.5 ? "var(--red)" : "var(--green)";
-      perfHtml += "<div class=\"card\" style=\"margin-bottom:8px\">"+
-        "<div class=\"card-l\" style=\"margin-bottom:4px\">Equity Curve — Cumulative Realized P&L</div>"+
-        "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:140px;display:block\"></canvas>"+
-        "<div style=\"font-size:10px;color:var(--muted);margin-top:5px\">"+
+      perfHtml += "<div style=\"background:var(--s1);border:1px solid var(--b1);border-top:3px solid var(--tab-accent,var(--gold));border-radius:4px;padding:14px 16px 12px;margin-bottom:10px;width:100%\">"+
+        "<div style=\"font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px\">Equity Curve — Cumulative Realized P&L</div>"+
+        "<canvas id=\"equityCurveCanvas\" style=\"width:100%;height:180px;display:block\"></canvas>"+
+        "<div style=\"font-size:10.5px;color:var(--muted);margin-top:8px\">"+
           "Peak reached: <b style=\"color:var(--green)\">"+cur+Math.round(perf.peakEquity).toLocaleString()+"</b>"+
           " &middot; Current (incl. unrealized): <b style=\"color:"+(perf.currentTotal>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(perf.currentTotal).toLocaleString()+"</b>"+
           " &middot; Drawdown from peak: <b style=\"color:"+ddClr+"\">"+cur+Math.round(perf.drawdownFromPeak).toLocaleString()+"</b>"+
@@ -1373,8 +1373,8 @@ function closeDetail(){
 // system started tracking. Edit these two values directly whenever you
 // have updated numbers — nothing reads this from the Google Sheet.
 var PRIOR_PERFORMANCE = {
-  NSE: { period: "Last 1 Year (broker order book, verified)", gainAmount: 120000 },  // rupee amount
-  US:  { period: "Last 1 Year (broker order book, verified)", gainPct: 40 }          // percent
+  NSE: { period: "Last 1 Year (broker order book, verified)", gainAmount: 120000 },        // rupee amount
+  US:  { period: "Last 1 Year (broker order book, verified)", gainAmount: 3000, gainPct: 40 } // actual $ amount used for the curve; % shown alongside
 };
 
 var FINNHUB_API_KEY = "d9646b1r01qik59mdhq0d9646b1r01qik59mdhqg";
@@ -1603,7 +1603,7 @@ function drawEquityCurve(curve){
   var cv = document.getElementById("equityCurveCanvas");
   if(!cv || !curve || curve.length<2) return;
   var dpr = window.devicePixelRatio || 1;
-  var w = cv.clientWidth, h = 140;
+  var w = cv.clientWidth, h = 180;
   cv.width = w*dpr; cv.height = h*dpr;
   var ctx = cv.getContext("2d");
   ctx.scale(dpr,dpr);
