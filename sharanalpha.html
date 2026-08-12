@@ -1181,11 +1181,16 @@ function renderModel(){
   if(!pos.length) return "<div class=\"empty\">Model Portfolio empty</div>";
   var open=pos.filter(function(p){return p.status==="OPEN";}).length;
   var cur=MARKET==="NSE"?"Rs.":"$";
+  var totalEntries = jrnl.filter(function(j){return j.action==="ENTRY";}).length;
+  var totalTargetHit = jrnl.filter(function(j){return j.action==="TARGET HIT";}).length;
+  var totalStopped = jrnl.filter(function(j){return j.action==="STOPPED OUT";}).length;
+  var totalExits = totalTargetHit + totalStopped;
+  var totalRunning = totalEntries - totalExits;
   var cards="<div class=\"card-grid\">"+
-    "<div class=\"card\"><div class=\"card-l\">Active</div><div class=\"card-v\" style=\"color:var(--accent)\">"+open+"/"+pos.length+"</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+pos.filter(function(p){return p.status==="TARGET HIT";}).length+"</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+pos.filter(function(p){return p.status==="STOPPED OUT";}).length+"</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Journal</div><div class=\"card-v\" style=\"color:var(--gold)\">"+jrnl.length+"</div></div>"+
+    "<div class=\"card\"><div class=\"card-l\">Total Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+totalEntries+"</div></div>"+
+    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+totalTargetHit+"</div></div>"+
+    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+totalStopped+"</div></div>"+
+    "<div class=\"card\"><div class=\"card-l\">Running</div><div class=\"card-v\" style=\"color:var(--accent)\">"+totalRunning+"</div></div>"+
     "</div>";
 
   var priorHtml = "";
