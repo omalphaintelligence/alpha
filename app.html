@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alpha Intel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0a0d13;min-height:100vh;display:flex;align-items:center;justify-content:center}
+
+.box{width:320px;text-align:center;padding:24px}
+.logo{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px}
+.logo b{color:#d4a947}
+.msg{color:#8a8a8a;font-size:13px;margin-bottom:18px}
+
+.field{width:100%;font-size:15px;text-align:left;padding:11px 14px;margin-bottom:10px;
+  border-radius:8px;border:1px solid #333;background:#161a22;color:#fff}
+.field:focus{outline:none;border-color:#d4a947}
+
+.err{color:#ff5c5c;font-size:12px;margin-top:6px;margin-bottom:6px}
+.ok{color:#3ddc84;font-size:12px;margin-top:6px;margin-bottom:6px}
+
+.btn{width:100%;margin-top:8px;padding:11px;border-radius:8px;border:none;
+  background:#d4a947;color:#0a0d13;font-weight:700;font-size:14px;cursor:pointer}
+.btn:hover{opacity:.9}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{background:none;border:1px solid #333;color:#ccc}
+
+.switch{color:#d4a947;font-size:12px;margin-top:14px;cursor:pointer;text-decoration:underline}
+.switch:hover{opacity:.85}
+
+.hidden{display:none}
+
+.welcome-card{background:#161a22;border:1px solid #2a2f3a;border-radius:10px;padding:20px}
+.welcome-card .email{color:#d4a947;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="logo">Alpha<b>Intel</b></div>
+
+  <!-- ================= AUTH FORM (signed out) ================= -->
+  <div id="authForm">
+    <div class="msg" id="authMode">Sign in to continue</div>
+    <input type="email" id="authEmail" class="field" placeholder="Email" autocomplete="email">
+    <input type="password" id="authPassword" class="field" placeholder="Password" autocomplete="current-password">
+    <div class="err hidden" id="authErr"></div>
+    <button class="btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Sign In</button>
+    <div class="switch" id="authSwitch" onclick="toggleAuthMode()">New here? Create an account</div>
+  </div>
+
+  <!-- ============ SIGNED IN, SUBSCRIPTION INACTIVE ============ -->
+  <div id="subscribeMsg" class="hidden">
+    <div class="welcome-card">
+      <div class="msg" style="margin-bottom:4px">Signed in as</div>
+      <div class="email" id="subscribeEmail"></div>
+      <div class="msg" style="margin-top:14px;margin-bottom:0">Your account isn't subscribed yet.<br>Contact us to activate access.</div>
+    </div>
+    <button class="btn btn-outline" onclick="supabaseSignOut()" style="margin-top:14px">Sign Out</button>
+  </div>
+
+  <!-- ============ SIGNED IN, SUBSCRIPTION ACTIVE ============ -->
+  <div id="welcomeMsg" class="hidden">
+    <div class="welcome-card">
+      <div class="msg" style="margin-bottom:4px">Welcome back</div>
+      <div class="email" id="welcomeEmail"></div>
+      <div class="msg" style="margin-top:14px;margin-bottom:0;color:#3ddc84">✓ Subscription active</div>
+    </div>
+    <div class="msg" style="margin-top:16px">(The full Alpha Intel dashboard will load here.)</div>
+    <button class="btn btn-outline" onclick="supabaseSignOut()" style="margin-top:14px">Sign Out</button>
+  </div>
+
+</div>
+
+<script>
+// ── Paste your own Supabase project's values here ──
+var SUPABASE_URL = "https://eoioyfgsqfkqyflmflhj.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_ZNhYfnxJo__rFy8eLkINyw_VpeYw3Rr";
+
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var AUTH_MODE = "signin";
+
+function show(id){
+  ["authForm","subscribeMsg","welcomeMsg"].forEach(function(x){
+    document.getElementById(x).classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
+}
+
+function checkSession(){
+  sb.auth.getSession().then(function(res){
+    var session = res.data && res.data.session;
+    if(session && session.user){
+      checkSubscription(session.user);
+    } else {
+      show("authForm");
+    }
+  });
+}
+
+function toggleAuthMode(){
+  AUTH_MODE = AUTH_MODE==="signin" ? "signup" : "signin";
+  document.getElementById("authMode").textContent = AUTH_MODE==="signin" ? "Sign in to continue" : "Create your account";
+  document.getElementById("authSubmitBtn").textContent = AUTH_MODE==="signin" ? "Sign In" : "Sign Up";
+  document.getElementById("authSwitch").textContent = AUTH_MODE==="signin" ? "New here? Create an account" : "Already have an account? Sign in";
+  var err = document.getElementById("authErr");
+  err.classList.add("hidden");
+  err.classList.remove("ok");
+}
+
+function handleAuthSubmit(){
+  var email = document.getElementById("authEmail").value.trim();
+  var password = document.getElementById("authPassword").value;
+  var err = document.getElementById("authErr");
+  var btn = document.getElementById("authSubmitBtn");
+  err.classList.add("hidden");
+  err.classList.remove("ok");
+
+  if(!email || !password){
+    err.textContent = "Please enter both email and password.";
+    err.classList.remove("hidden");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Please wait...";
+
+  var action = AUTH_MODE==="signin"
+    ? sb.auth.signInWithPassword({email:email, password:password})
+    : sb.auth.signUp({email:email, password:password});
+
+  action.then(function(res){
+    btn.disabled = false;
+    btn.textContent = AUTH_MODE==="signin" ? "Sign In" : "Sign Up";
+    if(res.error){
+      err.textContent = res.error.message;
+      err.classList.remove("hidden");
+      return;
+    }
+    if(AUTH_MODE==="signup" && res.data.user && !res.data.session){
+      err.textContent = "Account created! Check your email to confirm, then sign in.";
+      err.classList.remove("hidden");
+      err.classList.add("ok");
+      toggleAuthMode();
+      return;
+    }
+    if(res.data.session && res.data.session.user){
+      checkSubscription(res.data.session.user);
+    }
+  });
+}
+
+function checkSubscription(user){
+  sb.from("profiles").select("subscription_status").eq("id", user.id).single()
+    .then(function(res){
+      var status = res.data && res.data.subscription_status;
+      if(status === "active"){
+        document.getElementById("welcomeEmail").textContent = user.email;
+        show("welcomeMsg");
+      } else {
+        document.getElementById("subscribeEmail").textContent = user.email;
+        show("subscribeMsg");
+      }
+    });
+}
+
+function supabaseSignOut(){
+  sb.auth.signOut().then(function(){
+    location.reload();
+  });
+}
+
+checkSession();
+</script>
+</body>
+</html>
