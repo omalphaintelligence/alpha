@@ -111,8 +111,13 @@ tr:last-child td{border-bottom:none}
 </head>
 <body>
 
+<!-- ================== LOADING (initial) ================== -->
+<div id="loadingView" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
+  <div class="logo" style="opacity:.4"><span class="logo-mark"></span>Alpha<b>Intel</b></div>
+</div>
+
 <!-- ================== LANDING (signed out) ================== -->
-<div id="landing">
+<div id="landing" class="hidden">
   <div class="wrap">
     <div class="topnav">
       <div class="logo"><span class="logo-mark"></span>Alpha<b>Intel</b></div>
@@ -275,7 +280,7 @@ var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 var AUTH_MODE = "signin";
 
 function showView(id){
-  ["landing","subscribeMsg","welcomeMsg"].forEach(function(x){
+  ["loadingView","landing","subscribeMsg","welcomeMsg"].forEach(function(x){
     document.getElementById(x).classList.add("hidden");
   });
   document.getElementById(id).classList.remove("hidden");
@@ -353,6 +358,8 @@ function checkSession(){
     } else {
       showView("landing");
     }
+  }).catch(function(){
+    showView("landing");
   });
 }
 
@@ -367,6 +374,12 @@ function checkSubscription(user){
         document.getElementById("subscribeEmail").textContent = user.email;
         showView("subscribeMsg");
       }
+    })
+    .catch(function(){
+      // Couldn't read the profile row — treat as not subscribed rather
+      // than leaving the user on a blank screen.
+      document.getElementById("subscribeEmail").textContent = user.email;
+      showView("subscribeMsg");
     });
 }
 
