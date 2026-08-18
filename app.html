@@ -2,400 +2,636 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0a0d13">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Alpha Intel">
-<title>Alpha Intel — Momentum Screener</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha Intel — Momentum signals for Indian equities</title>
+<link rel="icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',system-ui,sans-serif;background:#0a0d13;color:#e8eaed;min-height:100vh}
-.hidden{display:none !important}
+:root{
+  --ink:#05070C;
+  --panel:#0C1119;
+  --panel-2:#111825;
+  --line:#1C2534;
+  --line-soft:#161E2B;
+  --text:#E8ECF3;
+  --muted:#7E8AA0;
+  --gold:#D9A94C;
+  --gold-dim:#8C6D2E;
+  --green:#3FB27F;
+  --red:#D9534F;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.55;
+}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
 
-/* ---------- Shared ---------- */
-.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
-.logo{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px}
-.logo b{color:#d4a947}
-.logo-mark{width:9px;height:9px;background:#d4a947;transform:rotate(45deg);border-radius:2px}
-.mono{font-family:'JetBrains Mono',monospace}
+/* ---------- boot gate: prevents any flash of the wrong view ---------- */
+#boot{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.boot-mark{
+  font-size:24px;font-weight:800;letter-spacing:-.02em;
+  opacity:.35;animation:pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.6}}
+.view{display:none}
+.view.active{display:block}
 
-.topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid #1e232d}
+/* ---------- shell ---------- */
+.wrap{max-width:1140px;margin:0 auto;padding:0 24px}
 
-.btn{padding:11px 22px;border-radius:8px;border:none;background:#d4a947;color:#0a0d13;
-  font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
-.btn:hover{opacity:.9}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-outline{background:none;border:1px solid #2a303c;color:#c7ccd4}
-.btn-outline:hover{border-color:#d4a947;color:#d4a947;opacity:1}
-.btn-sm{padding:7px 14px;font-size:12px}
-.btn-full{width:100%}
+header.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(5,7,12,.82);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line-soft);
+}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:66px}
+.brand{font-size:19px;font-weight:800;letter-spacing:-.025em}
+.brand span{color:var(--gold)}
+.nav-actions{display:flex;align-items:center;gap:10px}
 
-/* ---------- Landing ---------- */
-.hero{text-align:center;padding:60px 0 40px}
-.hero h1{font-family:'Space Grotesk',sans-serif;font-size:42px;line-height:1.15;font-weight:700;margin-bottom:16px}
-.hero h1 span{color:#d4a947}
-.hero p{color:#8c96a5;font-size:16px;max-width:560px;margin:0 auto 28px;line-height:1.6}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;border-radius:9px;
+  font-size:14px;font-weight:600;letter-spacing:-.01em;
+  transition:background .16s ease,border-color .16s ease,transform .12s ease,opacity .16s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn-gold{background:var(--gold);color:#120D02}
+.btn-gold:hover{background:#E7BB61}
+.btn-ghost{border:1px solid var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:#2C3648;background:var(--panel)}
+.btn-block{width:100%;padding:14px 20px;font-size:15px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
 
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:36px 0}
-.stat{background:#12161f;border:1px solid #1e232d;border-top:3px solid #d4a947;border-radius:8px;padding:16px}
-.stat-l{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#6d7684;margin-bottom:6px}
-.stat-v{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace}
-.stat-s{font-size:11px;color:#6d7684;margin-top:3px}
-.green{color:#00c896}.red{color:#ff5c7a}.gold{color:#d4a947}.blue{color:#4a9eff}
+/* ---------- hero ---------- */
+.hero{padding:96px 0 72px;position:relative;overflow:hidden}
+.hero::after{
+  content:'';position:absolute;top:-160px;left:50%;transform:translateX(-50%);
+  width:760px;height:420px;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(217,169,76,.10),transparent 68%);
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--gold);
+  border:1px solid rgba(217,169,76,.26);border-radius:999px;
+  padding:6px 14px;margin-bottom:26px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(63,178,127,.16)}
+h1{
+  font-size:clamp(38px,6.2vw,62px);
+  font-weight:800;letter-spacing:-.035em;line-height:1.05;
+  max-width:16ch;
+}
+h1 em{font-style:normal;color:var(--gold)}
+.hero p.lede{
+  margin-top:22px;max-width:56ch;
+  font-size:17px;color:var(--muted);line-height:1.65;
+}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+.note{margin-top:16px;font-size:13px;color:#5D6779}
 
-.section-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin:44px 0 6px}
-.section-sub{color:#8c96a5;font-size:13px;margin-bottom:20px}
+/* ---------- stats ---------- */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);
+  border-radius:14px;overflow:hidden;margin-top:64px;
+}
+.stat{background:var(--panel);padding:26px 24px}
+.stat-k{
+  font-family:var(--mono);font-size:28px;font-weight:700;
+  letter-spacing:-.03em;color:var(--text);
+}
+.stat-l{
+  margin-top:7px;font-size:12px;color:var(--muted);
+  letter-spacing:.04em;text-transform:uppercase;font-weight:500;
+}
 
-.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
-.feature{background:#12161f;border:1px solid #1e232d;border-radius:8px;padding:18px}
-.feature-icon{width:34px;height:34px;border-radius:8px;background:rgba(212,169,71,.12);
-  display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:17px}
-.feature h3{font-size:14px;font-weight:700;margin-bottom:6px}
-.feature p{font-size:12.5px;color:#8c96a5;line-height:1.55}
+/* ---------- sections ---------- */
+section{padding:84px 0}
+.sec-head{max-width:62ch;margin-bottom:44px}
+.sec-tag{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold-dim);font-weight:500;
+}
+h2{
+  margin-top:12px;font-size:clamp(27px,3.6vw,36px);
+  font-weight:700;letter-spacing:-.03em;line-height:1.15;
+}
+.sec-head p{margin-top:14px;font-size:16px;color:var(--muted);line-height:1.65}
 
-/* Locked preview table */
-.preview-wrap{position:relative;border:1px solid #1e232d;border-radius:8px;overflow:hidden;background:#12161f}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{padding:10px 12px;text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.6px;
-  text-transform:uppercase;color:#6d7684;background:#161b25;border-bottom:1px solid #1e232d}
-td{padding:10px 12px;border-bottom:1px solid #1a1f28}
-tr:last-child td{border-bottom:none}
-.rank{display:inline-block;min-width:30px;padding:2px 6px;border-radius:4px;font-size:11px;
-  font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(0,200,150,.14);color:#00c896}
-.sig{display:inline-block;padding:3px 8px;border-radius:3px;font-size:9.5px;font-weight:700;
-  letter-spacing:.3px;background:#0d7d3b;color:#fff}
-.blurred{filter:blur(5px);user-select:none;pointer-events:none}
-.lock-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;background:linear-gradient(180deg,rgba(10,13,19,.4),rgba(10,13,19,.94));gap:12px}
-.lock-icon{font-size:26px}
-.lock-txt{font-size:13px;color:#c7ccd4;font-weight:600}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{
+  background:var(--panel);border:1px solid var(--line-soft);
+  border-radius:14px;padding:28px 26px;
+  transition:border-color .18s ease;
+}
+.card:hover{border-color:var(--line)}
+.card h3{font-size:16px;font-weight:650;letter-spacing:-.015em;margin-bottom:10px}
+.card p{font-size:14.5px;color:var(--muted);line-height:1.62}
+.card-ico{
+  width:34px;height:34px;border-radius:9px;margin-bottom:18px;
+  background:rgba(217,169,76,.10);border:1px solid rgba(217,169,76,.20);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:14px;color:var(--gold);font-weight:700;
+}
 
-.cta-band{background:#12161f;border:1px solid #d4a947;border-radius:10px;padding:28px;
-  text-align:center;margin:44px 0}
-.cta-band h2{font-family:'Space Grotesk',sans-serif;font-size:22px;margin-bottom:8px}
-.cta-band p{color:#8c96a5;font-size:13.5px;margin-bottom:20px}
+/* ---------- locked table ---------- */
+.locked{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line-soft)}
+.tbl{width:100%;border-collapse:collapse;background:var(--panel)}
+.tbl th{
+  text-align:left;padding:14px 20px;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+  border-bottom:1px solid var(--line-soft);background:var(--panel-2);
+}
+.tbl td{
+  padding:16px 20px;font-size:14.5px;
+  border-bottom:1px solid var(--line-soft);
+}
+.tbl tr:last-child td{border-bottom:none}
+.tkr{font-family:var(--mono);font-weight:700;letter-spacing:-.01em}
+.num{font-family:var(--mono);font-size:14px}
+.pos{color:var(--green)}
+.tag{
+  display:inline-block;padding:4px 11px;border-radius:6px;
+  font-size:11.5px;font-weight:650;letter-spacing:.02em;
+}
+.tag-sb{background:rgba(63,178,127,.14);color:var(--green)}
+.tag-b{background:rgba(217,169,76,.13);color:var(--gold)}
+.tag-w{background:rgba(126,138,160,.13);color:var(--muted)}
+.blur{filter:blur(7px);user-select:none;pointer-events:none}
+.veil{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(5,7,12,.32) 0%,rgba(5,7,12,.93) 62%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:44px;text-align:center;
+}
+.lock-ico{font-size:22px;margin-bottom:14px;opacity:.75}
+.veil h4{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.veil p{margin-top:8px;font-size:14px;color:var(--muted);max-width:40ch}
+.veil .btn{margin-top:20px}
 
-.footer{border-top:1px solid #1e232d;padding:24px 0;margin-top:44px;text-align:center;
-  color:#5a626e;font-size:11.5px;line-height:1.7}
+/* ---------- cta band ---------- */
+.band{
+  border:1px solid var(--line-soft);border-radius:18px;
+  background:linear-gradient(160deg,var(--panel-2),var(--panel));
+  padding:56px 44px;text-align:center;
+}
+.band h2{max-width:20ch;margin:0 auto}
+.band p{margin:16px auto 0;max-width:52ch;color:var(--muted);font-size:16px}
+.band .btn{margin-top:30px}
 
-/* ---------- Auth modal ---------- */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;
-  display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:#12161f;border:1px solid #2a303c;border-radius:12px;padding:28px;width:340px;text-align:center}
-.modal .logo{justify-content:center;margin-bottom:6px}
-.msg{color:#8c96a5;font-size:13px;margin-bottom:18px}
-.field{width:100%;font-size:15px;padding:11px 14px;margin-bottom:10px;border-radius:8px;
-  border:1px solid #2a303c;background:#0d1119;color:#fff;font-family:inherit}
-.field:focus{outline:none;border-color:#d4a947}
-.err{color:#ff5c7a;font-size:12px;margin:6px 0}
-.err.ok{color:#00c896}
-.switch{color:#d4a947;font-size:12px;margin-top:14px;cursor:pointer;text-decoration:underline}
-.switch:hover{opacity:.85}
-.modal-close{position:absolute;top:14px;right:16px;font-size:22px;color:#6d7684;cursor:pointer;
-  background:none;border:none;line-height:1}
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
+.foot-top{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center}
+.disc{
+  margin-top:28px;padding-top:24px;border-top:1px solid var(--line-soft);
+  font-size:12.5px;color:#4E586B;line-height:1.7;max-width:78ch;
+}
 
-/* ---------- Signed-in states ---------- */
-.state-card{background:#12161f;border:1px solid #1e232d;border-radius:10px;padding:24px;text-align:center;max-width:460px;margin:60px auto}
-.state-card .email{color:#d4a947;font-weight:600;font-size:15px;margin:4px 0 16px}
+/* ---------- modal ---------- */
+.modal{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(3,5,9,.78);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.modal.open{display:flex}
+.sheet{
+  width:100%;max-width:404px;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:34px 30px;
+  animation:rise .22s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.sheet-head h3{font-size:21px;font-weight:700;letter-spacing:-.025em}
+.sheet-head p{margin-top:5px;font-size:14px;color:var(--muted)}
+.x{font-size:22px;color:var(--muted);line-height:1;padding:2px 6px;border-radius:6px}
+.x:hover{color:var(--text);background:var(--panel-2)}
+.field{margin-bottom:13px}
+.field input{
+  width:100%;padding:13px 15px;
+  background:var(--panel-2);border:1px solid var(--line);
+  border-radius:9px;color:var(--text);font-size:15px;
+  transition:border-color .15s ease;
+}
+.field input:focus{outline:none;border-color:var(--gold-dim)}
+.field input::placeholder{color:#5A6478}
+.swap{margin-top:20px;text-align:center;font-size:14px;color:var(--muted)}
+.swap button{color:var(--gold);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.msg{
+  margin-top:14px;padding:11px 14px;border-radius:9px;
+  font-size:13.5px;line-height:1.5;display:none;
+}
+.msg.show{display:block}
+.msg.err{background:rgba(217,83,79,.11);color:#E8807C;border:1px solid rgba(217,83,79,.24)}
+.msg.ok{background:rgba(63,178,127,.11);color:#6ECBA0;border:1px solid rgba(63,178,127,.24)}
 
-@media(max-width:640px){
-  .hero{padding:36px 0 26px}
-  .hero h1{font-size:30px}
-  .hero p{font-size:14px}
-  .section-title{font-size:19px}
+/* ---------- gate / member views ---------- */
+.center-pane{
+  min-height:calc(100vh - 66px);
+  display:flex;align-items:center;justify-content:center;padding:60px 24px;
+}
+.pane{
+  width:100%;max-width:520px;text-align:center;
+  background:var(--panel);border:1px solid var(--line-soft);
+  border-radius:18px;padding:52px 42px;
+}
+.pane-ico{font-size:30px;margin-bottom:20px}
+.pane h2{font-size:26px;letter-spacing:-.03em}
+.pane p{margin-top:14px;font-size:15.5px;color:var(--muted);line-height:1.65}
+.pane .email{
+  display:inline-block;margin-top:22px;
+  font-family:var(--mono);font-size:13.5px;color:var(--text);
+  background:var(--panel-2);border:1px solid var(--line);
+  border-radius:8px;padding:9px 15px;
+}
+.pane-actions{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
+
+.dash-head{
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:16px;padding:40px 0 26px;
+}
+.dash-head h2{margin:0;font-size:27px}
+.dash-head p{margin-top:6px;color:var(--muted);font-size:15px}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  background:rgba(63,178,127,.11);color:var(--green);
+  border:1px solid rgba(63,178,127,.24);border-radius:999px;padding:6px 13px;font-weight:500;
+}
+.slot{
+  border:1px dashed var(--line);border-radius:14px;
+  padding:70px 30px;text-align:center;color:var(--muted);
+  background:var(--panel);margin-bottom:60px;
+}
+.slot h3{color:var(--text);font-size:17px;margin-bottom:9px;letter-spacing:-.02em}
+.slot p{font-size:14.5px}
+
+@media(max-width:900px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .features{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .hero{padding:64px 0 52px}
+  section{padding:60px 0}
+  .band{padding:42px 24px}
+  .pane{padding:40px 26px}
+  .tbl th:nth-child(4),.tbl td:nth-child(4){display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
 }
 </style>
 </head>
 <body>
 
-<!-- ================== LOADING (initial) ================== -->
-<div id="loadingView" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
-  <div class="logo" style="opacity:.4"><span class="logo-mark"></span>Alpha<b>Intel</b></div>
-</div>
+<!-- boot gate -->
+<div id="boot"><div class="boot-mark">Alpha<span style="color:#D9A94C">Intel</span></div></div>
 
-<!-- ================== LANDING (signed out) ================== -->
-<div id="landing" class="hidden">
-  <div class="wrap">
-    <div class="topnav">
-      <div class="logo"><span class="logo-mark"></span>Alpha<b>Intel</b></div>
-      <button class="btn btn-outline btn-sm" onclick="openAuth('signin')">Sign In</button>
+<!-- ============ LANDING ============ -->
+<div id="view-landing" class="view">
+  <header class="nav">
+    <div class="wrap nav-in">
+      <div class="brand">Alpha<span>Intel</span></div>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
+        <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
+      </div>
     </div>
+  </header>
 
+  <div class="wrap">
     <div class="hero">
-      <h1>Momentum stocks,<br>found <span>before</span> the crowd.</h1>
-      <p>A proprietary screening engine that scans NSE India and US markets every day,
-         surfacing only the strongest momentum setups — filtered, ranked, and ready to act on.</p>
-      <button class="btn" onclick="openAuth('signup')">Get Started</button>
+      <div class="eyebrow"><span class="dot"></span>Updated after every NSE close</div>
+      <h1>Know which stocks are <em>actually</em> moving.</h1>
+      <p class="lede">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
+      <div class="hero-cta">
+        <button class="btn btn-gold" onclick="openAuth('signup')">Create your account</button>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+      <p class="note">Free to create an account. Access to live signals requires an active subscription.</p>
     </div>
 
-    <div class="stats-row">
-      <div class="stat">
-        <div class="stat-l">Stocks Screened</div>
-        <div class="stat-v gold">2,700+</div>
-        <div class="stat-s">NSE + US, daily</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-k">2,100+</div><div class="stat-l">Stocks scanned daily</div></div>
+      <div class="stat"><div class="stat-k">3</div><div class="stat-l">Conviction tiers</div></div>
+      <div class="stat"><div class="stat-k">Daily</div><div class="stat-l">Post-close refresh</div></div>
+      <div class="stat"><div class="stat-k">0</div><div class="stat-l">Tips or calls</div></div>
+    </div>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-tag">How it works</div>
+        <h2>A ranking engine, not a newsletter.</h2>
+        <p>Every stock on the exchange is scored against the same rules, every day. Nothing is hand-picked, and the list doesn't care what anyone on TV thinks.</p>
       </div>
-      <div class="stat">
-        <div class="stat-l">Model Portfolio</div>
-        <div class="stat-v blue">20</div>
-        <div class="stat-s">active positions</div>
-      </div>
-      <div class="stat">
-        <div class="stat-l">Signal Types</div>
-        <div class="stat-v green">3</div>
-        <div class="stat-s">Strong Buy / Buy / Watch</div>
-      </div>
-      <div class="stat">
-        <div class="stat-l">Updated</div>
-        <div class="stat-v gold">Daily</div>
-        <div class="stat-s">after market close</div>
+      <div class="features">
+        <div class="card">
+          <div class="card-ico">01</div>
+          <h3>Scored, then ranked</h3>
+          <p>Each name gets a composite score from price behaviour, trend structure and volume. The ranking is the output — you always see where a stock sits relative to everything else.</p>
+        </div>
+        <div class="card">
+          <div class="card-ico">02</div>
+          <h3>Three conviction tiers</h3>
+          <p>Names sort into Strong Buy, Buy and Watch. The tier tells you how much of the engine's criteria a stock currently satisfies, so you can size your attention accordingly.</p>
+        </div>
+        <div class="card">
+          <div class="card-ico">03</div>
+          <h3>Rank history you can check</h3>
+          <p>See how long a name has held its position and whether it's climbing or slipping. A stock that's been top-ranked for weeks reads very differently from one that appeared yesterday.</p>
+        </div>
+        <div class="card">
+          <div class="card-ico">04</div>
+          <h3>Sector rotation at a glance</h3>
+          <p>A sector summary shows where the ranked names are clustering, so you can see which parts of the market money is actually rotating into.</p>
+        </div>
+        <div class="card">
+          <div class="card-ico">05</div>
+          <h3>A journal that stays honest</h3>
+          <p>Log your entries and exits against the signals you acted on. Over time it tells you something no backtest can: how you actually traded the list.</p>
+        </div>
+        <div class="card">
+          <div class="card-ico">06</div>
+          <h3>Same rules, every session</h3>
+          <p>The engine doesn't get bored, doesn't chase headlines and doesn't change its mind after a bad week. Consistency is the whole point.</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="section-title">What you get</div>
-    <div class="section-sub">Everything is updated automatically after each market close.</div>
-    <div class="feature-grid">
-      <div class="feature">
-        <div class="feature-icon">📊</div>
-        <h3>Full Market Screener</h3>
-        <p>Large, Mid, Small cap, F&amp;O and ETF tabs — each ranked so you see the strongest names in every category first.</p>
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-tag">Today's list</div>
+        <h2>This is what subscribers see each morning.</h2>
+        <p>The full ranked table, updated after every close. Sample below is obscured.</p>
       </div>
-      <div class="feature">
-        <div class="feature-icon">🎯</div>
-        <h3>Model Portfolio</h3>
-        <p>20 active positions with defined entry, stop-loss and target levels — plus a full trade journal of every past entry and exit.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">📈</div>
-        <h3>Live Prices &amp; Ticker</h3>
-        <p>Real-time prices for every signal, plus a live index and world-market ticker strip.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">🔍</div>
-        <h3>Precision Entries</h3>
-        <p>Every signal comes with a clear entry zone, stop-loss and target — no guesswork about where to act.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">📉</div>
-        <h3>Performance Tracking</h3>
-        <p>CAGR, XIRR, realized vs unrealized P&amp;L, and an interactive equity curve of the full track record.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">📱</div>
-        <h3>Works Everywhere</h3>
-        <p>Install it on your phone's home screen and it behaves like a native app — no app store needed.</p>
+      <div class="locked">
+        <div class="blur">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Symbol</th><th>Signal</th><th>Sector</th><th>Score</th><th>1M</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td class="tkr">XXXXXX</td><td><span class="tag tag-sb">Strong Buy</span></td><td>Capital Goods</td><td class="num">97</td><td class="num pos">+18.4%</td></tr>
+              <tr><td class="num">2</td><td class="tkr">XXXXXXX</td><td><span class="tag tag-sb">Strong Buy</span></td><td>Financials</td><td class="num">94</td><td class="num pos">+14.1%</td></tr>
+              <tr><td class="num">3</td><td class="tkr">XXXXX</td><td><span class="tag tag-b">Buy</span></td><td>Pharma</td><td class="num">88</td><td class="num pos">+11.7%</td></tr>
+              <tr><td class="num">4</td><td class="tkr">XXXXXXXX</td><td><span class="tag tag-b">Buy</span></td><td>Auto</td><td class="num">85</td><td class="num pos">+9.2%</td></tr>
+              <tr><td class="num">5</td><td class="tkr">XXXXXX</td><td><span class="tag tag-w">Watch</span></td><td>Infrastructure</td><td class="num">79</td><td class="num pos">+6.8%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="veil">
+          <div class="lock-ico">🔒</div>
+          <h4>Locked</h4>
+          <p>Create an account and activate your subscription to see the full ranked list.</p>
+          <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="section-title">Sample signals</div>
-    <div class="section-sub">This is what the screener looks like inside.</div>
-    <div class="preview-wrap">
-      <table class="blurred">
-        <thead><tr><th>Rank</th><th>Symbol</th><th>Price</th><th>Signal</th><th>Sector</th></tr></thead>
-        <tbody>
-          <tr><td><span class="rank">98</span></td><td><b>••••••</b></td><td class="mono">₹•••.••</td><td><span class="sig">STRONG BUY</span></td><td>Technology</td></tr>
-          <tr><td><span class="rank">97</span></td><td><b>•••••</b></td><td class="mono">₹•,•••.••</td><td><span class="sig">STRONG BUY</span></td><td>Industrials</td></tr>
-          <tr><td><span class="rank">96</span></td><td><b>•••••••</b></td><td class="mono">₹•••.••</td><td><span class="sig">STRONG BUY</span></td><td>Financials</td></tr>
-          <tr><td><span class="rank">95</span></td><td><b>••••</b></td><td class="mono">₹•,•••.••</td><td><span class="sig">STRONG BUY</span></td><td>Healthcare</td></tr>
-          <tr><td><span class="rank">94</span></td><td><b>••••••</b></td><td class="mono">₹•••.••</td><td><span class="sig">STRONG BUY</span></td><td>Energy</td></tr>
-        </tbody>
-      </table>
-      <div class="lock-overlay">
-        <div class="lock-icon">🔒</div>
-        <div class="lock-txt">Sign in with an active subscription to view</div>
-        <button class="btn btn-sm" onclick="openAuth('signup')">Get Access</button>
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="band">
+        <h2>Stop guessing which chart to open first.</h2>
+        <p>Sign up in under a minute. You'll get the ranked list the moment your subscription is active.</p>
+        <button class="btn btn-gold" onclick="openAuth('signup')">Create your account</button>
       </div>
     </div>
+  </section>
 
-    <div class="cta-band">
-      <h2>Ready to get started?</h2>
-      <p>Create an account, then reach out to activate your subscription.</p>
-      <button class="btn" onclick="openAuth('signup')">Create Account</button>
+  <footer>
+    <div class="wrap">
+      <div class="foot-top">
+        <div class="brand">Alpha<span>Intel</span></div>
+        <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
+      </div>
+      <p class="disc"><strong style="color:#6E7A8E">Important:</strong> Alpha Intel is a research and screening tool. It is not investment advice, and nothing here is a recommendation to buy or sell any security. We are not registered with SEBI as an Investment Adviser or Research Analyst. Rankings are generated from historical price and volume data; past behaviour does not predict future returns. Markets carry risk of loss. Do your own research and consult a registered adviser before acting on anything you see here.</p>
     </div>
+  </footer>
+</div>
 
-    <div class="footer">
-      <b style="color:#8c96a5">Alpha Intel</b><br>
-      For educational and informational purposes only. Not investment advice.<br>
-      Markets carry risk — do your own research before trading.
+<!-- ============ INACTIVE SUBSCRIPTION ============ -->
+<div id="view-inactive" class="view">
+  <header class="nav">
+    <div class="wrap nav-in">
+      <div class="brand">Alpha<span>Intel</span></div>
+      <div class="nav-actions"><button class="btn btn-ghost" onclick="signOut()">Sign out</button></div>
+    </div>
+  </header>
+  <div class="center-pane">
+    <div class="pane">
+      <div class="pane-ico">🔒</div>
+      <h2>Your subscription isn't active yet</h2>
+      <p>Your account is set up and ready. Once your subscription is activated, the full ranked list opens automatically — no need to sign up again.</p>
+      <div class="email" id="inactive-email">—</div>
+      <div class="pane-actions">
+        <button class="btn btn-gold" onclick="refreshStatus()">Check again</button>
+        <button class="btn btn-ghost" onclick="signOut()">Sign out</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ================== SIGNED IN, NOT SUBSCRIBED ================== -->
-<div id="subscribeMsg" class="hidden">
+<!-- ============ ACTIVE MEMBER ============ -->
+<div id="view-active" class="view">
+  <header class="nav">
+    <div class="wrap nav-in">
+      <div class="brand">Alpha<span>Intel</span></div>
+      <div class="nav-actions">
+        <span class="pill"><span class="dot"></span>Active</span>
+        <button class="btn btn-ghost" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </header>
   <div class="wrap">
-    <div class="topnav">
-      <div class="logo"><span class="logo-mark"></span>Alpha<b>Intel</b></div>
-      <button class="btn btn-outline btn-sm" onclick="supabaseSignOut()">Sign Out</button>
+    <div class="dash-head">
+      <div>
+        <h2>Welcome back</h2>
+        <p id="active-email">—</p>
+      </div>
+      <div id="active-plan" style="font-family:var(--mono);font-size:12.5px;color:#7E8AA0"></div>
     </div>
-    <div class="state-card">
-      <div class="msg" style="margin-bottom:0">Signed in as</div>
-      <div class="email" id="subscribeEmail"></div>
-      <div style="font-size:34px;margin:10px 0">🔒</div>
-      <div style="font-size:15px;font-weight:600;margin-bottom:8px">Subscription not active yet</div>
-      <div class="msg">Your account is created. Reach out to activate your subscription and unlock the full screener.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ================== SIGNED IN, SUBSCRIBED ================== -->
-<div id="welcomeMsg" class="hidden">
-  <div class="wrap">
-    <div class="topnav">
-      <div class="logo"><span class="logo-mark"></span>Alpha<b>Intel</b></div>
-      <button class="btn btn-outline btn-sm" onclick="supabaseSignOut()">Sign Out</button>
-    </div>
-    <div class="state-card">
-      <div class="msg" style="margin-bottom:0">Welcome back</div>
-      <div class="email" id="welcomeEmail"></div>
-      <div style="font-size:34px;margin:10px 0">✅</div>
-      <div style="font-size:15px;font-weight:600;color:#00c896;margin-bottom:8px">Subscription active</div>
-      <div class="msg">The full Alpha Intel dashboard will load here.</div>
+    <div class="slot">
+      <h3>Dashboard slots in here</h3>
+      <p>The full Alpha Intel screener will be embedded at this point.</p>
     </div>
   </div>
 </div>
 
-<!-- ================== AUTH MODAL ================== -->
-<div id="authModal" class="modal-bg hidden">
-  <div class="modal" style="position:relative">
-    <button class="modal-close" onclick="closeAuth()">&times;</button>
-    <div class="logo"><span class="logo-mark"></span>Alpha<b>Intel</b></div>
-    <div class="msg" id="authMode">Sign in to continue</div>
-    <input type="email" id="authEmail" class="field" placeholder="Email" autocomplete="email">
-    <input type="password" id="authPassword" class="field" placeholder="Password" autocomplete="current-password">
-    <div class="err hidden" id="authErr"></div>
-    <button class="btn btn-full" id="authSubmitBtn" onclick="handleAuthSubmit()">Sign In</button>
-    <div class="switch" id="authSwitch" onclick="toggleAuthMode()">New here? Create an account</div>
+<!-- ============ AUTH MODAL ============ -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeAuth()">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h3 id="m-title">Sign in</h3>
+        <p id="m-sub">Welcome back.</p>
+      </div>
+      <button class="x" onclick="closeAuth()" aria-label="Close">×</button>
+    </div>
+    <div class="field"><input type="email" id="m-email" placeholder="Email address" autocomplete="email"></div>
+    <div class="field"><input type="password" id="m-pass" placeholder="Password" autocomplete="current-password"></div>
+    <button class="btn btn-gold btn-block" id="m-submit" onclick="submitAuth()">Sign in</button>
+    <div class="msg" id="m-msg"></div>
+    <div class="swap">
+      <span id="m-swap-text">New here?</span>
+      <button onclick="toggleMode()" id="m-swap-btn">Create an account</button>
+    </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── Paste your own Supabase project's values here ──
-var SUPABASE_URL = "https://eoioyfgsqfkqyflmflhj.supabase.co";
-var SUPABASE_ANON_KEY = "sb_publishable_ZNhYfnxJo__rFy8eLkINyw_VpeYw3Rr";
+const SUPABASE_URL = 'https://eoioyfgsqfkqyflmflhj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ZNhYfnxJo__rFy8eLkINyw_VpeYw3Rr';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-var AUTH_MODE = "signin";
+let mode = 'signin';
+let busy = false;
 
-function showView(id){
-  ["loadingView","landing","subscribeMsg","welcomeMsg"].forEach(function(x){
-    document.getElementById(x).classList.add("hidden");
-  });
-  document.getElementById(id).classList.remove("hidden");
+/* ---------- view switching ---------- */
+function show(id){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
 }
 
-function openAuth(mode){
-  AUTH_MODE = mode==="signup" ? "signin" : "signup"; // toggle flips it to the one we want
-  toggleAuthMode();
-  document.getElementById("authModal").classList.remove("hidden");
-  document.getElementById("authEmail").focus();
+/* ---------- modal ---------- */
+function openAuth(m){
+  mode = m || 'signin';
+  paintMode();
+  document.getElementById('m-msg').className = 'msg';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('m-email').focus(), 60);
 }
-
 function closeAuth(){
-  document.getElementById("authModal").classList.add("hidden");
+  document.getElementById('modal').classList.remove('open');
+}
+function toggleMode(){
+  mode = (mode === 'signin') ? 'signup' : 'signin';
+  document.getElementById('m-msg').className = 'msg';
+  paintMode();
+}
+function paintMode(){
+  const signin = mode === 'signin';
+  document.getElementById('m-title').textContent   = signin ? 'Sign in' : 'Create your account';
+  document.getElementById('m-sub').textContent     = signin ? 'Welcome back.' : 'Takes about a minute.';
+  document.getElementById('m-submit').textContent  = signin ? 'Sign in' : 'Create account';
+  document.getElementById('m-swap-text').textContent = signin ? 'New here?' : 'Already have an account?';
+  document.getElementById('m-swap-btn').textContent  = signin ? 'Create an account' : 'Sign in';
+  document.getElementById('m-pass').setAttribute('autocomplete', signin ? 'current-password' : 'new-password');
+}
+function say(text, kind){
+  const el = document.getElementById('m-msg');
+  el.textContent = text;
+  el.className = 'msg show ' + kind;
+}
+function setBusy(state, label){
+  busy = state;
+  const b = document.getElementById('m-submit');
+  b.disabled = state;
+  b.textContent = state ? label : (mode === 'signin' ? 'Sign in' : 'Create account');
 }
 
-function toggleAuthMode(){
-  AUTH_MODE = AUTH_MODE==="signin" ? "signup" : "signin";
-  document.getElementById("authMode").textContent = AUTH_MODE==="signin" ? "Sign in to continue" : "Create your account";
-  document.getElementById("authSubmitBtn").textContent = AUTH_MODE==="signin" ? "Sign In" : "Sign Up";
-  document.getElementById("authSwitch").textContent = AUTH_MODE==="signin" ? "New here? Create an account" : "Already have an account? Sign in";
-  var err = document.getElementById("authErr");
-  err.classList.add("hidden");
-  err.classList.remove("ok");
-}
-
-function handleAuthSubmit(){
-  var email = document.getElementById("authEmail").value.trim();
-  var password = document.getElementById("authPassword").value;
-  var err = document.getElementById("authErr");
-  var btn = document.getElementById("authSubmitBtn");
-  err.classList.add("hidden");
-  err.classList.remove("ok");
-
-  if(!email || !password){
-    err.textContent = "Please enter both email and password.";
-    err.classList.remove("hidden");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "Please wait...";
-
-  var action = AUTH_MODE==="signin"
-    ? sb.auth.signInWithPassword({email:email, password:password})
-    : sb.auth.signUp({email:email, password:password});
-
-  action.then(function(res){
-    btn.disabled = false;
-    btn.textContent = AUTH_MODE==="signin" ? "Sign In" : "Sign Up";
-    if(res.error){
-      err.textContent = res.error.message;
-      err.classList.remove("hidden");
-      return;
-    }
-    if(AUTH_MODE==="signup" && res.data.user && !res.data.session){
-      err.textContent = "Account created! Check your email to confirm, then sign in.";
-      err.classList.remove("hidden");
-      err.classList.add("ok");
-      toggleAuthMode();
-      return;
-    }
-    if(res.data.session && res.data.session.user){
-      closeAuth();
-      checkSubscription(res.data.session.user);
-    }
-  });
-}
-
-function checkSession(){
-  sb.auth.getSession().then(function(res){
-    var session = res.data && res.data.session;
-    if(session && session.user){
-      checkSubscription(session.user);
-    } else {
-      showView("landing");
-    }
-  }).catch(function(){
-    showView("landing");
-  });
-}
-
-function checkSubscription(user){
-  sb.from("profiles").select("subscription_status").eq("id", user.id).single()
-    .then(function(res){
-      var status = res.data && res.data.subscription_status;
-      if(status === "active"){
-        document.getElementById("welcomeEmail").textContent = user.email;
-        showView("welcomeMsg");
-      } else {
-        document.getElementById("subscribeEmail").textContent = user.email;
-        showView("subscribeMsg");
-      }
-    })
-    .catch(function(){
-      // Couldn't read the profile row — treat as not subscribed rather
-      // than leaving the user on a blank screen.
-      document.getElementById("subscribeEmail").textContent = user.email;
-      showView("subscribeMsg");
-    });
-}
-
-function supabaseSignOut(){
-  sb.auth.signOut().then(function(){ location.reload(); });
-}
-
-// Enter key submits the auth form
-document.addEventListener("keydown", function(e){
-  if(e.key==="Enter" && !document.getElementById("authModal").classList.contains("hidden")){
-    handleAuthSubmit();
-  }
-  if(e.key==="Escape") closeAuth();
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeAuth();
+  if(e.key === 'Enter' && document.getElementById('modal').classList.contains('open') && !busy) submitAuth();
 });
 
-checkSession();
+/* ---------- auth ---------- */
+async function submitAuth(){
+  if(busy) return;
+  const email = document.getElementById('m-email').value.trim();
+  const pass  = document.getElementById('m-pass').value;
+
+  if(!email || !pass){ say('Enter your email and password to continue.','err'); return; }
+  if(mode === 'signup' && pass.length < 6){ say('Password needs at least 6 characters.','err'); return; }
+
+  if(mode === 'signup'){
+    setBusy(true,'Creating…');
+    const { error } = await db.auth.signUp({
+      email, password: pass,
+      options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    });
+    setBusy(false);
+    if(error){ say(error.message,'err'); return; }
+    say('Account created. Check your inbox for the confirmation link, then sign in.','ok');
+    mode = 'signin'; paintMode();
+  } else {
+    setBusy(true,'Signing in…');
+    const { error } = await db.auth.signInWithPassword({ email, password: pass });
+    setBusy(false);
+    if(error){ say(error.message,'err'); return; }
+    closeAuth();
+    await route();
+  }
+}
+
+async function signOut(){
+  await db.auth.signOut();
+  show('view-landing');
+}
+
+/* ---------- subscription gate ---------- */
+async function route(){
+  const { data:{ session } } = await db.auth.getSession();
+  if(!session){ show('view-landing'); return; }
+
+  const email = session.user.email;
+  const { data: profile } = await db
+    .from('profiles')
+    .select('subscription_status, plan, expires_at')
+    .eq('id', session.user.id)
+    .single();
+
+  const active = profile && profile.subscription_status === 'active';
+
+  if(active){
+    document.getElementById('active-email').textContent = email;
+    const bits = [];
+    if(profile.plan) bits.push(profile.plan);
+    if(profile.expires_at) bits.push('renews ' + new Date(profile.expires_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}));
+    document.getElementById('active-plan').textContent = bits.join(' · ');
+    show('view-active');
+  } else {
+    document.getElementById('inactive-email').textContent = email;
+    show('view-inactive');
+  }
+}
+
+async function refreshStatus(){ await route(); }
+
+/* ---------- boot ---------- */
+(async function(){
+  try { await route(); }
+  catch(e){ console.error(e); show('view-landing'); }
+  finally { document.getElementById('boot').style.display = 'none'; }
+})();
+
+db.auth.onAuthStateChange((event) => {
+  if(event === 'SIGNED_IN' || event === 'SIGNED_OUT') route();
+});
 </script>
 </body>
 </html>
