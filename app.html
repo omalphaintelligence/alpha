@@ -21,20 +21,70 @@
      ============================================================ -->
 <style>
 :root{
-  --ink:#05070C;
-  --panel:#0C1119;
-  --panel-2:#111825;
-  --line:#1C2534;
-  --line-soft:#161E2B;
-  --text:#E8ECF3;
-  --muted:#7E8AA0;
-  --gold:#D9A94C;
-  --gold-dim:#8C6D2E;
-  --green:#3FB27F;
-  --red:#D9534F;
   --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --ease:cubic-bezier(.22,.9,.28,1);
 }
+
+/* Five shell themes, named to match the dashboard's t-* themes.
+   One localStorage key ('ai_th') drives both, so picking a theme on
+   the landing page carries into the screener and back. */
+body.s-dark{
+  --ink:#05070C; --panel:#0C1119; --panel-2:#111825;
+  --line:#1C2534; --line-soft:#161E2B;
+  --text:#E8ECF3; --muted:#7E8AA0;
+  --gold:#D9A94C; --gold-dim:#8C6D2E;
+  --green:#3FB27F; --red:#D9534F;
+  --nav-bg:rgba(5,7,12,.82);
+  --veil-1:rgba(5,7,12,.32); --veil-2:rgba(5,7,12,.93);
+  --glow:rgba(217,169,76,.10);
+  --grid:rgba(217,169,76,.055);
+}
+body.s-navy{
+  --ink:#020817; --panel:#0F1729; --panel-2:#162035;
+  --line:#1E3255; --line-soft:#16233C;
+  --text:#E2E8F0; --muted:#5A7099;
+  --gold:#FCD34D; --gold-dim:#9A7B24;
+  --green:#6EE7B7; --red:#FCA5A5;
+  --nav-bg:rgba(2,8,23,.84);
+  --veil-1:rgba(2,8,23,.32); --veil-2:rgba(2,8,23,.94);
+  --glow:rgba(96,165,250,.13);
+  --grid:rgba(96,165,250,.06);
+}
+body.s-green{
+  --ink:#0A1A0F; --panel:#0D1F12; --panel-2:#132918;
+  --line:#1A4A28; --line-soft:#143620;
+  --text:#D1FAE5; --muted:#4B7A5E;
+  --gold:#FBBF24; --gold-dim:#8A6712;
+  --green:#34D399; --red:#F87171;
+  --nav-bg:rgba(10,26,15,.84);
+  --veil-1:rgba(10,26,15,.32); --veil-2:rgba(10,26,15,.94);
+  --glow:rgba(52,211,153,.12);
+  --grid:rgba(52,211,153,.06);
+}
+body.s-saffron{
+  --ink:#1A0F00; --panel:#1F1200; --panel-2:#2D1A00;
+  --line:#5C3500; --line-soft:#3D2300;
+  --text:#FEF3C7; --muted:#92714A;
+  --gold:#FBBF24; --gold-dim:#8A6712;
+  --green:#86EFAC; --red:#FCA5A5;
+  --nav-bg:rgba(26,15,0,.84);
+  --veil-1:rgba(26,15,0,.32); --veil-2:rgba(26,15,0,.94);
+  --glow:rgba(251,191,36,.13);
+  --grid:rgba(251,191,36,.06);
+}
+body.s-light{
+  --ink:#FFFFFF; --panel:#F7F8FA; --panel-2:#EDF0F5;
+  --line:#D8DEE8; --line-soft:#E6EAF1;
+  --text:#0B1220; --muted:#5A6474;
+  --gold:#9A6E12; --gold-dim:#B99236;
+  --green:#0D7D3B; --red:#C8102E;
+  --nav-bg:rgba(255,255,255,.86);
+  --veil-1:rgba(255,255,255,.30); --veil-2:rgba(255,255,255,.94);
+  --glow:rgba(154,110,18,.10);
+  --grid:rgba(11,18,32,.045);
+}
+
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
@@ -43,6 +93,7 @@ body{
   font-family:var(--sans);
   -webkit-font-smoothing:antialiased;
   line-height:1.55;
+  transition:background-color .35s var(--ease), color .35s var(--ease);
 }
 a{color:inherit}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -66,7 +117,7 @@ input{font-family:inherit}
 
 header.nav{
   position:sticky;top:0;z-index:100;
-  background:rgba(5,7,12,.82);
+  background:var(--nav-bg);
   backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line-soft);
 }
@@ -82,10 +133,10 @@ header.nav{
   transition:background .16s ease,border-color .16s ease,transform .12s ease,opacity .16s ease;
 }
 .btn:active{transform:translateY(1px)}
-.btn-gold{background:var(--gold);color:#120D02}
-.btn-gold:hover{background:#E7BB61}
+.btn-gold{background:var(--gold);color:var(--ink)}
+.btn-gold:hover{filter:brightness(1.12)}
 .btn-ghost{border:1px solid var(--line);color:var(--text)}
-.btn-ghost:hover{border-color:#2C3648;background:var(--panel)}
+.btn-ghost:hover{border-color:var(--gold-dim);background:var(--panel)}
 .btn-block{width:100%;padding:14px 20px;font-size:15px}
 .btn:disabled{opacity:.55;cursor:not-allowed}
 
@@ -94,13 +145,13 @@ header.nav{
 .hero::after{
   content:'';position:absolute;top:-160px;left:50%;transform:translateX(-50%);
   width:760px;height:420px;pointer-events:none;
-  background:radial-gradient(ellipse at center,rgba(217,169,76,.10),transparent 68%);
+  background:radial-gradient(ellipse at center,var(--glow),transparent 68%);
 }
 .eyebrow{
   display:inline-flex;align-items:center;gap:9px;
   font-family:var(--mono);font-size:11px;font-weight:500;
   letter-spacing:.13em;text-transform:uppercase;color:var(--gold);
-  border:1px solid rgba(217,169,76,.26);border-radius:999px;
+  border:1px solid var(--gold-dim);border-radius:999px;
   padding:6px 14px;margin-bottom:26px;
 }
 .livedot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(63,178,127,.16)}
@@ -112,7 +163,7 @@ h1{
 h1 em{font-style:normal;color:var(--gold)}
 .hero p.lede{margin-top:22px;max-width:56ch;font-size:17px;color:var(--muted);line-height:1.65}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
-.note{margin-top:16px;font-size:13px;color:#5D6779}
+.note{margin-top:16px;font-size:13px;color:var(--muted);opacity:.85}
 
 /* stats */
 .stats{
@@ -141,7 +192,7 @@ h2{margin-top:12px;font-size:clamp(27px,3.6vw,36px);font-weight:700;letter-spaci
 .fcard p{font-size:14.5px;color:var(--muted);line-height:1.62}
 .fcard-ico{
   width:34px;height:34px;border-radius:9px;margin-bottom:18px;
-  background:rgba(217,169,76,.10);border:1px solid rgba(217,169,76,.20);
+  background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid var(--gold-dim);
   display:flex;align-items:center;justify-content:center;
   font-family:var(--mono);font-size:14px;color:var(--gold);font-weight:700;
 }
@@ -160,13 +211,13 @@ h2{margin-top:12px;font-size:clamp(27px,3.6vw,36px);font-weight:700;letter-spaci
 .num{font-family:var(--mono);font-size:14px}
 .up{color:var(--green)}
 .tag{display:inline-block;padding:4px 11px;border-radius:6px;font-size:11.5px;font-weight:650;letter-spacing:.02em}
-.tag-sb{background:rgba(63,178,127,.14);color:var(--green)}
-.tag-b{background:rgba(217,169,76,.13);color:var(--gold)}
-.tag-w{background:rgba(126,138,160,.13);color:var(--muted)}
+.tag-sb{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.tag-b{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold)}
+.tag-w{background:color-mix(in srgb,var(--muted) 16%,transparent);color:var(--muted)}
 .blur{filter:blur(7px);user-select:none;pointer-events:none}
 .veil{
   position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(5,7,12,.32) 0%,rgba(5,7,12,.93) 62%);
+  background:linear-gradient(180deg,var(--veil-1) 0%,var(--veil-2) 62%);
   display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
   padding-bottom:44px;text-align:center;
 }
@@ -190,13 +241,13 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .foot-top{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center}
 .disc{
   margin-top:28px;padding-top:24px;border-top:1px solid var(--line-soft);
-  font-size:12.5px;color:#4E586B;line-height:1.7;max-width:78ch;
+  font-size:12.5px;color:var(--muted);opacity:.8;line-height:1.7;max-width:78ch;
 }
 
 /* auth modal */
 .authwrap{
   position:fixed;inset:0;z-index:500;
-  background:rgba(3,5,9,.78);backdrop-filter:blur(6px);
+  background:color-mix(in srgb,var(--ink) 78%,transparent);backdrop-filter:blur(6px);
   display:none;align-items:center;justify-content:center;padding:24px;
 }
 .authwrap.open{display:flex}
@@ -220,7 +271,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   transition:border-color .15s ease;
 }
 .field input:focus{outline:none;border-color:var(--gold-dim)}
-.field input::placeholder{color:#5A6478}
+.field input::placeholder{color:var(--muted)}
 .swap{margin-top:20px;text-align:center;font-size:14px;color:var(--muted)}
 .swap button{color:var(--gold);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .msg{margin-top:14px;padding:11px 14px;border-radius:9px;font-size:13.5px;line-height:1.5;display:none}
@@ -246,9 +297,132 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 .pane-actions{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
 
+/* ---------- theme dots ---------- */
+.theme-dots{display:flex;align-items:center;gap:6px;margin-right:6px}
+.tdot{
+  width:16px;height:16px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;
+  transition:transform .18s var(--ease),border-color .18s var(--ease);
+}
+.tdot:hover{transform:scale(1.22)}
+.tdot.on{border-color:var(--text)}
+.tdot-dark{background:#0a0d13}
+.tdot-navy{background:#0f1729}
+.tdot-green{background:#0d1f12}
+.tdot-saffron{background:#1f1200}
+.tdot-light{background:#cbd5e1}
+
+/* ---------- scroll reveal ---------- */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- hero chart ---------- */
+.hero-grid{
+  display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;
+}
+.chart-card{
+  position:relative;border:1px solid var(--line-soft);border-radius:16px;
+  background:linear-gradient(165deg,var(--panel-2),var(--panel));
+  padding:18px 18px 12px;overflow:hidden;
+}
+.chart-card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:34px 34px;
+}
+.chart-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;position:relative}
+.chart-ttl{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.chart-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)}
+#heroChart{display:block;width:100%;height:210px;position:relative}
+.chart-legend{
+  display:flex;gap:14px;margin-top:8px;position:relative;
+  font-size:10.5px;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;
+}
+.lg{display:flex;align-items:center;gap:6px}
+.lg i{width:8px;height:8px;border-radius:2px;display:block}
+
+/* ---------- quote rail ---------- */
+.quote-rail{
+  margin-top:26px;border-left:3px solid var(--gold);
+  padding:6px 0 6px 18px;min-height:96px;position:relative;
+}
+.q-text{
+  font-size:16px;line-height:1.6;font-style:italic;color:var(--text);
+  opacity:0;transform:translateY(8px);
+  transition:opacity .55s var(--ease),transform .55s var(--ease);
+}
+.q-text.in{opacity:.92;transform:none}
+.q-by{
+  margin-top:9px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--gold);
+  opacity:0;transition:opacity .55s var(--ease) .1s;
+}
+.q-by.in{opacity:1}
+
+/* ---------- live pulse strip ---------- */
+.pulse-strip{
+  display:flex;align-items:center;gap:0;overflow:hidden;
+  border:1px solid var(--line-soft);border-radius:12px;
+  background:var(--panel);margin-top:26px;
+}
+.ps-lbl{
+  flex-shrink:0;padding:10px 14px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold);border-right:1px solid var(--line-soft);background:var(--panel-2);
+}
+.ps-track{flex:1;overflow:hidden;min-width:0}
+.ps-move{display:flex;width:max-content;animation:psScroll 26s linear infinite}
+.ps-track:hover .ps-move{animation-play-state:paused}
+@keyframes psScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ps-item{
+  display:flex;align-items:center;gap:8px;padding:10px 18px;
+  border-right:1px solid var(--line-soft);white-space:nowrap;
+}
+.ps-sym{font-family:var(--mono);font-size:12px;font-weight:700}
+.ps-chg{font-family:var(--mono);font-size:11.5px;font-weight:700}
+.ps-chg.u{color:var(--green)}
+.ps-chg.d{color:var(--red)}
+
+/* ---------- interactive lift ---------- */
+.fcard{position:relative;overflow:hidden}
+.fcard::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),
+             color-mix(in srgb,var(--gold) 13%,transparent),transparent 42%);
+  transition:opacity .3s var(--ease);
+}
+.fcard:hover{transform:translateY(-4px);border-color:var(--gold-dim)}
+.fcard:hover::after{opacity:1}
+.fcard{transition:border-color .25s var(--ease),transform .25s var(--ease)}
+.fcard-ico{transition:transform .3s var(--ease)}
+.fcard:hover .fcard-ico{transform:rotate(-6deg) scale(1.08)}
+
+.stat{transition:background-color .25s var(--ease)}
+.stat:hover{background:var(--panel-2)}
+.stat-k{font-variant-numeric:tabular-nums}
+
+.btn-gold{position:relative;overflow:hidden}
+.btn-gold::after{
+  content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.32),transparent);
+  transform:skewX(-18deg);
+}
+.btn-gold:hover::after{animation:shine .75s var(--ease)}
+@keyframes shine{to{left:130%}}
+
+.eyebrow .livedot{animation:beat 2.2s ease-in-out infinite}
+@keyframes beat{
+  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 55%,transparent)}
+  55%{box-shadow:0 0 0 7px transparent}
+}
+
+.tbl tbody tr{transition:background-color .2s var(--ease)}
+
 @media(max-width:900px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .features{grid-template-columns:1fr}
+  .hero-grid{grid-template-columns:1fr;gap:34px}
 }
 @media(max-width:600px){
   .hero{padding:64px 0 52px}
@@ -259,6 +433,12 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 @media(prefers-reduced-motion:reduce){
   .boot-mark,.sheet{animation:none!important}
+  .ps-move{animation:none!important}
+  .btn-gold:hover::after{animation:none!important}
+  .eyebrow .livedot{animation:none!important}
+  .rv{opacity:1!important;transform:none!important;transition:none!important}
+  .q-text,.q-by{transition:none!important}
+  .fcard:hover{transform:none}
   html{scroll-behavior:auto}
 }
 /* installed / home-screen mode — keep content clear of the notch
@@ -502,7 +682,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 #dash-root ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
 </style>
 </head>
-<body>
+<body class="s-dark">
 
 <div id="boot"><div class="boot-mark">Alpha<span style="color:#D9A94C">Intel</span></div></div>
 
@@ -512,6 +692,13 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
     <div class="wrap-x nav-in">
       <div class="brand">Alpha<span>Intel</span></div>
       <div class="nav-actions">
+        <div class="theme-dots" id="theme-dots">
+          <span class="tdot tdot-dark"    data-theme="dark"    title="Dark"></span>
+          <span class="tdot tdot-navy"    data-theme="navy"    title="Navy"></span>
+          <span class="tdot tdot-green"   data-theme="green"   title="Green"></span>
+          <span class="tdot tdot-saffron" data-theme="saffron" title="Saffron"></span>
+          <span class="tdot tdot-light"   data-theme="light"   title="Light"></span>
+        </div>
         <span id="nav-guest" style="display:flex;gap:10px">
           <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
           <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
@@ -523,14 +710,40 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 
   <div class="wrap-x">
     <div class="hero">
-      <div class="eyebrow"><span class="livedot"></span>Updated after every NSE close</div>
-      <h1>Know which stocks are <em>actually</em> moving.</h1>
-      <p class="lede">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
-      <div class="hero-cta">
-        <button class="btn btn-gold cta" id="cta-hero" data-guest="Create your account" data-guest-mode="signup" onclick="ctaClick(this)">Create your account</button>
-        <a class="btn btn-ghost" href="#how">See how it works</a>
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow"><span class="livedot"></span>Updated after every NSE close</div>
+          <h1>Know which stocks are <em>actually</em> moving.</h1>
+          <p class="lede">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
+          <div class="hero-cta">
+            <button class="btn btn-gold cta" id="cta-hero" data-guest="Create your account" data-guest-mode="signup" onclick="ctaClick(this)">Create your account</button>
+            <a class="btn btn-ghost" href="#how">See how it works</a>
+          </div>
+          <p class="note">Free to create an account. Access to live signals requires an active subscription.</p>
+
+          <div class="quote-rail">
+            <div class="q-text" id="q-text"></div>
+            <div class="q-by" id="q-by"></div>
+          </div>
+        </div>
+
+        <div class="chart-card rv">
+          <div class="chart-hd">
+            <span class="chart-ttl">Ranked basket &middot; illustrative</span>
+            <span class="chart-val" id="chartVal">&mdash;</span>
+          </div>
+          <canvas id="heroChart" width="640" height="420" aria-label="Illustrative rising equity curve"></canvas>
+          <div class="chart-legend">
+            <span class="lg"><i style="background:var(--green)"></i>Ranked basket</span>
+            <span class="lg"><i style="background:var(--muted)"></i>Benchmark</span>
+          </div>
+        </div>
       </div>
-      <p class="note">Free to create an account. Access to live signals requires an active subscription.</p>
+
+      <div class="pulse-strip rv">
+        <div class="ps-lbl">Signal flow</div>
+        <div class="ps-track"><div class="ps-move" id="psMove"></div></div>
+      </div>
     </div>
 
     <div class="stats">
@@ -629,7 +842,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
         <div class="brand">Alpha<span>Intel</span></div>
         <button class="btn btn-ghost cta" id="cta-footer" data-guest="Sign in" data-guest-mode="signin" onclick="ctaClick(this)">Sign in</button>
       </div>
-      <p class="disc"><strong style="color:#6E7A8E">Important:</strong> Alpha Intel is a research and screening tool. It is not investment advice, and nothing here is a recommendation to buy or sell any security. We are not registered with SEBI as an Investment Adviser or Research Analyst. Rankings are generated from historical price and volume data; past behaviour does not predict future returns. Markets carry risk of loss. Do your own research and consult a registered adviser before acting on anything you see here.</p>
+      <p class="disc"><strong style="color:var(--text);opacity:.75">Important:</strong> Alpha Intel is a research and screening tool. It is not investment advice, and nothing here is a recommendation to buy or sell any security. We are not registered with SEBI as an Investment Adviser or Research Analyst. Rankings are generated from historical price and volume data; past behaviour does not predict future returns. Markets carry risk of loss. Do your own research and consult a registered adviser before acting on anything you see here.</p>
     </div>
   </footer>
 </div>
@@ -678,7 +891,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
         <span class="td td-navy" onclick="setTheme('navy',this)" title="Navy"></span>
         <span class="td td-green" onclick="setTheme('green',this)" title="Green"></span>
         <span class="td td-saffron" onclick="setTheme('saffron',this)" title="Saffron"></span>
-        <span class="td td-light on" onclick="setTheme('light',this)" title="Light"></span>
+        <span class="td td-light" onclick="setTheme('light',this)" title="Light"></span>
       </div>
       <span id="dataUpdated" class="data-updated-lbl" style="font-size:11px;color:var(--muted)"></span>
       <span style="font-size:11px;color:var(--muted)"><span class="live-dot"></span></span>
@@ -800,6 +1013,306 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 const SUPABASE_URL = 'https://eoioyfgsqfkqyflmflhj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZNhYfnxJo__rFy8eLkINyw_VpeYw3Rr';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ============================================================
+   THEME — one key ('ai_th') drives the shell and the dashboard,
+   so a choice made on the landing page carries into the screener.
+   ============================================================ */
+const THEMES = ['dark','navy','green','saffron','light'];
+
+function setAppTheme(name, persist){
+  if(THEMES.indexOf(name) === -1) name = 'dark';
+  document.body.className = 's-' + name;
+
+  const root = document.getElementById('dash-root');
+  if(root) root.className = 't-' + name;
+
+  document.querySelectorAll('#theme-dots .tdot').forEach(d => {
+    d.classList.toggle('on', d.getAttribute('data-theme') === name);
+  });
+  document.querySelectorAll('#dash-root .td').forEach(d => d.classList.remove('on'));
+  const dd = document.querySelector('#dash-root .td-' + name);
+  if(dd) dd.classList.add('on');
+
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta){
+    meta.setAttribute('content',
+      getComputedStyle(document.body).getPropertyValue('--ink').trim() || '#05070C');
+  }
+
+  if(persist !== false){ try{ localStorage.setItem('ai_th', name); }catch(e){} }
+  if(typeof redrawHeroChart === 'function') redrawHeroChart();
+}
+
+function currentTheme(){
+  try{ return localStorage.getItem('ai_th') || 'dark'; }catch(e){ return 'dark'; }
+}
+
+document.querySelectorAll('#theme-dots .tdot').forEach(d => {
+  d.addEventListener('click', () => setAppTheme(d.getAttribute('data-theme')));
+});
+
+setAppTheme(currentTheme(), false);
+
+/* ============================================================
+   LANDING MOTION
+   ============================================================ */
+const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* --- scroll reveal --- */
+(function(){
+  const targets = document.querySelectorAll('#view-landing .fcard, #view-landing .sec-head, #view-landing .stats, #view-landing .locked, #view-landing .band, #view-landing .rv');
+  targets.forEach(t => t.classList.add('rv'));
+  if(REDUCED || !('IntersectionObserver' in window)){
+    targets.forEach(t => t.classList.add('in'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if(e.isIntersecting){
+        setTimeout(() => e.target.classList.add('in'), i * 70);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* --- cursor glow on feature cards --- */
+document.querySelectorAll('#view-landing .fcard').forEach(card => {
+  card.addEventListener('pointermove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+});
+
+/* --- animated stat counters --- */
+(function(){
+  const els = document.querySelectorAll('#view-landing .stat-k');
+  if(REDUCED || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(!e.isIntersecting) return;
+      io.unobserve(e.target);
+      const el = e.target;
+      const raw = el.textContent.trim();
+      const m = raw.match(/^([\d,]+)(\D*)$/);
+      if(!m) return;
+      const target = parseInt(m[1].replace(/,/g,''), 10);
+      const suffix = m[2] || '';
+      if(!target) return;
+      const dur = 1100, t0 = performance.now();
+      (function step(now){
+        const p = Math.min(1, (now - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * eased).toLocaleString('en-IN') + suffix;
+        if(p < 1) requestAnimationFrame(step);
+      })(t0);
+    });
+  }, { threshold: 0.5 });
+  els.forEach(el => io.observe(el));
+})();
+
+/* --- Mark Douglas quote rail --- */
+const DOUGLAS = [
+  ["Anything can happen.", "Mark Douglas"],
+  ["Think in probabilities, not certainties.", "Mark Douglas"],
+  ["Every moment in the market is unique.", "Mark Douglas"],
+  ["The best traders are not attached to being right.", "Mark Douglas"],
+  ["The market doesn't know you exist. Trade accordingly.", "Mark Douglas"],
+  ["Your edge doesn't guarantee any single trade. It works over time.", "Mark Douglas"],
+  ["Trading is not about being smart. It is about being disciplined.", "Mark Douglas"],
+  ["Boredom is a trader's best friend. It means you are waiting for the right setup.", "Mark Douglas"],
+  ["Hope is not a trading strategy.", "Mark Douglas"],
+  ["Trade what you see, not what you think.", "Mark Douglas"],
+  ["Most traders take random approaches, then wonder why they get random results.", "Mark Douglas"],
+  ["One of the greatest skills in trading is knowing when to do nothing.", "Mark Douglas"]
+];
+
+(function(){
+  const tEl = document.getElementById('q-text');
+  const bEl = document.getElementById('q-by');
+  if(!tEl || !bEl) return;
+
+  let order = DOUGLAS.map((_, i) => i).sort(() => Math.random() - 0.5);
+  let i = 0;
+
+  function paint(){
+    const [text, who] = DOUGLAS[order[i % order.length]];
+    tEl.textContent = '\u201C' + text + '\u201D';
+    bEl.textContent = who;
+    requestAnimationFrame(() => {
+      tEl.classList.add('in');
+      bEl.classList.add('in');
+    });
+    i++;
+  }
+
+  paint();
+  if(REDUCED) return;
+
+  setInterval(() => {
+    tEl.classList.remove('in');
+    bEl.classList.remove('in');
+    setTimeout(paint, 600);
+  }, 7000);
+})();
+
+/* --- signal flow strip (illustrative, not live data) --- */
+(function(){
+  const el = document.getElementById('psMove');
+  if(!el) return;
+  const names = ['CAPGOODS','FINSERV','PHARMA','AUTO','INFRA','METALS','IT','REALTY','ENERGY','FMCG','CHEM','BANK'];
+  const items = names.map(n => {
+    const up = Math.random() > 0.32;
+    const pct = (Math.random() * 4 + 0.4).toFixed(2);
+    return '<div class="ps-item"><span class="ps-sym">' + n + '</span>' +
+           '<span class="ps-chg ' + (up ? 'u' : 'd') + '">' +
+           (up ? '\u25B2 +' : '\u25BC -') + pct + '%</span></div>';
+  }).join('');
+  el.innerHTML = items + items;
+})();
+
+/* --- hero chart: a ranked basket outpacing a benchmark --- */
+/* var, not let: setAppTheme() runs before the chart IIFE below and
+   probes this binding. A let would still be in its temporal dead
+   zone at that point and even typeof would throw. */
+var redrawHeroChart = function(){};
+
+(function(){
+  const cv = document.getElementById('heroChart');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+
+  const N = 74;
+  function series(drift, vol, seed){
+    let v = 100, s = seed, out = [v];
+    for(let i = 1; i < N; i++){
+      s = (s * 9301 + 49297) % 233280;
+      const r = s / 233280 - 0.5;
+      v = Math.max(72, v * (1 + drift + r * vol));
+      out.push(v);
+    }
+    return out;
+  }
+  const basket = series(0.0125, 0.030, 7331);
+  const bench  = series(0.0034, 0.021, 4517);
+
+  let progress = 0;
+  let raf = null;
+
+  function draw(){
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if(!w || !h) return;
+    cv.width = w * dpr; cv.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const cs = getComputedStyle(document.body);
+    const green = cs.getPropertyValue('--green').trim() || '#3FB27F';
+    const muted = cs.getPropertyValue('--muted').trim() || '#7E8AA0';
+
+    const all = basket.concat(bench);
+    const min = Math.min.apply(null, all) * 0.985;
+    const max = Math.max.apply(null, all) * 1.015;
+    const padB = 16, padT = 8;
+    const X = i => (i / (N - 1)) * w;
+    const Y = v => padT + (h - padT - padB) * (1 - (v - min) / (max - min));
+
+    const shown = Math.max(2, Math.floor(N * progress));
+
+    function line(data, color, width, dashed){
+      ctx.save();
+      if(dashed) ctx.setLineDash([4, 5]);
+      ctx.beginPath();
+      for(let i = 0; i < shown; i++){
+        const x = X(i), y = Y(data[i]);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /* basket fill */
+    ctx.beginPath();
+    for(let i = 0; i < shown; i++){
+      const x = X(i), y = Y(basket[i]);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.lineTo(X(shown - 1), h);
+    ctx.lineTo(X(0), h);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, green);
+    grad.addColorStop(1, 'transparent');
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    line(bench, muted, 1.4, true);
+    line(basket, green, 2.4, false);
+
+    /* leading dot */
+    const lx = X(shown - 1), ly = Y(basket[shown - 1]);
+    ctx.beginPath();
+    ctx.arc(lx, ly, 8, 0, Math.PI * 2);
+    ctx.fillStyle = green;
+    ctx.globalAlpha = 0.18;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.4, 0, Math.PI * 2);
+    ctx.fillStyle = green;
+    ctx.fill();
+
+    const val = document.getElementById('chartVal');
+    if(val){
+      const pct = (basket[shown - 1] / basket[0] - 1) * 100;
+      val.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+    }
+  }
+
+  function animate(){
+    progress = Math.min(1, progress + 0.014);
+    draw();
+    if(progress < 1) raf = requestAnimationFrame(animate);
+  }
+
+  redrawHeroChart = draw;
+
+  if(REDUCED){
+    progress = 1;
+    draw();
+  } else if('IntersectionObserver' in window){
+    const io = new IntersectionObserver(es => {
+      es.forEach(e => {
+        if(e.isIntersecting){
+          io.unobserve(e.target);
+          progress = 0;
+          if(raf) cancelAnimationFrame(raf);
+          animate();
+        }
+      });
+    }, { threshold: 0.3 });
+    io.observe(cv);
+  } else {
+    progress = 1;
+    draw();
+  }
+
+  let rt = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(draw, 140);
+  });
+})();
 
 let mode = 'signin';
 let busy = false;
@@ -1138,11 +1651,10 @@ function switchTab(id,btn,color){
 }
 
 function setTheme(n,dot){
-  var root = dashRoot();
-  if(root) root.className="t-"+n;
-  document.querySelectorAll("#dash-root .td").forEach(function(d){d.classList.remove("on");});
-  if(dot) dot.classList.add("on");
-  try{ localStorage.setItem("ai_th",n); }catch(e){}
+  /* Delegates to the shared engine so the shell and the dashboard
+     never drift apart. The dot argument is ignored — setAppTheme
+     repaints both dot rows from the theme name itself. */
+  setAppTheme(n);
 }
 
 function toggleSb(){
@@ -2334,15 +2846,9 @@ document.addEventListener("keydown", function(e){
 /* Called once by startDashboard() — only after an active subscription
    has been confirmed. Nothing here runs on page load. */
 function initDashboard(){
-  var t="light";
-  try{ t = localStorage.getItem("ai_th")||"light"; }catch(e){}
-  var root = dashRoot();
-  if(root) root.className="t-"+t;
-  var d=document.querySelector("#dash-root .td-"+t);
-  if(d){
-    document.querySelectorAll("#dash-root .td").forEach(function(x){x.classList.remove("on");});
-    d.classList.add("on");
-  }
+  var t="dark";
+  try{ t = localStorage.getItem("ai_th")||"dark"; }catch(e){}
+  setAppTheme(t, false);
   var params=new URLSearchParams(window.location.search);
   var m=params.get("m");
   if(m&&m.toUpperCase()==="US"){
