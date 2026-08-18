@@ -433,6 +433,11 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   background:linear-gradient(90deg,var(--r70),var(--r80),var(--r85),var(--r90),var(--r99));
 }
 .lad-scale span{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted)}
+.lad-row{opacity:1;transition:transform .85s var(--ease),opacity .5s var(--ease),background-color .5s var(--ease),border-color .5s var(--ease)}
+.lad-note{
+  display:flex;align-items:center;justify-content:center;height:100%;
+  font-size:13px;color:var(--muted);text-align:center;padding:0 18px;
+}
 
 /* ---------- quote rail ---------- */
 .quote-rail{
@@ -468,7 +473,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   color:var(--brand);border-right:1px solid var(--line-soft);background:var(--panel-2);
 }
 .ps-track{flex:1;overflow:hidden;min-width:0}
-.ps-move{display:flex;width:max-content;animation:psScroll 26s linear infinite}
+.ps-move{display:flex;width:max-content;animation:psScroll 34s linear infinite}
 .ps-track:hover .ps-move{animation-play-state:paused}
 @keyframes psScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .ps-item{
@@ -476,6 +481,8 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   border-right:1px solid var(--line-soft);white-space:nowrap;
 }
 .ps-sym{font-family:var(--mono);font-size:12px;font-weight:700}
+.ps-px{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.ps-sec{font-size:12px;color:var(--muted)}
 .ps-chg{font-family:var(--mono);font-size:11.5px;font-weight:700}
 .ps-chg.u{color:var(--green)}
 .ps-chg.d{color:var(--red)}
@@ -829,8 +836,8 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 
         <div class="ladder rv">
           <div class="lad-hd">
-            <span class="lad-ttl">Rank ladder</span>
-            <span class="lad-live"><i></i>RE-SORTING</span>
+            <span class="lad-ttl">Top ranked today</span>
+            <span class="lad-live"><i></i><span id="ladStamp">LIVE</span></span>
           </div>
           <div class="lad-rows" id="ladRows"></div>
           <div class="lad-scale">
@@ -842,7 +849,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
       </div>
 
       <div class="pulse-strip rv">
-        <div class="ps-lbl">Signal flow</div>
+        <div class="ps-lbl">NSE indices</div>
         <div class="ps-track"><div class="ps-move" id="psMove"></div></div>
       </div>
     </div>
@@ -1156,6 +1163,24 @@ document.querySelectorAll('#theme-dots .tdot').forEach(d => {
 setAppTheme(currentTheme(), false);
 
 /* ============================================================
+   PUBLIC MARKET FEED
+   Same Apps Script endpoint the dashboard uses. It is already
+   public, so no new exposure — but note every anonymous visitor
+   now hits it, which counts against the Apps Script daily quota.
+
+   LANDING_SHOW_TICKERS: with this on, the real top-ranked symbols
+   are visible to anyone before signing up. Set it to false to keep
+   the real ranks, sectors and movement but mask the names.
+   ============================================================ */
+const FEED_URL = 'https://script.google.com/macros/s/AKfycbwnA5QHrJ1AAxhz9XZNQeAVg0o42SY-cZt6-gupSkaqLhit_KnCo6TpuzuGh_M6deYQ/exec';
+const LANDING_SHOW_TICKERS = true;
+
+function maskSymbol(sym){
+  if(LANDING_SHOW_TICKERS) return sym;
+  return sym.slice(0,2) + '\u2022'.repeat(Math.max(3, sym.length - 2));
+}
+
+/* ============================================================
    LANDING MOTION
    ============================================================ */
 const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -1260,103 +1285,133 @@ const DOUGLAS = [
   }, 7000);
 })();
 
-/* --- signal flow strip (illustrative, not live data) --- */
+/* --- signal flow strip: real NSE index moves ---
+   Reads the same ?action=indices feed the dashboard ticker uses.
+   On failure it says so rather than inventing numbers.          */
 (function(){
   const el = document.getElementById('psMove');
   if(!el) return;
-  const names = ['CAPGOODS','FINSERV','PHARMA','AUTO','INFRA','METALS','IT','REALTY','ENERGY','FMCG','CHEM','BANK'];
-  const items = names.map(n => {
-    const up = Math.random() > 0.32;
-    const pct = (Math.random() * 4 + 0.4).toFixed(2);
-    return '<div class="ps-item"><span class="ps-sym">' + n + '</span>' +
-           '<span class="ps-chg ' + (up ? 'u' : 'd') + '">' +
-           (up ? '\u25B2 +' : '\u25BC -') + pct + '%</span></div>';
-  }).join('');
-  el.innerHTML = items + items;
+
+  function msg(text){
+    el.innerHTML = '<div class="ps-item"><span class="ps-sec">' + text + '</span></div>';
+  }
+
+  function render(list){
+    const rows = (list || []).filter(x => x && x.label && typeof x.price === 'number');
+    if(!rows.length){ msg('Index data unavailable'); return; }
+
+    const html = rows.map(x => {
+      const chg = typeof x.chg === 'number' ? x.chg : 0;
+      const up = chg >= 0;
+      return '<div class="ps-item">' +
+               '<span class="ps-sym">' + x.label + '</span>' +
+               '<span class="ps-px">' + x.price.toLocaleString('en-IN', {maximumFractionDigits: 2}) + '</span>' +
+               '<span class="ps-chg ' + (up ? 'u' : 'd') + '">' +
+                 (up ? '\u25B2 +' : '\u25BC ') + chg.toFixed(2) + '%' +
+               '</span>' +
+             '</div>';
+    }).join('');
+
+    /* doubled so the marquee can loop seamlessly */
+    el.innerHTML = rows.length >= 4 ? html + html : html;
+  }
+
+  function load(){
+    fetch(FEED_URL + '?action=indices', { redirect: 'follow' })
+      .then(r => r.json())
+      .then(render)
+      .catch(() => msg('Index data unavailable'));
+  }
+
+  msg('Loading index data\u2026');
+  load();
+  if(!REDUCED) setInterval(load, 60000);
 })();
 
 /* --- signature: the rank ladder ---
-   Seven names hold rank positions. Every few seconds the engine
-   "re-ranks" — scores drift, rows re-sort, and each row slides to
-   its new slot. Colour is sampled from the same 70-99 ramp the
-   tier tags use, so the hue always means the score.
-   Illustrative movement, not live market data.                    */
+   The real top-ranked names from the live screener feed, in rank
+   order, coloured by the same 70-99 ramp the tier tags use. Rows
+   animate into their slots on load; positions come from the data,
+   not from a timer. Refreshes every 5 minutes — the underlying
+   ranking only changes after the close.                          */
 var redrawHeroChart = function(){};
 
 (function(){
   const host = document.getElementById('ladRows');
   if(!host) return;
 
-  const ROW_H = 42, GAP = 6;
+  const ROW_H = 42, GAP = 6, COUNT = 7;
   const STOPS = [
-    { at: 99, v: '--r99' },
-    { at: 92, v: '--r90' },
-    { at: 86, v: '--r85' },
-    { at: 79, v: '--r80' },
-    { at: 70, v: '--r70' }
+    { at: 99, v: '--r99' }, { at: 92, v: '--r90' }, { at: 86, v: '--r85' },
+    { at: 79, v: '--r80' }, { at: 70, v: '--r70' }
   ];
 
-  /* nearest ramp stop for a score — keeps hue tied to rank */
   function hueFor(score){
     let best = STOPS[0];
-    for(const stop of STOPS){
-      if(Math.abs(stop.at - score) < Math.abs(best.at - score)) best = stop;
+    for(const st of STOPS){
+      if(Math.abs(st.at - score) < Math.abs(best.at - score)) best = st;
     }
     return 'var(' + best.v + ')';
   }
 
-  const names = [
-    ['BHARATFORG','Capital Goods'],
-    ['CHOLAFIN',  'Financials'],
-    ['LAURUSLABS','Pharma'],
-    ['TIINDIA',   'Auto'],
-    ['KEC',       'Infrastructure'],
-    ['APLAPOLLO', 'Metals'],
-    ['PERSISTENT','Technology']
-  ];
-
-  const rows = names.map(([sym, sec], i) => {
-    const el = document.createElement('div');
-    el.className = 'lad-row';
-    el.innerHTML =
-      '<div class="lad-rank"></div>' +
-      '<div class="lad-mid"><div class="lad-sym">' + sym + '</div>' +
-      '<div class="lad-sec">' + sec + '</div></div>' +
-      '<div class="lad-bar"><i></i></div>';
-    host.appendChild(el);
-    return { el, score: 99 - i * 4.4 - Math.random() * 1.1 };
-  });
-
-  function paint(animate){
-    rows.slice()
-        .sort((a, b) => b.score - a.score)
-        .forEach((r, slot) => {
-          r.el.style.transform = 'translateY(' + (slot * (ROW_H + GAP)) + 'px)';
-        });
-
-    rows.forEach(r => {
-      const score = Math.round(r.score);
-      const hue = hueFor(score);
-      r.el.style.setProperty('--hue', hue);
-      r.el.querySelector('.lad-rank').textContent = score;
-      r.el.querySelector('.lad-bar i').style.width =
-        Math.max(8, Math.min(100, (score - 66) / 33 * 100)) + '%';
-    });
-
-    if(!animate) host.offsetHeight; /* flush before transitions matter */
+  function note(text){
+    host.innerHTML = '<div class="lad-note">' + text + '</div>';
   }
 
-  paint(false);
+  function stamp(updated){
+    const el = document.getElementById('ladStamp');
+    if(!el) return;
+    if(!updated){ el.textContent = 'LIVE'; return; }
+    const d = new Date(updated);
+    el.textContent = isNaN(d.getTime())
+      ? 'LIVE'
+      : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }).toUpperCase();
+  }
 
-  if(REDUCED) return;
+  function render(rows){
+    host.innerHTML = '';
+    rows.forEach((r, slot) => {
+      const score = Math.round(r.rank);
+      const el = document.createElement('div');
+      el.className = 'lad-row';
+      el.style.setProperty('--hue', hueFor(score));
+      el.style.transform = 'translateY(' + (slot * (ROW_H + GAP)) + 'px)';
+      el.innerHTML =
+        '<div class="lad-rank">' + score + '</div>' +
+        '<div class="lad-mid">' +
+          '<div class="lad-sym">' + maskSymbol(r.symbol || '\u2014') + '</div>' +
+          '<div class="lad-sec">' + (r.sector || '') + '</div>' +
+        '</div>' +
+        '<div class="lad-bar"><i style="width:' +
+          Math.max(8, Math.min(100, (score - 66) / 33 * 100)) + '%"></i></div>';
 
-  setInterval(() => {
-    rows.forEach(r => {
-      r.score += (Math.random() - 0.48) * 5.5;
-      r.score = Math.max(71, Math.min(99, r.score));
+      if(!REDUCED){
+        el.style.opacity = '0';
+        setTimeout(() => { el.style.opacity = '1'; }, 90 + slot * 70);
+      }
+      host.appendChild(el);
     });
-    paint(true);
-  }, 3200);
+  }
+
+  function load(){
+    fetch(FEED_URL, { redirect: 'follow' })
+      .then(r => r.json())
+      .then(data => {
+        const all = (data && data.tabs && data.tabs.ALL) || [];
+        const top = all
+          .filter(x => x && typeof x.rank === 'number' && x.symbol)
+          .sort((a, b) => b.rank - a.rank)
+          .slice(0, COUNT);
+        if(!top.length){ note('No ranked names in the latest run.'); return; }
+        stamp(data.updated);
+        render(top);
+      })
+      .catch(() => note('Live rankings are unavailable right now.'));
+  }
+
+  note('Loading today\u2019s rankings\u2026');
+  load();
+  setInterval(load, 300000);
 })();
 
 let mode = 'signin';
