@@ -1,0 +1,39 @@
+{
+  "name": "Alpha Intel",
+  "short_name": "AlphaIntel",
+  "description": "Daily momentum rankings for NSE and US equities.",
+  "start_url": "app.html",
+  "scope": "./",
+  "id": "/alpha/app.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#05070C",
+  "theme_color": "#05070C",
+  "categories": ["finance", "business"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
