@@ -512,8 +512,11 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
     <div class="wrap-x nav-in">
       <div class="brand">Alpha<span>Intel</span></div>
       <div class="nav-actions">
-        <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
-        <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
+        <span id="nav-guest" style="display:flex;gap:10px">
+          <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
+          <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
+        </span>
+        <button id="nav-member" class="btn btn-gold" style="display:none" onclick="goApp()">Open dashboard</button>
       </div>
     </div>
   </header>
@@ -524,7 +527,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
       <h1>Know which stocks are <em>actually</em> moving.</h1>
       <p class="lede">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
       <div class="hero-cta">
-        <button class="btn btn-gold" onclick="openAuth('signup')">Create your account</button>
+        <button class="btn btn-gold cta" id="cta-hero" data-guest="Create your account" data-guest-mode="signup" onclick="ctaClick(this)">Create your account</button>
         <a class="btn btn-ghost" href="#how">See how it works</a>
       </div>
       <p class="note">Free to create an account. Access to live signals requires an active subscription.</p>
@@ -580,7 +583,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
     </div>
   </div>
 
-  <div class="sec" style="padding-top:0">
+  <div class="sec" id="sec-sample" style="padding-top:0">
     <div class="wrap-x">
       <div class="sec-head">
         <div class="sec-tag">Today's list</div>
@@ -604,7 +607,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
           <div class="lock-ico">&#128274;</div>
           <h4>Locked</h4>
           <p>Create an account and activate your subscription to see the full ranked list.</p>
-          <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
+          <button class="btn btn-gold cta" id="cta-veil" data-guest="Get access" data-guest-mode="signup" onclick="ctaClick(this)">Get access</button>
         </div>
       </div>
     </div>
@@ -615,7 +618,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
       <div class="band">
         <h2>Stop guessing which chart to open first.</h2>
         <p>Sign up in under a minute. You'll get the ranked list the moment your subscription is active.</p>
-        <button class="btn btn-gold" onclick="openAuth('signup')">Create your account</button>
+        <button class="btn btn-gold cta" id="cta-band" data-guest="Create your account" data-guest-mode="signup" onclick="ctaClick(this)">Create your account</button>
       </div>
     </div>
   </div>
@@ -624,7 +627,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
     <div class="wrap-x">
       <div class="foot-top">
         <div class="brand">Alpha<span>Intel</span></div>
-        <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
+        <button class="btn btn-ghost cta" id="cta-footer" data-guest="Sign in" data-guest-mode="signin" onclick="ctaClick(this)">Sign in</button>
       </div>
       <p class="disc"><strong style="color:#6E7A8E">Important:</strong> Alpha Intel is a research and screening tool. It is not investment advice, and nothing here is a recommendation to buy or sell any security. We are not registered with SEBI as an Investment Adviser or Research Analyst. Rankings are generated from historical price and volume data; past behaviour does not predict future returns. Markets carry risk of loss. Do your own research and consult a registered adviser before acting on anything you see here.</p>
     </div>
@@ -647,6 +650,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
       <div class="email" id="inactive-email">&mdash;</div>
       <div class="pane-actions">
         <button class="btn btn-gold" onclick="refreshStatus()">Check again</button>
+        <button class="btn btn-ghost" onclick="goHome()">Home</button>
         <button class="btn btn-ghost" onclick="signOut()">Sign out</button>
       </div>
     </div>
@@ -680,6 +684,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
       <span style="font-size:11px;color:var(--muted)"><span class="live-dot"></span></span>
       <span id="clock"></span>
       <span id="ai-user" style="font-size:11px;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button class="mkt-btn" onclick="goHome()">Home</button>
       <button class="mkt-btn" onclick="signOut()">Sign out</button>
     </div>
   </header>
@@ -800,10 +805,69 @@ let mode = 'signin';
 let busy = false;
 let dashStarted = false;
 
+/* 'out' | 'inactive' | 'active' — drives what the landing page's
+   buttons say and do, so a signed-in reader can browse the marketing
+   pages without being offered "Sign in" again. */
+let AUTH_STATE = 'out';
+
 function show(id){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
+}
+
+/* Landing stays reachable at all times. These move between it and
+   wherever the user belongs, without re-querying Supabase. */
+function goHome(){ show('view-landing'); }
+
+function goApp(){
+  if(AUTH_STATE === 'active'){ show('view-active'); startDashboard(); }
+  else if(AUTH_STATE === 'inactive'){ show('view-inactive'); }
+  else { openAuth('signin'); }
+}
+
+function ctaClick(btn){
+  if(AUTH_STATE === 'out'){
+    openAuth(btn.getAttribute('data-guest-mode') || 'signup');
+  } else {
+    goApp();
+  }
+}
+
+function paintLandingState(){
+  const signedIn = AUTH_STATE !== 'out';
+
+  const guest  = document.getElementById('nav-guest');
+  const member = document.getElementById('nav-member');
+  if(guest)  guest.style.display  = signedIn ? 'none' : 'flex';
+  if(member){
+    member.style.display = signedIn ? 'inline-flex' : 'none';
+    member.textContent = AUTH_STATE === 'active' ? 'Open dashboard' : 'Check subscription';
+  }
+
+  document.querySelectorAll('.cta').forEach(b => {
+    if(!signedIn){
+      b.textContent = b.getAttribute('data-guest') || b.textContent;
+    } else {
+      b.textContent = AUTH_STATE === 'active' ? 'Open dashboard' : 'Check subscription';
+    }
+  });
+
+  /* An active subscriber shouldn't be told their own product is locked. */
+  const veil = document.querySelector('#view-landing .veil h4');
+  const veilP = document.querySelector('#view-landing .veil p');
+  if(veil && veilP){
+    if(AUTH_STATE === 'active'){
+      veil.textContent = 'You have full access';
+      veilP.textContent = 'Open the dashboard to see the live ranked list.';
+    } else if(AUTH_STATE === 'inactive'){
+      veil.textContent = 'Locked';
+      veilP.textContent = 'Your account is ready — activate your subscription to unlock the full list.';
+    } else {
+      veil.textContent = 'Locked';
+      veilP.textContent = 'Create an account and activate your subscription to see the full ranked list.';
+    }
+  }
 }
 
 function openAuth(m){
@@ -875,12 +939,19 @@ async function submitAuth(){
 
 async function signOut(){
   await db.auth.signOut();
+  AUTH_STATE = 'out';
+  paintLandingState();
   show('view-landing');
 }
 
 async function route(){
   const { data:{ session } } = await db.auth.getSession();
-  if(!session){ show('view-landing'); return; }
+  if(!session){
+    AUTH_STATE = 'out';
+    paintLandingState();
+    show('view-landing');
+    return;
+  }
 
   const email = session.user.email;
   const { data: profile } = await db
@@ -890,6 +961,8 @@ async function route(){
     .single();
 
   const active = profile && profile.subscription_status === 'active';
+  AUTH_STATE = active ? 'active' : 'inactive';
+  paintLandingState();
 
   if(active){
     document.getElementById('ai-user').textContent = email;
