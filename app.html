@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ============================================================
      PART 1 — SHELL STYLES (landing page, auth modal, gate views)
@@ -22,6 +22,7 @@
 <style>
 :root{
   --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --disp:'Bricolage Grotesque','Inter',sans-serif;
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
   --ease:cubic-bezier(.22,.9,.28,1);
 }
@@ -39,6 +40,7 @@ body.s-dark{
   --veil-1:rgba(5,7,12,.32); --veil-2:rgba(5,7,12,.93);
   --glow:rgba(217,169,76,.10);
   --grid:rgba(217,169,76,.055);
+  --r99:#F2B441; --r90:#4ED8A0; --r85:#3EC9D6; --r80:#6E8BFF; --r70:#A97CF0;
 }
 body.s-navy{
   --ink:#020817; --panel:#0F1729; --panel-2:#162035;
@@ -50,6 +52,7 @@ body.s-navy{
   --veil-1:rgba(2,8,23,.32); --veil-2:rgba(2,8,23,.94);
   --glow:rgba(96,165,250,.13);
   --grid:rgba(96,165,250,.06);
+  --r99:#FCD34D; --r90:#6EE7B7; --r85:#67E8F9; --r80:#93B4FF; --r70:#C4B5FD;
 }
 body.s-green{
   --ink:#0A1A0F; --panel:#0D1F12; --panel-2:#132918;
@@ -61,6 +64,7 @@ body.s-green{
   --veil-1:rgba(10,26,15,.32); --veil-2:rgba(10,26,15,.94);
   --glow:rgba(52,211,153,.12);
   --grid:rgba(52,211,153,.06);
+  --r99:#FBBF24; --r90:#34D399; --r85:#5EEAD4; --r80:#7DD3FC; --r70:#C4B5FD;
 }
 body.s-saffron{
   --ink:#1A0F00; --panel:#1F1200; --panel-2:#2D1A00;
@@ -72,6 +76,7 @@ body.s-saffron{
   --veil-1:rgba(26,15,0,.32); --veil-2:rgba(26,15,0,.94);
   --glow:rgba(251,191,36,.13);
   --grid:rgba(251,191,36,.06);
+  --r99:#FBBF24; --r90:#86EFAC; --r85:#7DD3FC; --r80:#A5B4FC; --r70:#D8B4FE;
 }
 body.s-light{
   --ink:#FFFFFF; --panel:#F7F8FA; --panel-2:#EDF0F5;
@@ -83,6 +88,7 @@ body.s-light{
   --veil-1:rgba(255,255,255,.30); --veil-2:rgba(255,255,255,.94);
   --glow:rgba(154,110,18,.10);
   --grid:rgba(11,18,32,.045);
+  --r99:#B07908; --r90:#0F8B4C; --r85:#0E7C90; --r80:#3B57C4; --r70:#6D3FA8;
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
@@ -106,7 +112,7 @@ input{font-family:inherit}
   display:flex;align-items:center;justify-content:center;
 }
 .boot-mark{
-  font-size:24px;font-weight:800;letter-spacing:-.02em;
+  font-family:var(--disp);font-size:26px;font-weight:800;letter-spacing:-.035em;
   opacity:.35;animation:bootPulse 1.4s ease-in-out infinite;
 }
 @keyframes bootPulse{0%,100%{opacity:.25}50%{opacity:.6}}
@@ -122,7 +128,7 @@ header.nav{
   border-bottom:1px solid var(--line-soft);
 }
 .nav-in{display:flex;align-items:center;justify-content:space-between;height:66px}
-.brand{font-size:19px;font-weight:800;letter-spacing:-.025em}
+.brand{font-family:var(--disp);font-size:20px;font-weight:800;letter-spacing:-.04em}
 .brand span{color:var(--gold)}
 .nav-actions{display:flex;align-items:center;gap:10px}
 
@@ -150,17 +156,23 @@ header.nav{
 .eyebrow{
   display:inline-flex;align-items:center;gap:9px;
   font-family:var(--mono);font-size:11px;font-weight:500;
-  letter-spacing:.13em;text-transform:uppercase;color:var(--gold);
-  border:1px solid var(--gold-dim);border-radius:999px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--r99);
+  border:1px solid color-mix(in srgb,var(--r99) 34%,transparent);border-radius:999px;
   padding:6px 14px;margin-bottom:26px;
 }
 .livedot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(63,178,127,.16)}
 h1{
-  font-size:clamp(38px,6.2vw,62px);
-  font-weight:800;letter-spacing:-.035em;line-height:1.05;
-  max-width:16ch;
+  font-family:var(--disp);
+  font-size:clamp(40px,6.4vw,68px);
+  font-weight:800;letter-spacing:-.045em;line-height:.98;
+  max-width:15ch;
 }
-h1 em{font-style:normal;color:var(--gold)}
+h1 em{
+  font-style:normal;
+  background:linear-gradient(96deg,var(--r99),var(--r90) 46%,var(--r85));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:var(--r99);
+}
 .hero p.lede{margin-top:22px;max-width:56ch;font-size:17px;color:var(--muted);line-height:1.65}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
 .note{margin-top:16px;font-size:13px;color:var(--muted);opacity:.85}
@@ -172,14 +184,30 @@ h1 em{font-style:normal;color:var(--gold)}
   border-radius:14px;overflow:hidden;margin-top:64px;
 }
 .stat{background:var(--panel);padding:26px 24px}
-.stat-k{font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:-.03em;color:var(--text)}
+.stat{border-top:2px solid var(--hue,var(--r99))}
+.stat-k{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:-.04em;color:var(--hue,var(--text))}
 .stat-l{margin-top:7px;font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:500}
 
 /* sections */
 .sec{padding:84px 0}
+.sec--band{
+  background:
+    linear-gradient(180deg,transparent,color-mix(in srgb,var(--panel) 70%,transparent) 12%,
+                    color-mix(in srgb,var(--panel) 70%,transparent) 88%,transparent);
+  border-top:1px solid var(--line-soft);
+  border-bottom:1px solid var(--line-soft);
+}
 .sec-head{max-width:62ch;margin-bottom:44px}
-.sec-tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dim);font-weight:500}
-h2{margin-top:12px;font-size:clamp(27px,3.6vw,36px);font-weight:700;letter-spacing:-.03em;line-height:1.15}
+.sec-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;
+}
+.sec-tag::before{
+  content:'';width:22px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--r99),var(--r85));
+}
+h2{font-family:var(--disp);margin-top:12px;font-size:clamp(28px,3.8vw,40px);font-weight:700;letter-spacing:-.04em;line-height:1.08}
 .sec-head p{margin-top:14px;font-size:16px;color:var(--muted);line-height:1.65}
 
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
@@ -188,14 +216,17 @@ h2{margin-top:12px;font-size:clamp(27px,3.6vw,36px);font-weight:700;letter-spaci
   border-radius:14px;padding:28px 26px;transition:border-color .18s ease;
 }
 .fcard:hover{border-color:var(--line)}
-.fcard h3{font-size:16px;font-weight:650;letter-spacing:-.015em;margin-bottom:10px}
+.fcard h3{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.025em;margin-bottom:10px}
 .fcard p{font-size:14.5px;color:var(--muted);line-height:1.62}
+.fcard{border-top:2px solid var(--hue,var(--r99))}
 .fcard-ico{
-  width:34px;height:34px;border-radius:9px;margin-bottom:18px;
-  background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid var(--gold-dim);
+  width:36px;height:36px;border-radius:10px;margin-bottom:18px;
+  background:color-mix(in srgb,var(--hue,var(--r99)) 15%,transparent);
+  border:1px solid color-mix(in srgb,var(--hue,var(--r99)) 40%,transparent);
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-size:14px;color:var(--gold);font-weight:700;
+  color:var(--hue,var(--r99));
 }
+.fcard-ico svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 /* locked sample table */
 .locked{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line-soft)}
@@ -211,9 +242,9 @@ h2{margin-top:12px;font-size:clamp(27px,3.6vw,36px);font-weight:700;letter-spaci
 .num{font-family:var(--mono);font-size:14px}
 .up{color:var(--green)}
 .tag{display:inline-block;padding:4px 11px;border-radius:6px;font-size:11.5px;font-weight:650;letter-spacing:.02em}
-.tag-sb{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
-.tag-b{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold)}
-.tag-w{background:color-mix(in srgb,var(--muted) 16%,transparent);color:var(--muted)}
+.tag-sb{background:color-mix(in srgb,var(--r99) 18%,transparent);color:var(--r99)}
+.tag-b{background:color-mix(in srgb,var(--r85) 18%,transparent);color:var(--r85)}
+.tag-w{background:color-mix(in srgb,var(--r70) 18%,transparent);color:var(--r70)}
 .blur{filter:blur(7px);user-select:none;pointer-events:none}
 .veil{
   position:absolute;inset:0;
@@ -222,15 +253,18 @@ h2{margin-top:12px;font-size:clamp(27px,3.6vw,36px);font-weight:700;letter-spaci
   padding-bottom:44px;text-align:center;
 }
 .lock-ico{font-size:22px;margin-bottom:14px;opacity:.75}
-.veil h4{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.veil h4{font-family:var(--disp);font-size:21px;font-weight:700;letter-spacing:-.03em}
 .veil p{margin-top:8px;font-size:14px;color:var(--muted);max-width:40ch}
 .veil .btn{margin-top:20px}
 
 /* cta band */
 .band{
   border:1px solid var(--line-soft);border-radius:18px;
-  background:linear-gradient(160deg,var(--panel-2),var(--panel));
-  padding:56px 44px;text-align:center;
+  background:
+    radial-gradient(120% 140% at 12% 0%,color-mix(in srgb,var(--r85) 11%,transparent),transparent 58%),
+    radial-gradient(120% 140% at 88% 100%,color-mix(in srgb,var(--r99) 11%,transparent),transparent 58%),
+    linear-gradient(160deg,var(--panel-2),var(--panel));
+  padding:60px 44px;text-align:center;
 }
 .band h2{max-width:20ch;margin:0 auto}
 .band p{margin:16px auto 0;max-width:52ch;color:var(--muted);font-size:16px}
@@ -259,7 +293,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
-.sheet-head h3{font-size:21px;font-weight:700;letter-spacing:-.025em}
+.sheet-head h3{font-family:var(--disp);font-size:22px;font-weight:700;letter-spacing:-.035em}
 .sheet-head p{margin-top:5px;font-size:14px;color:var(--muted)}
 .x{font-size:22px;color:var(--muted);line-height:1;padding:2px 6px;border-radius:6px}
 .x:hover{color:var(--text);background:var(--panel-2)}
@@ -287,7 +321,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   border-radius:18px;padding:52px 42px;
 }
 .pane-ico{font-size:30px;margin-bottom:20px}
-.pane h2{font-size:26px;letter-spacing:-.03em}
+.pane h2{font-family:var(--disp);font-size:28px;letter-spacing:-.04em}
 .pane p{margin-top:14px;font-size:15.5px;color:var(--muted);line-height:1.65}
 .pane .email{
   display:inline-block;margin-top:22px;
@@ -316,36 +350,71 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .rv{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 .rv.in{opacity:1;transform:none}
 
-/* ---------- hero chart ---------- */
-.hero-grid{
-  display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;
+/* ---------- hero layout ---------- */
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:52px;align-items:center}
+
+/* ---------- signature: the rank ladder ----------
+   The engine scores every stock 70-99 and re-sorts after each close.
+   This is that, literally: rows hold rank positions and swap places.
+   Colour is not decoration here — it encodes the score.            */
+.ladder{
+  position:relative;border:1px solid var(--line-soft);border-radius:18px;
+  background:linear-gradient(168deg,var(--panel-2),var(--panel));
+  padding:16px 16px 14px;overflow:hidden;
 }
-.chart-card{
-  position:relative;border:1px solid var(--line-soft);border-radius:16px;
-  background:linear-gradient(165deg,var(--panel-2),var(--panel));
-  padding:18px 18px 12px;overflow:hidden;
-}
-.chart-card::before{
+.ladder::before{
   content:'';position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(var(--grid) 1px,transparent 1px),
-                   linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-  background-size:34px 34px;
+  background-image:linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:44px 100%;
 }
-.chart-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;position:relative}
-.chart-ttl{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em}
-.chart-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)}
-#heroChart{display:block;width:100%;height:210px;position:relative}
-.chart-legend{
-  display:flex;gap:14px;margin-top:8px;position:relative;
-  font-size:10.5px;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;
+.lad-hd{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:2px 4px 12px;position:relative;
 }
-.lg{display:flex;align-items:center;gap:6px}
-.lg i{width:8px;height:8px;border-radius:2px;display:block}
+.lad-ttl{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);
+}
+.lad-live{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--r90)}
+.lad-live i{width:6px;height:6px;border-radius:50%;background:var(--r90);animation:beat 2.2s ease-in-out infinite}
+
+.lad-rows{position:relative;height:322px}
+.lad-row{
+  position:absolute;left:0;right:0;height:42px;
+  display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:12px;
+  padding:0 10px;border-radius:10px;
+  background:color-mix(in srgb,var(--hue) 7%,transparent);
+  border:1px solid color-mix(in srgb,var(--hue) 20%,transparent);
+  transition:transform .85s var(--ease), background-color .5s var(--ease), border-color .5s var(--ease);
+  will-change:transform;
+}
+.lad-rank{
+  font-family:var(--mono);font-size:16px;font-weight:700;
+  color:var(--hue);text-align:right;font-variant-numeric:tabular-nums;
+}
+.lad-mid{min-width:0}
+.lad-sym{font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:.02em}
+.lad-sec{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lad-bar{width:58px;height:5px;border-radius:3px;background:color-mix(in srgb,var(--muted) 22%,transparent);overflow:hidden}
+.lad-bar i{display:block;height:100%;border-radius:3px;background:var(--hue);transition:width .85s var(--ease)}
+
+.lad-scale{
+  display:flex;align-items:center;gap:10px;margin-top:14px;
+  padding-top:12px;border-top:1px solid var(--line-soft);position:relative;
+}
+.lad-ramp{
+  flex:1;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--r70),var(--r80),var(--r85),var(--r90),var(--r99));
+}
+.lad-scale span{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted)}
 
 /* ---------- quote rail ---------- */
 .quote-rail{
-  margin-top:26px;border-left:3px solid var(--gold);
-  padding:6px 0 6px 18px;min-height:96px;position:relative;
+  margin-top:30px;padding:6px 0 6px 18px;min-height:96px;position:relative;
+}
+.quote-rail::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px;
+  background:linear-gradient(180deg,var(--r99),var(--r85) 55%,var(--r70));
 }
 .q-text{
   font-size:16px;line-height:1.6;font-style:italic;color:var(--text);
@@ -355,7 +424,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .q-text.in{opacity:.92;transform:none}
 .q-by{
   margin-top:9px;font-family:var(--mono);font-size:10.5px;
-  letter-spacing:.13em;text-transform:uppercase;color:var(--gold);
+  letter-spacing:.13em;text-transform:uppercase;color:var(--r85);
   opacity:0;transition:opacity .55s var(--ease) .1s;
 }
 .q-by.in{opacity:1}
@@ -363,13 +432,14 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 /* ---------- live pulse strip ---------- */
 .pulse-strip{
   display:flex;align-items:center;gap:0;overflow:hidden;
+  box-shadow:0 0 0 1px transparent;
   border:1px solid var(--line-soft);border-radius:12px;
   background:var(--panel);margin-top:26px;
 }
 .ps-lbl{
   flex-shrink:0;padding:10px 14px;font-family:var(--mono);
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--gold);border-right:1px solid var(--line-soft);background:var(--panel-2);
+  color:var(--r99);border-right:1px solid var(--line-soft);background:var(--panel-2);
 }
 .ps-track{flex:1;overflow:hidden;min-width:0}
 .ps-move{display:flex;width:max-content;animation:psScroll 26s linear infinite}
@@ -389,10 +459,10 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .fcard::after{
   content:'';position:absolute;inset:0;pointer-events:none;opacity:0;
   background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),
-             color-mix(in srgb,var(--gold) 13%,transparent),transparent 42%);
+             color-mix(in srgb,var(--hue,var(--r99)) 15%,transparent),transparent 42%);
   transition:opacity .3s var(--ease);
 }
-.fcard:hover{transform:translateY(-4px);border-color:var(--gold-dim)}
+.fcard:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--hue,var(--r99)) 45%,transparent)}
 .fcard:hover::after{opacity:1}
 .fcard{transition:border-color .25s var(--ease),transform .25s var(--ease)}
 .fcard-ico{transition:transform .3s var(--ease)}
@@ -727,15 +797,16 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
           </div>
         </div>
 
-        <div class="chart-card rv">
-          <div class="chart-hd">
-            <span class="chart-ttl">Ranked basket &middot; illustrative</span>
-            <span class="chart-val" id="chartVal">&mdash;</span>
+        <div class="ladder rv">
+          <div class="lad-hd">
+            <span class="lad-ttl">Rank ladder</span>
+            <span class="lad-live"><i></i>RE-SORTING</span>
           </div>
-          <canvas id="heroChart" width="640" height="420" aria-label="Illustrative rising equity curve"></canvas>
-          <div class="chart-legend">
-            <span class="lg"><i style="background:var(--green)"></i>Ranked basket</span>
-            <span class="lg"><i style="background:var(--muted)"></i>Benchmark</span>
+          <div class="lad-rows" id="ladRows"></div>
+          <div class="lad-scale">
+            <span>70</span>
+            <div class="lad-ramp"></div>
+            <span>99</span>
           </div>
         </div>
       </div>
@@ -747,14 +818,14 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
     </div>
 
     <div class="stats">
-      <div class="stat"><div class="stat-k">2,100+</div><div class="stat-l">Stocks scanned daily</div></div>
-      <div class="stat"><div class="stat-k">3</div><div class="stat-l">Conviction tiers</div></div>
-      <div class="stat"><div class="stat-k">Daily</div><div class="stat-l">Post-close refresh</div></div>
-      <div class="stat"><div class="stat-k">0</div><div class="stat-l">Tips or calls</div></div>
+      <div class="stat" style="--hue:var(--r99)"><div class="stat-k">2,100+</div><div class="stat-l">Stocks scanned daily</div></div>
+      <div class="stat" style="--hue:var(--r90)"><div class="stat-k">3</div><div class="stat-l">Conviction tiers</div></div>
+      <div class="stat" style="--hue:var(--r85)"><div class="stat-k">Daily</div><div class="stat-l">Post-close refresh</div></div>
+      <div class="stat" style="--hue:var(--r80)"><div class="stat-k">0</div><div class="stat-l">Tips or calls</div></div>
     </div>
   </div>
 
-  <div class="sec" id="how">
+  <div class="sec sec--band" id="how">
     <div class="wrap-x">
       <div class="sec-head">
         <div class="sec-tag">How it works</div>
@@ -762,33 +833,33 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
         <p>Every stock on the exchange is scored against the same rules, every day. Nothing is hand-picked, and the list doesn't care what anyone on TV thinks.</p>
       </div>
       <div class="features">
-        <div class="fcard">
-          <div class="fcard-ico">01</div>
+        <div class="fcard" style="--hue:var(--r99)">
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg></div>
           <h3>Scored, then ranked</h3>
           <p>Each name gets a composite score from price behaviour, trend structure and volume. The ranking is the output — you always see where a stock sits relative to everything else.</p>
         </div>
-        <div class="fcard">
-          <div class="fcard-ico">02</div>
+        <div class="fcard" style="--hue:var(--r90)">
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 13.5 12 18l9-4.5"/></svg></div>
           <h3>Three conviction tiers</h3>
           <p>Names sort into Strong Buy, Buy and Watch. The tier tells you how much of the engine's criteria a stock currently satisfies, so you can size your attention accordingly.</p>
         </div>
-        <div class="fcard">
-          <div class="fcard-ico">03</div>
+        <div class="fcard" style="--hue:var(--r85)">
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>
           <h3>Rank history you can check</h3>
           <p>See how long a name has held its position and whether it's climbing or slipping. A stock that's been top-ranked for weeks reads very differently from one that appeared yesterday.</p>
         </div>
-        <div class="fcard">
-          <div class="fcard-ico">04</div>
+        <div class="fcard" style="--hue:var(--r80)">
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6.2 5.8"/></svg></div>
           <h3>Sector rotation at a glance</h3>
           <p>A sector summary shows where the ranked names are clustering, so you can see which parts of the market money is actually rotating into.</p>
         </div>
-        <div class="fcard">
-          <div class="fcard-ico">05</div>
+        <div class="fcard" style="--hue:var(--r70)">
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6Z"/><path d="M6 3.5v17M9.5 8.5h6M9.5 12h6"/></svg></div>
           <h3>A journal that stays honest</h3>
           <p>Log your entries and exits against the signals you acted on. Over time it tells you something no backtest can: how you actually traded the list.</p>
         </div>
-        <div class="fcard">
-          <div class="fcard-ico">06</div>
+        <div class="fcard" style="--hue:var(--r90)">
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"/><path d="M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"/><path d="M4 20v-4h4"/></svg></div>
           <h3>Same rules, every session</h3>
           <p>The engine doesn't get bored, doesn't chase headlines and doesn't change its mind after a bad week. Consistency is the whole point.</p>
         </div>
@@ -1174,144 +1245,88 @@ const DOUGLAS = [
   el.innerHTML = items + items;
 })();
 
-/* --- hero chart: a ranked basket outpacing a benchmark --- */
-/* var, not let: setAppTheme() runs before the chart IIFE below and
-   probes this binding. A let would still be in its temporal dead
-   zone at that point and even typeof would throw. */
+/* --- signature: the rank ladder ---
+   Seven names hold rank positions. Every few seconds the engine
+   "re-ranks" — scores drift, rows re-sort, and each row slides to
+   its new slot. Colour is sampled from the same 70-99 ramp the
+   tier tags use, so the hue always means the score.
+   Illustrative movement, not live market data.                    */
 var redrawHeroChart = function(){};
 
 (function(){
-  const cv = document.getElementById('heroChart');
-  if(!cv) return;
-  const ctx = cv.getContext('2d');
+  const host = document.getElementById('ladRows');
+  if(!host) return;
 
-  const N = 74;
-  function series(drift, vol, seed){
-    let v = 100, s = seed, out = [v];
-    for(let i = 1; i < N; i++){
-      s = (s * 9301 + 49297) % 233280;
-      const r = s / 233280 - 0.5;
-      v = Math.max(72, v * (1 + drift + r * vol));
-      out.push(v);
+  const ROW_H = 42, GAP = 6;
+  const STOPS = [
+    { at: 99, v: '--r99' },
+    { at: 92, v: '--r90' },
+    { at: 86, v: '--r85' },
+    { at: 79, v: '--r80' },
+    { at: 70, v: '--r70' }
+  ];
+
+  /* nearest ramp stop for a score — keeps hue tied to rank */
+  function hueFor(score){
+    let best = STOPS[0];
+    for(const stop of STOPS){
+      if(Math.abs(stop.at - score) < Math.abs(best.at - score)) best = stop;
     }
-    return out;
-  }
-  const basket = series(0.0125, 0.030, 7331);
-  const bench  = series(0.0034, 0.021, 4517);
-
-  let progress = 0;
-  let raf = null;
-
-  function draw(){
-    const dpr = window.devicePixelRatio || 1;
-    const w = cv.clientWidth, h = cv.clientHeight;
-    if(!w || !h) return;
-    cv.width = w * dpr; cv.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-
-    const cs = getComputedStyle(document.body);
-    const green = cs.getPropertyValue('--green').trim() || '#3FB27F';
-    const muted = cs.getPropertyValue('--muted').trim() || '#7E8AA0';
-
-    const all = basket.concat(bench);
-    const min = Math.min.apply(null, all) * 0.985;
-    const max = Math.max.apply(null, all) * 1.015;
-    const padB = 16, padT = 8;
-    const X = i => (i / (N - 1)) * w;
-    const Y = v => padT + (h - padT - padB) * (1 - (v - min) / (max - min));
-
-    const shown = Math.max(2, Math.floor(N * progress));
-
-    function line(data, color, width, dashed){
-      ctx.save();
-      if(dashed) ctx.setLineDash([4, 5]);
-      ctx.beginPath();
-      for(let i = 0; i < shown; i++){
-        const x = X(i), y = Y(data[i]);
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = color;
-      ctx.lineWidth = width;
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    /* basket fill */
-    ctx.beginPath();
-    for(let i = 0; i < shown; i++){
-      const x = X(i), y = Y(basket[i]);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.lineTo(X(shown - 1), h);
-    ctx.lineTo(X(0), h);
-    ctx.closePath();
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, green);
-    grad.addColorStop(1, 'transparent');
-    ctx.globalAlpha = 0.16;
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    line(bench, muted, 1.4, true);
-    line(basket, green, 2.4, false);
-
-    /* leading dot */
-    const lx = X(shown - 1), ly = Y(basket[shown - 1]);
-    ctx.beginPath();
-    ctx.arc(lx, ly, 8, 0, Math.PI * 2);
-    ctx.fillStyle = green;
-    ctx.globalAlpha = 0.18;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.beginPath();
-    ctx.arc(lx, ly, 3.4, 0, Math.PI * 2);
-    ctx.fillStyle = green;
-    ctx.fill();
-
-    const val = document.getElementById('chartVal');
-    if(val){
-      const pct = (basket[shown - 1] / basket[0] - 1) * 100;
-      val.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
-    }
+    return 'var(' + best.v + ')';
   }
 
-  function animate(){
-    progress = Math.min(1, progress + 0.014);
-    draw();
-    if(progress < 1) raf = requestAnimationFrame(animate);
-  }
+  const names = [
+    ['BHARATFORG','Capital Goods'],
+    ['CHOLAFIN',  'Financials'],
+    ['LAURUSLABS','Pharma'],
+    ['TIINDIA',   'Auto'],
+    ['KEC',       'Infrastructure'],
+    ['APLAPOLLO', 'Metals'],
+    ['PERSISTENT','Technology']
+  ];
 
-  redrawHeroChart = draw;
-
-  if(REDUCED){
-    progress = 1;
-    draw();
-  } else if('IntersectionObserver' in window){
-    const io = new IntersectionObserver(es => {
-      es.forEach(e => {
-        if(e.isIntersecting){
-          io.unobserve(e.target);
-          progress = 0;
-          if(raf) cancelAnimationFrame(raf);
-          animate();
-        }
-      });
-    }, { threshold: 0.3 });
-    io.observe(cv);
-  } else {
-    progress = 1;
-    draw();
-  }
-
-  let rt = null;
-  window.addEventListener('resize', () => {
-    clearTimeout(rt);
-    rt = setTimeout(draw, 140);
+  const rows = names.map(([sym, sec], i) => {
+    const el = document.createElement('div');
+    el.className = 'lad-row';
+    el.innerHTML =
+      '<div class="lad-rank"></div>' +
+      '<div class="lad-mid"><div class="lad-sym">' + sym + '</div>' +
+      '<div class="lad-sec">' + sec + '</div></div>' +
+      '<div class="lad-bar"><i></i></div>';
+    host.appendChild(el);
+    return { el, score: 99 - i * 4.4 - Math.random() * 1.1 };
   });
+
+  function paint(animate){
+    rows.slice()
+        .sort((a, b) => b.score - a.score)
+        .forEach((r, slot) => {
+          r.el.style.transform = 'translateY(' + (slot * (ROW_H + GAP)) + 'px)';
+        });
+
+    rows.forEach(r => {
+      const score = Math.round(r.score);
+      const hue = hueFor(score);
+      r.el.style.setProperty('--hue', hue);
+      r.el.querySelector('.lad-rank').textContent = score;
+      r.el.querySelector('.lad-bar i').style.width =
+        Math.max(8, Math.min(100, (score - 66) / 33 * 100)) + '%';
+    });
+
+    if(!animate) host.offsetHeight; /* flush before transitions matter */
+  }
+
+  paint(false);
+
+  if(REDUCED) return;
+
+  setInterval(() => {
+    rows.forEach(r => {
+      r.score += (Math.random() - 0.48) * 5.5;
+      r.score = Math.max(71, Math.min(99, r.score));
+    });
+    paint(true);
+  }, 3200);
 })();
 
 let mode = 'signin';
