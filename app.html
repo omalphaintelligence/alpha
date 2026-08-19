@@ -678,6 +678,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 #dash-root .card{background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:10px 12px}
 #dash-root .card-l{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:3px}
 #dash-root .card-v{font-size:18px;font-weight:700;font-family:monospace}
+#dash-root .card-s{font-size:9.5px;color:var(--muted);margin-top:2px;letter-spacing:.02em}
 #dash-root .st-open{display:inline-flex;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
 #dash-root .st-hit{display:inline-flex;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.2)}
 #dash-root .st-stop{display:inline-flex;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.2)}
@@ -3253,6 +3254,62 @@ const PF_TRADES = [
   ["WABAG","2026-06-15",1630.0,"2026-07-28",1875.0,15.03]
 ];
 
+
+/* Same trades, sized differently. PF_BASE compounds — capital is
+   split equally across whatever is open, so profits get redeployed.
+   PF_BASE_FIXED puts a flat PF_LOT into every trade regardless of
+   account size, so nothing compounds; it is capital + cumulative
+   realised P&L, rebased to 100 so both modes share one axis.
+
+   Fixed sizing needs enough capital for the worst-case simultaneous
+   position count (34 here), hence PF_CAPITAL. */
+const PF_LOT = 10000;
+const PF_CAPITAL = 340000;
+const PF_BASE_FIXED = [
+  100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,
+  100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,
+  100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,
+  100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,
+  100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,
+  100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,
+  100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,
+  100.0,100.0,100.0,100.71,100.71,100.71,100.71,100.71,100.71,100.71,100.71,100.71,100.71,100.71,100.71,100.71,
+  100.71,100.71,100.71,100.43,100.43,100.43,100.43,100.43,100.43,100.43,100.54,100.54,100.39,100.39,100.39,100.39,
+  100.39,99.67,99.67,99.67,99.67,99.54,101.2,101.2,102.37,102.37,102.82,103.78,104.27,103.29,107.5,111.48,
+  111.48,111.48,111.48,111.48,112.27,112.27,112.27,112.27,112.27,112.27,112.22,112.22,112.07,112.07,112.75,112.26,
+  112.26,112.26,112.31,112.7,113.33,114.15,116.14,116.14,118.09,120.25,123.22,123.82,123.82,123.82,123.64,123.64,
+  123.64,123.37,123.62,125.29,125.32,124.28,124.28,124.96,124.96,124.96,124.96,124.96,125.06,125.06,125.06,125.06,
+  125.41,125.34,126.33,129.22,129.22,129.22,128.94,128.94,128.94,128.94,128.94,128.94,128.64,128.22,132.25,134.02,
+  134.02,135.19,135.19,135.62,140.24,139.83,139.83,139.83,139.83,139.83,139.83,139.47,139.03,137.45,138.3,137.97,
+  136.76,136.76,136.76,137.4,137.4,137.4,137.13,138.11,138.37,138.37,138.23,138.23,137.93,139.42,140.57,140.65,
+  140.44,140.28,140.28,140.28,140.28,140.28,140.28,140.28,140.13,140.1,140.1,140.01,140.01,140.01,140.01,140.01,
+  139.82,139.72,139.26,139.53,139.33,139.29,139.29,139.29,139.26,139.26,139.08,139.25,139.25,139.25,139.33,139.33,
+  139.71,139.31,139.15,138.77,138.77,138.32,138.32,138.32,138.32,138.32,138.2,137.99,137.91,137.91,137.91,137.91,
+  137.91,137.91,137.91,137.47,137.39,137.39,137.39,137.39,137.39,137.39,137.54,138.1,137.99,137.75,137.48,137.48,
+  137.48,137.48,138.91,138.91,139.63,140.51,141.87,141.68,143.9,144.91,146.12,146.39,145.02,145.02,145.02,145.02,
+  145.02,145.02,145.02,145.02,144.84,144.55,144.55,144.55,144.55,144.55,144.54,145.05,144.83,144.4,144.4,144.4,
+  145.7,146.32,147.8,147.8,147.8,148.11,148.11,148.11,148.1,148.1,148.1,147.87,147.87,147.12,146.5,146.26,
+  146.91,147.48,148.18,148.66,148.66,149.75,149.75,151.27,152.19,152.46,153.15,153.15,152.88,152.88,155.12,155.12,
+  155.12,158.4,158.4,158.4,158.4,158.57,159.82,159.82,159.82,159.82,159.82,159.82,159.82,159.82,159.82,159.82,
+  159.82,159.71,159.71,159.71,164.88,165.23,165.18,165.65,165.89,165.89,168.85,168.85,170.48,170.48,172.03,172.03,
+  175.52,175.52,175.52,175.17,174.9,176.92,176.92,176.92,176.92,176.46,176.46,176.33,176.33,178.26,182.47,183.8,
+  183.6,183.6,183.6,183.6,183.6,183.6,183.6,183.35,183.35,184.09,183.6,183.41,183.63,183.32,183.32,183.32,
+  183.32,183.32,183.32,183.32,183.32,183.32,183.32,183.32,183.03,183.03,183.03,182.81,182.54,183.76,183.76,186.97,
+  187.37,187.05,187.05,187.05,187.05,187.05,187.05,187.05,186.77,186.54,186.28,185.62,185.36,184.8,184.8,184.96,
+  184.96,184.96,184.96,184.96,184.96,184.96,184.96,184.91,184.91,184.91,184.91,184.91,184.91,184.91,184.91,184.91,
+  184.75,184.88,184.72,184.87,184.59,184.59,185.25,187.8,187.8,188.91,192.07,192.77,192.77,193.45,193.85,195.87,
+  196.0,200.03,200.03,200.97,200.97,200.97,200.76,201.0,201.98,201.84,201.84,201.84,201.84,201.84,201.84,201.84,
+  201.84,201.84,201.84,201.84,201.81,201.55,201.56,203.56,204.12,203.81,203.81,204.78,205.08,207.72,207.47,207.47,
+  207.47,209.37,209.37,209.37,211.17,211.17,210.87,210.87,211.53,213.51,213.51,213.51,213.51,213.51,213.51,213.51,
+  213.51,215.04,214.46,214.05,214.94,214.94,215.68,216.28,216.28,216.28,217.65,218.24,218.24,217.54,217.54,217.54,
+  216.86,216.86,216.86,216.86,216.86,216.86,216.17,216.17,215.21,214.47,214.12,212.12,212.12,211.55,211.55,211.23,
+  211.23,211.23,211.23,211.23,211.23,210.83,210.83,210.83,210.83,210.83,210.83,210.83,210.83,210.83,210.85,210.85,
+  210.85,210.85,210.85,210.85,210.85,210.58,210.01,210.01,210.01,209.62,209.62,209.62,209.62,210.12,210.12,210.12,
+  211.37,211.37,211.65,211.57,210.99,210.99,210.99,210.99,210.99,210.99,212.09,212.11,212.91,213.11,212.7,212.45,
+  212.24,212.24,212.24,212.96,212.51,210.85,210.85,209.98,209.98,209.98,209.98,209.98,210.59,212.18,211.61,211.22,
+  212.07,211.8,212.94,212.94,213.15
+];
+
 /* Live leg: continues the curve past the CSV cutoff using the Model
    Portfolio journal. Exits are paired back to their ENTRY by symbol,
    then the same method as the CSV leg is applied — each trade's
@@ -3261,10 +3318,13 @@ const PF_TRADES = [
 
    Only closed trades count, matching the CSV leg. Positions still
    open do not move the line until they are exited. */
+var PF_SIZING = 'compound';   /* 'compound' | 'fixed' */
 var PF_WEEKLY = PF_BASE.slice();
 
 function extendFromJournal(){
-  PF_WEEKLY = PF_BASE.slice();
+  var fixedMode = PF_SIZING === 'fixed';
+  var BASE = fixedMode ? PF_BASE_FIXED : PF_BASE;
+  PF_WEEKLY = BASE.slice();
 
   var jr = (D.modelPortfolio && D.modelPortfolio.journal) || [];
   if(!jr.length) return;
@@ -3299,23 +3359,41 @@ function extendFromJournal(){
 
   trades.forEach(function(t){ t.dr = Math.pow(1 + t.pct/100, 1/t.days) - 1; });
 
-  /* walk day by day from the cutoff to the last exit */
-  var cur = PF_BASE[PF_BASE.length-1];
+  var cur = BASE[BASE.length-1];
   var nextSample = cutMs + WEEK;
 
   for(var d = cutMs + DAY; d <= lastExit; d += DAY){
-    var sum = 0, n = 0;
-    for(var k = 0; k < trades.length; k++){
-      var t = trades[k];
-      if(t.a <= d && t.b > d){ sum += t.dr; n++; }
+    if(fixedMode){
+      /* flat lot per trade: the account only moves when one closes */
+      for(var q = 0; q < trades.length; q++){
+        var tq = trades[q];
+        if(tq.b > d - DAY && tq.b <= d){
+          cur += (tq.pct/100 * PF_LOT) / PF_CAPITAL * 100;
+        }
+      }
+    } else {
+      var sum = 0, n = 0;
+      for(var k = 0; k < trades.length; k++){
+        var t = trades[k];
+        if(t.a <= d && t.b > d){ sum += t.dr; n++; }
+      }
+      if(n) cur *= (1 + sum/n);
     }
-    if(n) cur *= (1 + sum/n);
 
     while(d >= nextSample){
       PF_WEEKLY.push(+cur.toFixed(2));
       nextSample += WEEK;
     }
   }
+}
+
+function setPerfSizing(m, btn){
+  PF_SIZING = m;
+  document.querySelectorAll('#dash-root .perf-size .perf-btn').forEach(function(b){ b.classList.remove('on'); });
+  if(btn) btn.classList.add('on');
+  extendFromJournal();
+  drawPerf();
+  paintPerfHeads();
 }
 
 var PERF_RANGE = 'max';
@@ -3381,6 +3459,15 @@ function paintPerfHeads(){
     bp.textContent = (bg >= 0 ? '+' : '') + bg.toFixed(2) + '%';
     bp.style.color = bg >= 0 ? 'var(--green)' : 'var(--red)';
   }
+  const note = document.getElementById('perfSizeNote');
+  if(note){
+    const rupees = PF_CAPITAL * last / 100;
+    note.textContent = PF_SIZING === 'fixed'
+      ? '\u20b9' + PF_CAPITAL.toLocaleString('en-IN') + ' capital \u2192 \u20b9' +
+        Math.round(rupees).toLocaleString('en-IN') + ' \u00b7 profits not redeployed'
+      : 'capital split equally across open positions \u00b7 profits redeployed';
+  }
+
   const span = document.getElementById('perfSpan');
   if(span){
     const f = d.dates[0], l = d.dates[d.dates.length - 1];
@@ -3518,6 +3605,13 @@ function renderPerfBlock(){
       '<span class="perf-tag" id="perfSpan"></span></div>' +
       '<div class="perf-ctl">' + btns + '</div>' +
     '</div>' +
+    '<div class="perf-ctl perf-size" style="margin:-6px 0 12px">' +
+      '<button class="perf-btn' + (PF_SIZING === 'compound' ? ' on' : '') +
+        '" onclick="setPerfSizing(\'compound\',this)">Compounded</button>' +
+      '<button class="perf-btn' + (PF_SIZING === 'fixed' ? ' on' : '') +
+        '" onclick="setPerfSizing(\'fixed\',this)">\u20b9' + (PF_LOT/1000) + 'k per trade</button>' +
+      '<span style="font-size:10.5px;color:var(--muted);align-self:center;margin-left:8px" id="perfSizeNote"></span>' +
+    '</div>' +
     '<div class="perf-tops">' +
       '<div class="perf-lede">Current value of <b>\u20b9100</b> invested at the start of the selected window.</div>' +
       '<div><div class="perf-k-l" style="color:var(--purple)">Model Portfolio' +
@@ -3544,17 +3638,44 @@ function renderModel(){
   var pos=mp.positions||[],jrnl=mp.journal||[];
   if(!pos.length) return "<div class=\"empty\">Model Portfolio empty</div>";
   var cur=MARKET==="NSE"?"Rs.":"$";
-  var totalEntries = jrnl.filter(function(j){return j.action==="ENTRY";}).length;
-  var totalTargetHit = jrnl.filter(function(j){return j.action==="TARGET HIT";}).length;
-  var totalStopped = jrnl.filter(function(j){return j.action==="STOPPED OUT";}).length;
-  var totalExits = totalTargetHit + totalStopped;
-  var totalRunning = totalEntries - totalExits;
+  var liveEntries   = jrnl.filter(function(j){return j.action==="ENTRY";}).length;
+  var liveTargetHit = jrnl.filter(function(j){return j.action==="TARGET HIT";}).length;
+  var liveStopped   = jrnl.filter(function(j){return j.action==="STOPPED OUT";}).length;
+
+  /* The archive log records only the return, not the reason a position
+     was closed. A positive exit is counted as a target hit and a
+     negative one as a stop — an inference from the sign, not something
+     the log states. Exits that closed flat are neither. */
+  var arcEntries=0, arcHit=0, arcStop=0, arcFlat=0;
+  if(MARKET==="NSE" && typeof PF_TRADES !== "undefined"){
+    arcEntries = PF_TRADES.length;
+    PF_TRADES.forEach(function(t){
+      if(t[5] > 0) arcHit++;
+      else if(t[5] < 0) arcStop++;
+      else arcFlat++;
+    });
+  }
+
+  var totalEntries   = liveEntries + arcEntries;
+  var totalTargetHit = liveTargetHit + arcHit;
+  var totalStopped   = liveStopped + arcStop;
+  var totalExits     = liveTargetHit + liveStopped + arcEntries;
+  var totalRunning   = totalEntries - totalExits;
+  var closed         = totalTargetHit + totalStopped;
+  var winRate        = closed ? Math.round(totalTargetHit / closed * 100) : 0;
+
+  function sub(n){
+    return arcEntries ? "<div class=\"card-s\">incl. "+n.toLocaleString()+" archive</div>" : "";
+  }
+
   var cards="<div class=\"card-grid\">"+
-    "<div class=\"card\"><div class=\"card-l\">Total Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+totalEntries+"</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+totalTargetHit+"</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+totalStopped+"</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Running</div><div class=\"card-v\" style=\"color:var(--accent)\">"+totalRunning+"</div></div>"+
-    "</div>";
+    "<div class=\"card\"><div class=\"card-l\">Total Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+totalEntries.toLocaleString()+"</div>"+sub(arcEntries)+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+totalTargetHit.toLocaleString()+"</div>"+sub(arcHit)+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+totalStopped.toLocaleString()+"</div>"+sub(arcStop)+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Win Rate</div><div class=\"card-v\" style=\"color:var(--accent)\">"+winRate+"%</div><div class=\"card-s\">"+closed.toLocaleString()+" closed</div></div>"+
+    "<div class=\"card\"><div class=\"card-l\">Running</div><div class=\"card-v\" style=\"color:var(--purple)\">"+totalRunning+"</div><div class=\"card-s\">open now</div></div>"+
+    "</div>"+
+    (arcEntries ? "<div style=\"font-size:9.5px;color:var(--muted);margin:-4px 0 8px;font-style:italic\">Archive exits are classified by the sign of the return \u2014 the historical log does not record why a position was closed"+(arcFlat ? ", and "+arcFlat+" closed flat so count as neither" : "")+".</div>" : "");
 
   var perf = computeJournalPerformance(jrnl, pos);
   var perfHtml = "";
