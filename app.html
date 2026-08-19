@@ -827,6 +827,11 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   pointer-events:none;z-index:6;box-shadow:0 3px 12px rgba(0,0,0,.3);line-height:1.5;
 }
 #dash-root .perf-periods{margin-top:16px;padding-top:14px;border-top:1px solid var(--b1)}
+#dash-root .perf-toggle{padding:5px 12px}
+#dash-root .mp-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+#dash-root .mp-head-t{font-size:13px;font-weight:700;letter-spacing:-.01em}
+#dash-root .mp-period{display:flex;gap:3px;flex-wrap:wrap}
+#dash-root .mp-note{font-size:9.5px;color:var(--muted);margin:-2px 0 8px;font-style:italic}
 #dash-root .perf-periods .tw{border-top-width:1px;max-height:none}
 #dash-root .perf-periods td{padding:7px 9px;font-size:12.5px}
 #dash-root .perf-periods th{cursor:default}
@@ -3577,6 +3582,15 @@ function computePeriodStats(){
   }).filter(Boolean);
 }
 
+var PERIOD_TABLE_OPEN = false;
+
+function togglePeriodTable(btn){
+  PERIOD_TABLE_OPEN = !PERIOD_TABLE_OPEN;
+  const box = document.getElementById('periodTableBox');
+  if(box) box.style.display = PERIOD_TABLE_OPEN ? '' : 'none';
+  if(btn) btn.textContent = PERIOD_TABLE_OPEN ? 'Hide returns by period' : 'Returns by period';
+}
+
 function renderPeriodTable(){
   const stats = computePeriodStats();
   if(!stats.length) return '';
@@ -3594,11 +3608,14 @@ function renderPeriodTable(){
   }).join('');
 
   return '<div class="perf-periods">' +
-    '<div class="perf-ttl" style="margin-bottom:8px">Returns by period</div>' +
-    '<div class="tw"><table><thead><tr>' +
+    '<button class="perf-btn perf-toggle" onclick="togglePeriodTable(this)">' +
+      (PERIOD_TABLE_OPEN ? 'Hide returns by period' : 'Returns by period') + '</button>' +
+    '<div id="periodTableBox"' + (PERIOD_TABLE_OPEN ? '' : ' style="display:none"') + '>' +
+    '<div class="tw" style="margin-top:10px"><table><thead><tr>' +
       '<th>Period</th><th>Model Portfolio</th><th>' + PF_BENCH_LABEL + '</th><th>Max Drawdown</th>' +
     '</tr></thead><tbody>' + body + '</tbody></table></div>' +
     '<div style="font-size:9.5px;color:var(--muted);margin-top:6px;font-style:italic">Drawdown is the worst peak-to-trough fall within each window, measured on weekly closes.</div>' +
+    '</div>' +
   '</div>';
 }
 
@@ -3672,7 +3689,123 @@ function computeCurvePerformance(){
   };
 }
 
+/* ---------------- Model Portfolio period filter ----------------
+   Every card below is scoped to the selected window. Counts come
+   from trade dates (archive + live journal), rupee P&L comes off the
+   equity curve across that same window, so both agree with the
+   chart above.
+
+   Unrealised is the one exception — it can only ever mean positions
+   open right now, so it does not change with the window. */
+var MODEL_PERIOD = 'ALL';
+var MODEL_PERIODS = [
+  ['1M',1], ['2M',2], ['3M',3], ['6M',6],
+  ['1Y',12], ['2Y',24], ['3Y',36], ['ALL',0]
+];
+
+function modelPeriodCutoff(){
+  var def = MODEL_PERIODS.filter(function(p){ return p[0]===MODEL_PERIOD; })[0];
+  if(!def || !def[1]) return null;              /* ALL */
+  var WEEK = 7*24*3600*1000;
+  var endMs = new Date(PF_START).getTime() + (PF_WEEKLY.length-1)*WEEK;
+  var d = new Date(endMs);
+  d.setMonth(d.getMonth() - def[1]);
+  return d.getTime();
+}
+
+function setModelPeriod(pd){
+  MODEL_PERIOD = pd;
+  renderTab();
+}
+
+/* Curve stats limited to the selected window. */
+function curveStatsForPeriod(){
+  if(!PF_WEEKLY || PF_WEEKLY.length < 2) return null;
+  var WEEK = 7*24*3600*1000;
+  var startMs = new Date(PF_START).getTime();
+  var cut = modelPeriodCutoff();
+
+  var from = 0;
+  if(cut != null){
+    from = Math.round((cut - startMs)/WEEK);
+    if(from < 0) from = 0;
+    if(from > PF_WEEKLY.length-2) from = PF_WEEKLY.length-2;
+  }
+
+  var seg = PF_WEEKLY.slice(from);
+  var mult = seg[seg.length-1] / seg[0];
+  var years = (seg.length-1) * 7 / 365.25;
+
+  var peak = -Infinity, dd = 0;
+  for(var i=0;i<seg.length;i++){
+    if(seg[i] > peak) peak = seg[i];
+    var cur = (seg[i]/peak - 1) * 100;
+    if(cur < dd) dd = cur;
+  }
+
+  /* Rupee P&L for the window = capital x the curve's rise across it,
+     scaled by where the account already stood at the window's start. */
+  var startValue = PF_CAPITAL * (seg[0] / PF_WEEKLY[0]);
+  var endValue   = PF_CAPITAL * (seg[seg.length-1] / PF_WEEKLY[0]);
+
+  return {
+    years: years,
+    retPct: (mult - 1) * 100,
+    cagr: years > 0.25 ? (Math.pow(mult, 1/years) - 1) * 100 : null,
+    realized: endValue - startValue,
+    endValue: endValue,
+    maxDD: dd,
+    lotNow: PF_LOT * (PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0])
+  };
+}
+
+/* Entry / exit counts inside the window, archive + live combined. */
+function tradeCountsForPeriod(jrnl){
+  var cut = modelPeriodCutoff();
+  function inWin(ms){ return cut == null || ms >= cut; }
+
+  var entries=0, hit=0, stop=0, flat=0, arcE=0, arcH=0, arcS=0;
+
+  if(MARKET==="NSE" && typeof PF_TRADES !== "undefined"){
+    PF_TRADES.forEach(function(t){
+      if(inWin(new Date(t[1]).getTime())){ entries++; arcE++; }
+      if(inWin(new Date(t[3]).getTime())){
+        if(t[5] > 0){ hit++; arcH++; }
+        else if(t[5] < 0){ stop++; arcS++; }
+        else flat++;
+      }
+    });
+  }
+
+  (jrnl||[]).forEach(function(j){
+    var ms = new Date(j.date).getTime();
+    if(isNaN(ms) || !inWin(ms)) return;
+    if(j.action==="ENTRY") entries++;
+    else if(j.action==="TARGET HIT") hit++;
+    else if(j.action==="STOPPED OUT") stop++;
+  });
+
+  return { entries:entries, hit:hit, stop:stop, flat:flat,
+           arcE:arcE, arcH:arcH, arcS:arcS,
+           closed: hit + stop,
+           winRate: (hit+stop) ? Math.round(hit/(hit+stop)*100) : 0 };
+}
+
+function renderPeriodPicker(){
+  return '<div class="perf-ctl mp-period">' +
+    MODEL_PERIODS.map(function(p){
+      return '<button class="perf-btn' + (p[0]===MODEL_PERIOD ? ' on' : '') +
+             '" onclick="setModelPeriod(\'' + p[0] + '\')">' +
+             (p[0]==='ALL' ? 'All time' : p[0]) + '</button>';
+    }).join('') +
+  '</div>';
+}
+
 function renderModel(){
+  /* Rebuild the live leg BEFORE anything reads PF_WEEKLY — the cards
+     below take their figures off it. */
+  if(MARKET==="NSE") extendFromJournal();
+
   var mp=D.modelPortfolio||{positions:[],journal:[]};
   var pos=mp.positions||[],jrnl=mp.journal||[];
   /* No open positions is not an empty tab — the performance history
@@ -3681,44 +3814,26 @@ function renderModel(){
     return "<div class=\"empty\">Model Portfolio empty</div>";
   }
   var cur=MARKET==="NSE"?"Rs.":"$";
-  var liveEntries   = jrnl.filter(function(j){return j.action==="ENTRY";}).length;
-  var liveTargetHit = jrnl.filter(function(j){return j.action==="TARGET HIT";}).length;
-  var liveStopped   = jrnl.filter(function(j){return j.action==="STOPPED OUT";}).length;
-
-  /* The archive log records only the return, not the reason a position
-     was closed. A positive exit is counted as a target hit and a
-     negative one as a stop — an inference from the sign, not something
-     the log states. Exits that closed flat are neither. */
-  var arcEntries=0, arcHit=0, arcStop=0, arcFlat=0;
-  if(MARKET==="NSE" && typeof PF_TRADES !== "undefined"){
-    arcEntries = PF_TRADES.length;
-    PF_TRADES.forEach(function(t){
-      if(t[5] > 0) arcHit++;
-      else if(t[5] < 0) arcStop++;
-      else arcFlat++;
-    });
-  }
-
-  var totalEntries   = liveEntries + arcEntries;
-  var totalTargetHit = liveTargetHit + arcHit;
-  var totalStopped   = liveStopped + arcStop;
-  var totalExits     = liveTargetHit + liveStopped + arcEntries;
-  var totalRunning   = totalEntries - totalExits;
-  var closed         = totalTargetHit + totalStopped;
-  var winRate        = closed ? Math.round(totalTargetHit / closed * 100) : 0;
+  var C = tradeCountsForPeriod(jrnl);
+  var liveOpen = jrnl.filter(function(j){return j.action==="ENTRY";}).length
+               - jrnl.filter(function(j){return j.action==="TARGET HIT"||j.action==="STOPPED OUT";}).length;
 
   function sub(n){
-    return arcEntries ? "<div class=\"card-s\">incl. "+n.toLocaleString()+" archive</div>" : "";
+    return C.arcE ? "<div class=\"card-s\">incl. "+n.toLocaleString()+" archive</div>" : "";
   }
 
-  var cards="<div class=\"card-grid\">"+
-    "<div class=\"card\"><div class=\"card-l\">Total Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+totalEntries.toLocaleString()+"</div>"+sub(arcEntries)+"</div>"+
-    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+totalTargetHit.toLocaleString()+"</div>"+sub(arcHit)+"</div>"+
-    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+totalStopped.toLocaleString()+"</div>"+sub(arcStop)+"</div>"+
-    "<div class=\"card\"><div class=\"card-l\">Win Rate</div><div class=\"card-v\" style=\"color:var(--accent)\">"+winRate+"%</div><div class=\"card-s\">"+closed.toLocaleString()+" closed</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Running</div><div class=\"card-v\" style=\"color:var(--purple)\">"+totalRunning+"</div><div class=\"card-s\">open now</div></div>"+
+  var periodLbl = MODEL_PERIOD==='ALL' ? 'all time' : 'last '+MODEL_PERIOD;
+
+  var cards=
+    "<div class=\"mp-head\"><span class=\"mp-head-t\">Model Portfolio</span>"+renderPeriodPicker()+"</div>"+
+    "<div class=\"card-grid\">"+
+    "<div class=\"card\"><div class=\"card-l\">Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+C.entries.toLocaleString()+"</div>"+sub(C.arcE)+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+C.hit.toLocaleString()+"</div>"+sub(C.arcH)+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+C.stop.toLocaleString()+"</div>"+sub(C.arcS)+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Win Rate</div><div class=\"card-v\" style=\"color:var(--accent)\">"+C.winRate+"%</div><div class=\"card-s\">"+C.closed.toLocaleString()+" closed \u00b7 "+periodLbl+"</div></div>"+
+    "<div class=\"card\"><div class=\"card-l\">Running</div><div class=\"card-v\" style=\"color:var(--purple)\">"+Math.max(0,liveOpen)+"</div><div class=\"card-s\">open now</div></div>"+
     "</div>"+
-    (arcEntries ? "<div style=\"font-size:9.5px;color:var(--muted);margin:-4px 0 8px;font-style:italic\">Archive exits are classified by the sign of the return \u2014 the historical log does not record why a position was closed"+(arcFlat ? ", and "+arcFlat+" closed flat so count as neither" : "")+".</div>" : "");
+    (C.arcE ? "<div class=\"mp-note\">Archive exits are classified by the sign of the return \u2014 the historical log does not record why a position was closed"+(C.flat ? ", and "+C.flat+" closed flat so count as neither" : "")+".</div>" : "");
 
   var perf = computeJournalPerformance(jrnl, pos);
   var perfHtml = "";
@@ -3730,26 +3845,28 @@ function renderModel(){
     var realClr = perf.realizedPnl>=0 ? "var(--green)" : "var(--red)";
     var unrealClr = perf.unrealizedPnl>=0 ? "var(--green)" : "var(--red)";
     var totalTrades = perf.realizedCount + perf.unrealizedCount;
-    var curveP = (MARKET==="NSE") ? computeCurvePerformance() : null;
+    var curveP = (MARKET==="NSE") ? curveStatsForPeriod() : null;
 
     if(curveP){
-      /* Whole-record figures. Realised comes off the curve, so it
-         covers every closed trade; unrealised still comes from the
-         live positions only. */
+      /* Rupee figures for the selected window. Realised is what the
+         curve actually added across it; unrealised is current-only,
+         so it is labelled as such rather than pretending to be
+         window-scoped. */
       var unreal = perf.unrealizedPnl * (curveP.lotNow / perf.tradeAmount);
+      var retTxt = (curveP.retPct>=0?"+":"")+curveP.retPct.toFixed(1)+"%";
       perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
-        "<div class=\"card\"><div class=\"card-l\">CAGR</div><div class=\"card-v\" style=\"color:"+(curveP.cagr>=0?"var(--green)":"var(--red)")+"\">"+(curveP.cagr!=null?curveP.cagr.toFixed(1)+"%":"\u2014")+"</div>"+
-          "<div class=\"card-s\">over "+curveP.years.toFixed(1)+"y</div></div>"+
-        "<div class=\"card\"><div class=\"card-l\">Total Return</div><div class=\"card-v\" style=\"color:var(--gold)\">+"+Math.round(curveP.totalPct).toLocaleString()+"%</div>"+
-          "<div class=\"card-s\">since inception</div></div>"+
+        "<div class=\"card\"><div class=\"card-l\">Return</div><div class=\"card-v\" style=\"color:"+(curveP.retPct>=0?"var(--green)":"var(--red)")+"\">"+retTxt+"</div>"+
+          "<div class=\"card-s\">"+periodLbl+"</div></div>"+
+        "<div class=\"card\"><div class=\"card-l\">CAGR</div><div class=\"card-v\" style=\"color:"+((curveP.cagr==null||curveP.cagr>=0)?"var(--green)":"var(--red)")+"\">"+(curveP.cagr!=null?curveP.cagr.toFixed(1)+"%":"\u2014")+"</div>"+
+          "<div class=\"card-s\">"+(curveP.cagr!=null?"over "+curveP.years.toFixed(1)+"y":"window too short")+"</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">Realized P&L</div><div class=\"card-v\" style=\"color:"+(curveP.realized>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(curveP.realized).toLocaleString("en-IN")+"</div>"+
-          "<div class=\"card-s\">all closed trades</div></div>"+
+          "<div class=\"card-s\">"+C.closed.toLocaleString()+" closed \u00b7 "+periodLbl+"</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">Unrealized P&L</div><div class=\"card-v\" style=\"color:"+(unreal>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(unreal).toLocaleString("en-IN")+"</div>"+
-          "<div class=\"card-s\">"+perf.unrealizedCount+" open now</div></div>"+
+          "<div class=\"card-s\">"+perf.unrealizedCount+" open now \u00b7 current only</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">Max Drawdown</div><div class=\"card-v\" style=\"color:var(--red)\">"+curveP.maxDD.toFixed(1)+"%</div>"+
-          "<div class=\"card-s\">worst peak-to-trough</div></div>"+
+          "<div class=\"card-s\">within "+periodLbl+"</div></div>"+
         "</div>"+
-        "<div style=\"font-size:9.5px;color:var(--muted);margin:3px 0 8px;font-style:italic\">Position size scales with equity: the first trade was "+cur+PF_LOT.toLocaleString("en-IN")+", one today would be "+cur+Math.round(curveP.lotNow).toLocaleString("en-IN")+". Drawdown is measured on weekly closes of the reconstructed curve, so it understates intra-week lows.</div>";
+        "<div class=\"mp-note\">Position size scales with equity: the first trade was "+cur+PF_LOT.toLocaleString("en-IN")+", one today would be "+cur+Math.round(curveP.lotNow).toLocaleString("en-IN")+". Drawdown uses weekly closes, so it understates intra-week lows.</div>";
     } else {
       perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
       "<div class=\"card\"><div class=\"card-l\">CAGR*</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
@@ -3837,7 +3954,6 @@ function renderModel(){
   var jCap = jEvents.length > J_LIMIT
     ? "<div style=\"font-size:10px;color:var(--muted);margin-top:6px;font-style:italic\">Showing the "+J_LIMIT+" most recent of "+jEvents.length.toLocaleString()+" journal events.</div>"
     : "";
-  if(MARKET==="NSE") extendFromJournal();
   return (MARKET==="NSE" ? renderPerfBlock() : "")+cards+perfHtml+
     (pos.length
       ? "<div class=\"tw\" style=\"margin-bottom:10px\"><table><thead><tr><th>Symbol</th><th>Live Price</th><th>P&L%</th><th>Status</th><th>Chart</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>"+posRows+"</tbody></table></div>"
