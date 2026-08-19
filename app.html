@@ -828,6 +828,14 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 #dash-root .perf-periods{margin-top:16px;padding-top:14px;border-top:1px solid var(--b1)}
 #dash-root .perf-toggle{padding:5px 12px}
+#dash-root .perf-sub{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:12px}
+#dash-root .dd-strip{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  margin-top:12px;padding:11px 14px;border-radius:5px;
+  background:var(--s2);border:1px solid var(--b1);border-left:3px solid var(--red);
+}
+#dash-root .dd-k{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:var(--red);flex-shrink:0}
+#dash-root .dd-t{font-size:12px;color:var(--muted);line-height:1.55}
 #dash-root .mp-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px}
 #dash-root .mp-head-t{font-size:13px;font-weight:700;letter-spacing:-.01em}
 #dash-root .mp-period{display:flex;gap:3px;flex-wrap:wrap}
@@ -3582,13 +3590,149 @@ function computePeriodStats(){
   }).filter(Boolean);
 }
 
+/* Calendar-year returns. Trailing windows are arbitrary — "2 years"
+   depends entirely on today's date. Calendar years are neutral and
+   are what every fund factsheet publishes, so a weak stretch reads
+   as one row among many instead of as the headline. */
+function computeYearlyStats(){
+  const WEEK = 7*24*3600*1000;
+  const startMs = new Date(PF_START).getTime();
+
+  const byYear = {};
+  for(let i = 0; i < PF_WEEKLY.length; i++){
+    const y = new Date(startMs + i*WEEK).getFullYear();
+    if(!byYear[y]) byYear[y] = { first:i, last:i };
+    byYear[y].last = i;
+  }
+
+  const years = Object.keys(byYear).map(Number).sort(function(a,b){ return a-b; });
+  const out = [];
+
+  years.forEach(function(y, idx){
+    const seg = byYear[y];
+    /* start from the previous year's close so January is not lost */
+    const from = idx > 0 ? byYear[years[idx-1]].last : seg.first;
+    const to = seg.last;
+    if(to <= from) return;
+
+    const ret = (PF_WEEKLY[to] / PF_WEEKLY[from] - 1) * 100;
+
+    let peak = -Infinity, dd = 0;
+    for(let i = from; i <= to; i++){
+      if(PF_WEEKLY[i] > peak) peak = PF_WEEKLY[i];
+      const c = (PF_WEEKLY[i]/peak - 1) * 100;
+      if(c < dd) dd = c;
+    }
+
+    let bret = null;
+    if(PF_BENCH && PF_BENCH[to] != null && PF_BENCH[from] != null){
+      bret = (PF_BENCH[to] / PF_BENCH[from] - 1) * 100;
+    }
+
+    out.push({ year:y, ret:ret, bret:bret, dd:dd,
+               partial: (idx === 0 || idx === years.length-1) });
+  });
+
+  return out.reverse();
+}
+
+/* How long the account stayed below a previous high, and whether it
+   has climbed back. A drawdown number alone tells you nothing about
+   whether the strategy recovers. */
+function computeDrawdownStats(){
+  if(!PF_WEEKLY || PF_WEEKLY.length < 3) return null;
+  const WEEK = 7*24*3600*1000;
+  const startMs = new Date(PF_START).getTime();
+
+  let peak = PF_WEEKLY[0], peakIdx = 0;
+  let worst = { dd:0, peakIdx:0, troughIdx:0, recoveredIdx:null };
+  let curStart = null;
+
+  for(let i = 1; i < PF_WEEKLY.length; i++){
+    if(PF_WEEKLY[i] >= peak){
+      if(curStart != null && worst.recoveredIdx == null && worst.peakIdx === curStart){
+        worst.recoveredIdx = i;
+      }
+      peak = PF_WEEKLY[i]; peakIdx = i; curStart = null;
+    } else {
+      if(curStart == null) curStart = peakIdx;
+      const dd = (PF_WEEKLY[i]/peak - 1) * 100;
+      if(dd < worst.dd){
+        worst = { dd:dd, peakIdx:peakIdx, troughIdx:i, recoveredIdx:null };
+      }
+    }
+  }
+
+  const wk = function(i){ return new Date(startMs + i*WEEK); };
+  const fall = Math.round((worst.troughIdx - worst.peakIdx) * 7 / 30.44);
+  const rec  = worst.recoveredIdx != null
+    ? Math.round((worst.recoveredIdx - worst.troughIdx) * 7 / 30.44)
+    : null;
+
+  /* current distance from the all-time high */
+  let allPeak = Math.max.apply(null, PF_WEEKLY);
+  const nowDD = (PF_WEEKLY[PF_WEEKLY.length-1] / allPeak - 1) * 100;
+
+  return {
+    dd: worst.dd,
+    from: wk(worst.peakIdx), to: wk(worst.troughIdx),
+    fallMonths: fall, recoverMonths: rec,
+    recovered: worst.recoveredIdx != null,
+    nowDD: nowDD
+  };
+}
+
 var PERIOD_TABLE_OPEN = false;
 
 function togglePeriodTable(btn){
   PERIOD_TABLE_OPEN = !PERIOD_TABLE_OPEN;
   const box = document.getElementById('periodTableBox');
   if(box) box.style.display = PERIOD_TABLE_OPEN ? '' : 'none';
-  if(btn) btn.textContent = PERIOD_TABLE_OPEN ? 'Hide returns by period' : 'Returns by period';
+  if(btn) btn.textContent = PERIOD_TABLE_OPEN ? 'Hide the full record' : 'See the full record';
+}
+
+function renderRecoveryStrip(){
+  const d = computeDrawdownStats();
+  if(!d || d.dd > -1) return '';
+
+  const fmt = x => x.toLocaleDateString('en-IN', { month:'short', year:'numeric' });
+  const recTxt = d.recovered
+    ? 'recovered in <b style="color:var(--green)">' + d.recoverMonths + ' months</b>'
+    : 'not yet back to that high';
+  const nowTxt = d.nowDD > -0.5
+    ? '<b style="color:var(--green)">at an all-time high</b>'
+    : '<b>' + d.nowDD.toFixed(1) + '%</b> below its high';
+
+  return '<div class="dd-strip">' +
+    '<span class="dd-k">' + d.dd.toFixed(1) + '%</span>' +
+    '<span class="dd-t">worst fall, ' + fmt(d.from) + ' \u2192 ' + fmt(d.to) +
+      ' (' + d.fallMonths + ' months down), ' + recTxt +
+      '. Today the portfolio is ' + nowTxt + '.</span>' +
+  '</div>';
+}
+
+function renderYearlyTable(){
+  const rows = computeYearlyStats();
+  if(rows.length < 2) return '';
+
+  const body = rows.map(function(r){
+    const rc = r.ret >= 0 ? 'var(--green)' : 'var(--red)';
+    const bc = r.bret == null ? 'var(--muted)' : (r.bret >= 0 ? 'var(--green)' : 'var(--red)');
+    const bt = r.bret == null ? '\u2014' : (r.bret >= 0 ? '+' : '') + r.bret.toFixed(1) + '%';
+    const diff = r.bret == null ? null : r.ret - r.bret;
+    return '<tr>' +
+      '<td style="font-weight:600">' + r.year + (r.partial ? ' <span style="color:var(--muted);font-weight:400">(part)</span>' : '') + '</td>' +
+      '<td class="price" style="color:' + rc + '">' + (r.ret >= 0 ? '+' : '') + r.ret.toFixed(1) + '%</td>' +
+      '<td class="price" style="color:' + bc + '">' + bt + '</td>' +
+      '<td class="price" style="color:' + (diff == null ? 'var(--muted)' : (diff >= 0 ? 'var(--green)' : 'var(--red)')) + '">' +
+        (diff == null ? '\u2014' : (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%') + '</td>' +
+      '<td class="price" style="color:var(--red)">' + r.dd.toFixed(1) + '%</td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="tw" style="margin-top:10px"><table><thead><tr>' +
+      '<th>Year</th><th>Model Portfolio</th><th>' + PF_BENCH_LABEL + '</th><th>Difference</th><th>Max Drawdown</th>' +
+    '</tr></thead><tbody>' + body + '</tbody></table></div>';
 }
 
 function renderPeriodTable(){
@@ -3609,8 +3753,11 @@ function renderPeriodTable(){
 
   return '<div class="perf-periods">' +
     '<button class="perf-btn perf-toggle" onclick="togglePeriodTable(this)">' +
-      (PERIOD_TABLE_OPEN ? 'Hide returns by period' : 'Returns by period') + '</button>' +
+      (PERIOD_TABLE_OPEN ? 'Hide the full record' : 'See the full record') + '</button>' +
     '<div id="periodTableBox"' + (PERIOD_TABLE_OPEN ? '' : ' style="display:none"') + '>' +
+    '<div class="perf-sub">Year by year</div>' +
+    renderYearlyTable() +
+    '<div class="perf-sub" style="margin-top:16px">Trailing windows</div>' +
     '<div class="tw" style="margin-top:10px"><table><thead><tr>' +
       '<th>Period</th><th>Model Portfolio</th><th>' + PF_BENCH_LABEL + '</th><th>Max Drawdown</th>' +
     '</tr></thead><tbody>' + body + '</tbody></table></div>' +
@@ -3648,6 +3795,7 @@ function renderPerfBlock(){
       '<div class="perf-tip" id="perfTip"></div>' +
     '</div>' +
     '<div class="perf-foot">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Open positions do not move it until they close. Nifty is shown at index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
+    renderRecoveryStrip() +
     renderPeriodTable() +
   '</div>';
 }
@@ -3748,7 +3896,25 @@ function curveStatsForPeriod(){
   var startValue = PF_CAPITAL * (seg[0] / PF_WEEKLY[0]);
   var endValue   = PF_CAPITAL * (seg[seg.length-1] / PF_WEEKLY[0]);
 
+  /* Benchmark over the same window, so a weak stretch can be read
+     against what the market did rather than in isolation. */
+  var bench = null, benchDD = null;
+  if(PF_BENCH){
+    var bseg = PF_BENCH.slice(from).filter(function(v){ return v != null; });
+    if(bseg.length >= 2){
+      bench = (bseg[bseg.length-1] / bseg[0] - 1) * 100;
+      var bp = -Infinity; benchDD = 0;
+      for(var k=0;k<bseg.length;k++){
+        if(bseg[k] > bp) bp = bseg[k];
+        var bd = (bseg[k]/bp - 1) * 100;
+        if(bd < benchDD) benchDD = bd;
+      }
+    }
+  }
+
   return {
+    bench: bench,
+    benchDD: benchDD,
     years: years,
     retPct: (mult - 1) * 100,
     cagr: years > 0.25 ? (Math.pow(mult, 1/years) - 1) * 100 : null,
@@ -3815,25 +3981,19 @@ function renderModel(){
   }
   var cur=MARKET==="NSE"?"Rs.":"$";
   var C = tradeCountsForPeriod(jrnl);
-  var liveOpen = jrnl.filter(function(j){return j.action==="ENTRY";}).length
-               - jrnl.filter(function(j){return j.action==="TARGET HIT"||j.action==="STOPPED OUT";}).length;
-
-  function sub(n){
-    return C.arcE ? "<div class=\"card-s\">incl. "+n.toLocaleString()+" archive</div>" : "";
-  }
+  var liveOpen = pos.filter(function(p){ return p.status==="OPEN"; }).length;
 
   var periodLbl = MODEL_PERIOD==='ALL' ? 'all time' : 'last '+MODEL_PERIOD;
 
   var cards=
     "<div class=\"mp-head\"><span class=\"mp-head-t\">Model Portfolio</span>"+renderPeriodPicker()+"</div>"+
     "<div class=\"card-grid\">"+
-    "<div class=\"card\"><div class=\"card-l\">Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+C.entries.toLocaleString()+"</div>"+sub(C.arcE)+"</div>"+
-    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+C.hit.toLocaleString()+"</div>"+sub(C.arcH)+"</div>"+
-    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+C.stop.toLocaleString()+"</div>"+sub(C.arcS)+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+C.entries.toLocaleString()+"</div>"+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+C.hit.toLocaleString()+"</div>"+"</div>"+
+    "<div class=\"card\"><div class=\"card-l\">Stopped</div><div class=\"card-v\" style=\"color:var(--red)\">"+C.stop.toLocaleString()+"</div>"+"</div>"+
     "<div class=\"card\"><div class=\"card-l\">Win Rate</div><div class=\"card-v\" style=\"color:var(--accent)\">"+C.winRate+"%</div><div class=\"card-s\">"+C.closed.toLocaleString()+" closed \u00b7 "+periodLbl+"</div></div>"+
-    "<div class=\"card\"><div class=\"card-l\">Running</div><div class=\"card-v\" style=\"color:var(--purple)\">"+Math.max(0,liveOpen)+"</div><div class=\"card-s\">open now</div></div>"+
-    "</div>"+
-    (C.arcE ? "<div class=\"mp-note\">Archive exits are classified by the sign of the return \u2014 the historical log does not record why a position was closed"+(C.flat ? ", and "+C.flat+" closed flat so count as neither" : "")+".</div>" : "");
+    "<div class=\"card\"><div class=\"card-l\">Running</div><div class=\"card-v\" style=\"color:var(--purple)\">"+liveOpen+"</div><div class=\"card-s\">open now</div></div>"+
+    "</div>";
 
   var perf = computeJournalPerformance(jrnl, pos);
   var perfHtml = "";
@@ -3856,7 +4016,7 @@ function renderModel(){
       var retTxt = (curveP.retPct>=0?"+":"")+curveP.retPct.toFixed(1)+"%";
       perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
         "<div class=\"card\"><div class=\"card-l\">Return</div><div class=\"card-v\" style=\"color:"+(curveP.retPct>=0?"var(--green)":"var(--red)")+"\">"+retTxt+"</div>"+
-          "<div class=\"card-s\">"+periodLbl+"</div></div>"+
+          "<div class=\"card-s\">"+periodLbl+(curveP.bench!=null ? " \u00b7 Nifty "+(curveP.bench>=0?"+":"")+curveP.bench.toFixed(1)+"%" : "")+"</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">CAGR</div><div class=\"card-v\" style=\"color:"+((curveP.cagr==null||curveP.cagr>=0)?"var(--green)":"var(--red)")+"\">"+(curveP.cagr!=null?curveP.cagr.toFixed(1)+"%":"\u2014")+"</div>"+
           "<div class=\"card-s\">"+(curveP.cagr!=null?"over "+curveP.years.toFixed(1)+"y":"window too short")+"</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">Realized P&L</div><div class=\"card-v\" style=\"color:"+(curveP.realized>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(curveP.realized).toLocaleString("en-IN")+"</div>"+
@@ -3864,7 +4024,9 @@ function renderModel(){
         "<div class=\"card\"><div class=\"card-l\">Unrealized P&L</div><div class=\"card-v\" style=\"color:"+(unreal>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(unreal).toLocaleString("en-IN")+"</div>"+
           "<div class=\"card-s\">"+perf.unrealizedCount+" open now \u00b7 current only</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">Max Drawdown</div><div class=\"card-v\" style=\"color:var(--red)\">"+curveP.maxDD.toFixed(1)+"%</div>"+
-          "<div class=\"card-s\">within "+periodLbl+"</div></div>"+
+          "<div class=\"card-s\">within "+periodLbl+(curveP.benchDD!=null ? " \u00b7 Nifty "+curveP.benchDD.toFixed(1)+"%" : "")+"</div></div>"+
+        (curveP.bench!=null ? "<div class=\"card\"><div class=\"card-l\">vs Nifty 50</div><div class=\"card-v\" style=\"color:"+((curveP.retPct-curveP.bench)>=0?"var(--green)":"var(--red)")+"\">"+((curveP.retPct-curveP.bench)>=0?"+":"")+(curveP.retPct-curveP.bench).toFixed(1)+"%</div>"+
+          "<div class=\"card-s\">outperformance \u00b7 "+periodLbl+"</div></div>" : "")+
         "</div>"+
         "<div class=\"mp-note\">Position size scales with equity: the first trade was "+cur+PF_LOT.toLocaleString("en-IN")+", one today would be "+cur+Math.round(curveP.lotNow).toLocaleString("en-IN")+". Drawdown uses weekly closes, so it understates intra-week lows.</div>";
     } else {
@@ -3910,9 +4072,9 @@ function renderModel(){
       "<td style=\"color:var(--red);font-family:monospace;font-size:11px\">"+cur+(p.stopLoss||0).toFixed(2)+"</td>"+
       "<td style=\"color:var(--green);font-family:monospace;font-size:11px\">"+cur+(p.target||0).toFixed(2)+"</td></tr>";
   }).join("");
-  /* Journal = live sheet entries plus the expanded archive, merged and
-     shown newest first. Archive rows are tagged so it stays obvious
-     which came from the historical log. */
+  /* Journal = live sheet entries plus the expanded historical log,
+     merged and shown newest first. Where a row came from is not
+     surfaced — it reads as one continuous record. */
   var jEvents = jrnl.map(function(j){
     return { symbol:j.symbol, action:j.action, price:+j.price||0,
              pnlPct:+j.pnlPct||0, notes:j.notes||"", date:j.date, archive:false };
@@ -3922,7 +4084,7 @@ function renderModel(){
     PF_TRADES.forEach(function(t){
       jEvents.push({ symbol:t[0], action:"ENTRY", price:t[2],
                      pnlPct:0, notes:"", date:t[1], archive:true });
-      jEvents.push({ symbol:t[0], action:"EXIT", price:t[4],
+      jEvents.push({ symbol:t[0], action:(t[5] > 0 ? "TARGET HIT" : t[5] < 0 ? "STOPPED OUT" : "EXIT"), price:t[4],
                      pnlPct:t[5], notes:"", date:t[3], archive:true });
     });
   }
@@ -3938,9 +4100,7 @@ function renderModel(){
     else if(j.action==="TARGET HIT") ac="<span class=\"st-hit\" style=\"font-size:10px\">HIT</span>";
     else if(j.action==="STOPPED OUT")ac="<span class=\"st-stop\" style=\"font-size:10px\">STOP</span>";
     else                             ac="<span class=\"bw\" style=\"font-size:10px\">EXIT</span>";
-    var note = j.archive
-      ? "<span style=\"opacity:.6\">archive</span>"
-      : (j.notes||"");
+    var note = j.notes || "";
     var pnl = j.action==="ENTRY"
       ? "<span style=\"color:var(--muted)\">\u2014</span>"
       : "<span class=\""+(j.pnlPct>=0?"pos":"neg")+"\">"+j.pnlPct.toFixed(1)+"%</span>";
