@@ -826,6 +826,10 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   font-family:'JetBrains Mono',monospace;white-space:nowrap;
   pointer-events:none;z-index:6;box-shadow:0 3px 12px rgba(0,0,0,.3);line-height:1.5;
 }
+#dash-root .perf-periods{margin-top:16px;padding-top:14px;border-top:1px solid var(--b1)}
+#dash-root .perf-periods .tw{border-top-width:1px;max-height:none}
+#dash-root .perf-periods td{padding:7px 9px;font-size:12.5px}
+#dash-root .perf-periods th{cursor:default}
 #dash-root .perf-foot{
   margin-top:10px;font-size:10px;color:var(--muted);line-height:1.6;font-style:italic;
 }
@@ -3534,6 +3538,70 @@ function drawPerf(){
   cv.onmouseleave = function(){ render(null); if(tip) tip.style.display = 'none'; };
 }
 
+/* Period table: return and worst drawdown for each trailing window,
+   portfolio against Nifty. Drawdown is measured inside the window,
+   not from the all-time peak, so a short window can read 0% even
+   while the account sits below its record high. */
+function computePeriodStats(){
+  const rows = [
+    ['1 month', 4], ['3 months', 13], ['6 months', 26],
+    ['1 year', 52], ['2 years', 104], ['3 years', 156],
+    ['Since inception', 0]
+  ];
+  const n = PF_WEEKLY.length;
+
+  return rows.map(function(r){
+    const want = r[1];
+    if(want && want >= n) return null;
+    const from = want ? n - want - 1 : 0;
+
+    const seg = PF_WEEKLY.slice(from);
+    if(seg.length < 2) return null;
+
+    const ret = (seg[seg.length-1] / seg[0] - 1) * 100;
+
+    let peak = -Infinity, dd = 0;
+    for(let i = 0; i < seg.length; i++){
+      if(seg[i] > peak) peak = seg[i];
+      const cur = (seg[i] / peak - 1) * 100;
+      if(cur < dd) dd = cur;
+    }
+
+    let bret = null;
+    if(PF_BENCH && PF_BENCH.length > from){
+      const bseg = PF_BENCH.slice(from).filter(function(v){ return v != null; });
+      if(bseg.length >= 2) bret = (bseg[bseg.length-1] / bseg[0] - 1) * 100;
+    }
+
+    return { label: r[0], ret: ret, dd: dd, bret: bret };
+  }).filter(Boolean);
+}
+
+function renderPeriodTable(){
+  const stats = computePeriodStats();
+  if(!stats.length) return '';
+
+  const body = stats.map(function(x){
+    const rc = x.ret >= 0 ? 'var(--green)' : 'var(--red)';
+    const bc = x.bret == null ? 'var(--muted)' : (x.bret >= 0 ? 'var(--green)' : 'var(--red)');
+    const bt = x.bret == null ? '\u2014' : (x.bret >= 0 ? '+' : '') + x.bret.toFixed(1) + '%';
+    return '<tr>' +
+      '<td style="font-weight:600">' + x.label + '</td>' +
+      '<td class="price" style="color:' + rc + '">' + (x.ret >= 0 ? '+' : '') + x.ret.toFixed(1) + '%</td>' +
+      '<td class="price" style="color:' + bc + '">' + bt + '</td>' +
+      '<td class="price" style="color:var(--red)">' + x.dd.toFixed(1) + '%</td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="perf-periods">' +
+    '<div class="perf-ttl" style="margin-bottom:8px">Returns by period</div>' +
+    '<div class="tw"><table><thead><tr>' +
+      '<th>Period</th><th>Model Portfolio</th><th>' + PF_BENCH_LABEL + '</th><th>Max Drawdown</th>' +
+    '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+    '<div style="font-size:9.5px;color:var(--muted);margin-top:6px;font-style:italic">Drawdown is the worst peak-to-trough fall within each window, measured on weekly closes.</div>' +
+  '</div>';
+}
+
 function renderPerfBlock(){
   const btns = ['1m','3m','6m','1y','2y','3y','max']
     .map(r => '<button class="perf-btn' + (r === PERF_RANGE ? ' on' : '') +
@@ -3562,7 +3630,8 @@ function renderPerfBlock(){
       '<canvas id="perfCanvas"></canvas>' +
       '<div class="perf-tip" id="perfTip"></div>' +
     '</div>' +
-    '<div class="perf-foot">Curve to 26 Jun 2026 is built from the historical closed-trade log; everything after that date is rebuilt from the Model Portfolio journal using the same method. Each trade\u2019s entry-to-exit return is spread across its holding period and equal-weighted across open positions \u2014 only entry and exit prices exist, so the line is smooth between them and does not show real intra-trade drawdown. Open positions do not move the line until they close. The Nifty comparison is index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
+    '<div class="perf-foot">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Open positions do not move it until they close. Nifty is shown at index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
+    renderPeriodTable() +
   '</div>';
 }
 
@@ -3606,7 +3675,11 @@ function computeCurvePerformance(){
 function renderModel(){
   var mp=D.modelPortfolio||{positions:[],journal:[]};
   var pos=mp.positions||[],jrnl=mp.journal||[];
-  if(!pos.length) return "<div class=\"empty\">Model Portfolio empty</div>";
+  /* No open positions is not an empty tab — the performance history
+     and journal still stand on their own. */
+  if(!pos.length && !jrnl.length && MARKET!=="NSE"){
+    return "<div class=\"empty\">Model Portfolio empty</div>";
+  }
   var cur=MARKET==="NSE"?"Rs.":"$";
   var liveEntries   = jrnl.filter(function(j){return j.action==="ENTRY";}).length;
   var liveTargetHit = jrnl.filter(function(j){return j.action==="TARGET HIT";}).length;
@@ -3766,7 +3839,9 @@ function renderModel(){
     : "";
   if(MARKET==="NSE") extendFromJournal();
   return (MARKET==="NSE" ? renderPerfBlock() : "")+cards+perfHtml+
-    "<div class=\"tw\" style=\"margin-bottom:10px\"><table><thead><tr><th>Symbol</th><th>Live Price</th><th>P&L%</th><th>Status</th><th>Chart</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>"+posRows+"</tbody></table></div>"+
+    (pos.length
+      ? "<div class=\"tw\" style=\"margin-bottom:10px\"><table><thead><tr><th>Symbol</th><th>Live Price</th><th>P&L%</th><th>Status</th><th>Chart</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>"+posRows+"</tbody></table></div>"
+      : "<div class=\"empty\" style=\"padding:1.5rem\">No open positions right now.</div>")+
     "<div style=\"font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px\">Journal</div>"+
     "<div class=\"tw\"><table><thead><tr><th>Symbol</th><th>Action</th><th>Price</th><th>P&L%</th><th>Notes</th><th>Date</th></tr></thead><tbody>"+jRows+"</tbody></table></div>"+jCap;
 }
