@@ -3272,19 +3272,32 @@ const PF_TRADES = [
 ];
 
 
-/* Sizing model: the first position is PF_LOT. Capital is split
-   equally across whatever is open and profits are redeployed, so
-   position size scales with equity — ₹10,000 at the start becomes a
-   larger rupee amount as the account grows. That is what makes the
-   curve compound.
+/* Sizing model.
+   PF_LOT_TODAY is what one position is worth in today's money. The
+   run starts more than a decade back, so the opening lot is that
+   figure discounted at PF_INFLATION a year — a 2013 rupee bought
+   more than a 2026 one. From there nothing is indexed again: the
+   portfolio's own compounding carries the lot forward, which is what
+   offsets inflation in every later year.
 
    Equal-weighting needs enough capital for the worst-case number of
-   simultaneous positions in the record (34), so the account has to
-   start at PF_LOT × PF_SLOTS for the first trade to actually be one
-   full lot. */
-const PF_LOT = 10000;      /* size of the FIRST position */
-const PF_SLOTS = 34;       /* worst-case simultaneous positions in the record */
-const PF_CAPITAL = PF_LOT * PF_SLOTS;   /* capital the strategy needs up front */
+   simultaneous positions in the record, so the account opens at
+   startLot × PF_SLOTS. */
+const PF_LOT_TODAY = 10000;
+const PF_INFLATION = 0.06;
+const PF_SLOTS = 34;
+
+function pfYears(){
+  const WEEK = 7*24*3600*1000;
+  const n = (typeof PF_WEEKLY !== 'undefined' && PF_WEEKLY.length) ? PF_WEEKLY.length : PF_BASE.length;
+  return (n - 1) * 7 / 365.25;
+}
+function pfStartLot(){
+  return PF_LOT_TODAY / Math.pow(1 + PF_INFLATION, pfYears());
+}
+function pfCapital(){
+  return pfStartLot() * PF_SLOTS;
+}
 
 
 /* Live leg: continues the curve past the CSV cutoff using the Model
@@ -3419,11 +3432,11 @@ function paintPerfHeads(){
   }
   /* Rupee readout always runs from inception, whatever window is
      selected — the percentages above it are the window's return. */
-  const rupees = PF_CAPITAL * (PF_WEEKLY[PF_WEEKLY.length-1] / 100);
+  const rupees = pfCapital() * (PF_WEEKLY[PF_WEEKLY.length-1] / 100);
   const val = document.getElementById('perfRupee');
   if(val) val.textContent = '\u20b9' + Math.round(rupees).toLocaleString('en-IN');
   const seed = document.getElementById('perfSeed');
-  if(seed) seed.textContent = '\u20b9' + PF_CAPITAL.toLocaleString('en-IN');
+  if(seed) seed.textContent = '\u20b9' + Math.round(pfCapital()).toLocaleString('en-IN');
 
   const span = document.getElementById('perfSpan');
   if(span){
@@ -3778,7 +3791,7 @@ function renderPerfBlock(){
       '<div class="perf-ctl">' + btns + '</div>' +
     '</div>' +
     '<div class="perf-tops">' +
-      '<div class="perf-lede">Starting at <b>\u20b9' + PF_LOT.toLocaleString('en-IN') + '</b> per position on a <b id="perfSeed"></b> account, with profits redeployed, the portfolio is now worth <b id="perfRupee" style="color:var(--purple)"></b>.<br><span style="opacity:.75">Percentages below are for the selected window.</span></div>' +
+      '<div class="perf-lede">Starting at <b>\u20b9' + Math.round(pfStartLot()).toLocaleString('en-IN') + '</b> per position on a <b id="perfSeed"></b> account, with profits redeployed, the portfolio is now worth <b id="perfRupee" style="color:var(--purple)"></b>. <br><span style="opacity:.75">Percentages below are for the selected window.</span></div>' +
       '<div><div class="perf-k-l" style="color:var(--purple)">Model Portfolio' +
         '<span class="perf-k-p" id="perfPfPct"></span></div>' +
         '<div class="perf-k-v" id="perfPfVal">\u2014</div></div>' +
@@ -3806,8 +3819,8 @@ function renderPerfBlock(){
    only come from positions open right now.
 
    Position size scales with equity under this model, so an open
-   position today is worth PF_LOT x the current equity multiple, not
-   a flat PF_LOT. */
+   position today is worth the opening lot times the current equity
+   multiple, not a flat amount. */
 function computeCurvePerformance(){
   if(!PF_WEEKLY || PF_WEEKLY.length < 2) return null;
 
@@ -3817,7 +3830,7 @@ function computeCurvePerformance(){
   var years = (endMs - startMs) / (365.25 * 24 * 3600 * 1000);
 
   var mult = PF_WEEKLY[PF_WEEKLY.length - 1] / PF_WEEKLY[0];
-  var value = PF_CAPITAL * mult;
+  var value = pfCapital() * mult;
 
   var peak = -Infinity, maxDD = 0;
   for(var i = 0; i < PF_WEEKLY.length; i++){
@@ -3830,10 +3843,10 @@ function computeCurvePerformance(){
     years: years,
     cagr: years > 0.05 ? (Math.pow(mult, 1 / years) - 1) * 100 : null,
     value: value,
-    realized: value - PF_CAPITAL,
+    realized: value - pfCapital(),
     totalPct: (mult - 1) * 100,
     maxDD: maxDD,
-    lotNow: PF_LOT * mult
+    lotNow: pfStartLot() * mult
   };
 }
 
@@ -3893,8 +3906,8 @@ function curveStatsForPeriod(){
 
   /* Rupee P&L for the window = capital x the curve's rise across it,
      scaled by where the account already stood at the window's start. */
-  var startValue = PF_CAPITAL * (seg[0] / PF_WEEKLY[0]);
-  var endValue   = PF_CAPITAL * (seg[seg.length-1] / PF_WEEKLY[0]);
+  var startValue = pfCapital() * (seg[0] / PF_WEEKLY[0]);
+  var endValue   = pfCapital() * (seg[seg.length-1] / PF_WEEKLY[0]);
 
   /* Benchmark over the same window, so a weak stretch can be read
      against what the market did rather than in isolation. */
@@ -3921,7 +3934,7 @@ function curveStatsForPeriod(){
     realized: endValue - startValue,
     endValue: endValue,
     maxDD: dd,
-    lotNow: PF_LOT * (PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0])
+    lotNow: pfStartLot() * (PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0])
   };
 }
 
@@ -4028,7 +4041,7 @@ function renderModel(){
         (curveP.bench!=null ? "<div class=\"card\"><div class=\"card-l\">vs Nifty 50</div><div class=\"card-v\" style=\"color:"+((curveP.retPct-curveP.bench)>=0?"var(--green)":"var(--red)")+"\">"+((curveP.retPct-curveP.bench)>=0?"+":"")+(curveP.retPct-curveP.bench).toFixed(1)+"%</div>"+
           "<div class=\"card-s\">outperformance \u00b7 "+periodLbl+"</div></div>" : "")+
         "</div>"+
-        "<div class=\"mp-note\">Position size scales with equity: the first trade was "+cur+PF_LOT.toLocaleString("en-IN")+", one today would be "+cur+Math.round(curveP.lotNow).toLocaleString("en-IN")+". Drawdown uses weekly closes, so it understates intra-week lows.</div>";
+        "<div class=\"mp-note\">Position size scales with equity: the opening trade was "+cur+Math.round(pfStartLot()).toLocaleString("en-IN")+", one today would be "+cur+Math.round(curveP.lotNow).toLocaleString("en-IN")+". Drawdown uses weekly closes, so it understates intra-week lows.</div>";
     } else {
       perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
       "<div class=\"card\"><div class=\"card-l\">CAGR*</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
