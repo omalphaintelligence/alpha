@@ -2406,7 +2406,16 @@ function computeJournalPerformance(journal, positions){
    log has only entry and exit prices, the line is smooth between
    them — it does NOT show real intra-trade drawdown. */
 const PF_START = '2013-11-01';
-const PF_WEEKLY = [
+/* CSV-derived leg: weekly equity from the closed-trade log, rebased
+   to 100, running to 26 Jun 2026. Everything after that date is
+   rebuilt live from the Model Portfolio journal — see
+   extendFromJournal() — so the two legs form one continuous curve.
+
+   Each trade's entry-to-exit return is spread geometrically across
+   its holding days and equal-weighted across whatever was open that
+   day. Only entry and exit prices exist, so the line is smooth
+   between them and hides real intra-trade drawdown. */
+const PF_BASE = [
   100.21,100.71,101.22,101.72,102.23,102.74,103.26,103.77,104.29,104.81,105.34,105.86,106.39,106.93,107.46,108.0,
   108.54,109.08,109.63,110.17,110.72,111.28,111.83,112.39,112.95,113.52,114.09,114.66,115.23,115.81,116.39,116.97,
   117.55,118.14,118.73,119.32,119.92,120.52,121.12,121.73,122.34,122.95,123.56,124.18,124.8,125.43,126.05,126.68,
@@ -2447,8 +2456,8 @@ const PF_WEEKLY = [
   878.59,874.91,870.1,867.61,865.73,865.93,867.23,868.71,870.09,871.38,872.52,873.26,873.9,874.38,874.71,875.1,
   875.38,875.91,876.33,875.78,874.96,874.31,874.65,876.04,877.72,879.53,881.54,882.97,884.09,884.0,882.81,881.6,
   881.27,881.68,881.97,881.8,881.33,880.59,880.14,879.61,879.08,878.56,877.6,875.08,866.45,858.79,855.33,851.81,
-  848.7,843.55,837.64,830.42,819.5,809.62,802.43,809.54,820.35,832.79,849.75,866.3,875.25,876.59,874.32,879.81,
-  883.58,885.83,883.6,881.36,882.57,886.47,897.84,916.44,936.04,945.23
+  848.7,843.55,837.64,830.42,819.5,809.62,802.43,809.54,820.35,832.79,849.75,866.3,875.25,876.2,872.76,877.93,
+  881.99,884.27,881.01,874.53,873.37
 ];
 
 /* Benchmark: left empty because no Nifty 50 history is available to
@@ -2525,6 +2534,71 @@ var PF_BENCH = [
 ];
 var PF_BENCH_LABEL = 'Nifty 50';
 
+/* Live leg: continues the curve past the CSV cutoff using the Model
+   Portfolio journal. Exits are paired back to their ENTRY by symbol,
+   then the same method as the CSV leg is applied — each trade's
+   return spread geometrically over its holding days, equal-weighted
+   across open positions, compounded onto the last CSV value.
+
+   Only closed trades count, matching the CSV leg. Positions still
+   open do not move the line until they are exited. */
+var PF_WEEKLY = PF_BASE.slice();
+
+function extendFromJournal(){
+  PF_WEEKLY = PF_BASE.slice();
+
+  var jr = (D.modelPortfolio && D.modelPortfolio.journal) || [];
+  if(!jr.length) return;
+
+  var WEEK = 7*24*3600*1000, DAY = 24*3600*1000;
+  var startMs = new Date(PF_START).getTime();
+  var cutMs = startMs + (PF_BASE.length-1)*WEEK;
+
+  /* pair each exit with the most recent unmatched ENTRY of that symbol */
+  var rows = jr.map(function(j){
+    return { sym:j.symbol, act:j.action, t:new Date(j.date).getTime(), pct:+j.pnlPct||0 };
+  }).filter(function(r){ return r.sym && !isNaN(r.t); })
+    .sort(function(a,b){ return a.t-b.t; });
+
+  var openBySym = {}, trades = [];
+  rows.forEach(function(r){
+    if(r.act === 'ENTRY'){
+      (openBySym[r.sym] = openBySym[r.sym] || []).push(r.t);
+    } else if(r.act === 'TARGET HIT' || r.act === 'STOPPED OUT'){
+      var stack = openBySym[r.sym];
+      if(stack && stack.length){
+        var entryT = stack.shift();
+        var days = Math.round((r.t - entryT)/DAY);
+        if(days > 0) trades.push({ a:entryT, b:r.t, days:days, pct:r.pct });
+      }
+    }
+  });
+  if(!trades.length) return;
+
+  var lastExit = trades.reduce(function(m,t){ return Math.max(m, t.b); }, 0);
+  if(lastExit <= cutMs) return;
+
+  trades.forEach(function(t){ t.dr = Math.pow(1 + t.pct/100, 1/t.days) - 1; });
+
+  /* walk day by day from the cutoff to the last exit */
+  var cur = PF_BASE[PF_BASE.length-1];
+  var nextSample = cutMs + WEEK;
+
+  for(var d = cutMs + DAY; d <= lastExit; d += DAY){
+    var sum = 0, n = 0;
+    for(var k = 0; k < trades.length; k++){
+      var t = trades[k];
+      if(t.a <= d && t.b > d){ sum += t.dr; n++; }
+    }
+    if(n) cur *= (1 + sum/n);
+
+    while(d >= nextSample){
+      PF_WEEKLY.push(+cur.toFixed(2));
+      nextSample += WEEK;
+    }
+  }
+}
+
 var PERF_RANGE = 'max';
 var PERF_WEEKS = { '1m':4, '3m':13, '6m':26, '1y':52, '2y':104, '3y':156, 'max':0 };
 
@@ -2536,14 +2610,23 @@ function perfSlice(){
   const WEEK = 7 * 24 * 3600 * 1000;
 
   const pf = PF_WEEKLY.slice(from);
-  const bm = PF_BENCH ? PF_BENCH.slice(from) : null;
+  /* PF_BENCH only runs to the last week of baked Nifty data. Any
+     journal weeks beyond that get null and are skipped when drawn,
+     rather than being flat-lined into a fake reading. */
+  let bm = null;
+  if(PF_BENCH){
+    const padded = PF_BENCH.slice();
+    while(padded.length < PF_WEEKLY.length) padded.push(null);
+    bm = padded.slice(from);
+    if(bm[0] == null) bm = null;
+  }
 
   /* rebase whatever window is showing back to 100 */
   const base = pf[0], bbase = bm ? bm[0] : null;
   return {
     dates: pf.map((_, i) => new Date(startMs + (from + i) * WEEK)),
     pf: pf.map(v => v / base * 100),
-    bm: bm ? bm.map(v => v / bbase * 100) : null
+    bm: bm ? bm.map(v => v == null ? null : v / bbase * 100) : null
   };
 }
 
@@ -2571,7 +2654,8 @@ function paintPerfHeads(){
   const bleg = document.getElementById('perfBmLeg');
   if(bleg) bleg.style.display = d.bm ? '' : 'none';
   if(d.bm){
-    const bl = d.bm[d.bm.length - 1];
+    const known = d.bm.filter(v => v != null);
+    const bl = known[known.length - 1];
     document.getElementById('perfBmVal').textContent = '\u20b9' + bl.toFixed(2);
     const bp = document.getElementById('perfBmPct');
     const bg = bl - 100;
@@ -2605,7 +2689,7 @@ function drawPerf(){
   const muted  = cs.getPropertyValue('--muted').trim()  || '#888';
   const bcol   = cs.getPropertyValue('--b1').trim()     || '#333';
 
-  const all = d.bm ? d.pf.concat(d.bm) : d.pf;
+  const all = (d.bm ? d.pf.concat(d.bm) : d.pf).filter(v => v != null);
   let lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
   const pad = (hi - lo) * 0.08 || 1;
   lo -= pad; hi += pad;
@@ -2635,7 +2719,13 @@ function drawPerf(){
     function line(arr, color, width, alpha){
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      arr.forEach((v, i) => { const x = X(i), y = Y(v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      let pen = false;
+      arr.forEach((v, i) => {
+        if(v == null){ pen = false; return; }
+        const x = X(i), y = Y(v);
+        pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        pen = true;
+      });
       ctx.strokeStyle = color; ctx.lineWidth = width;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.stroke();
@@ -2671,7 +2761,7 @@ function drawPerf(){
       ctx.restore();
       ctx.beginPath(); ctx.arc(hx, Y(d.pf[hover]), 3.6, 0, Math.PI * 2);
       ctx.fillStyle = accent; ctx.fill();
-      if(d.bm){
+      if(d.bm && d.bm[hover] != null){
         ctx.beginPath(); ctx.arc(hx, Y(d.bm[hover]), 3, 0, Math.PI * 2);
         ctx.fillStyle = muted; ctx.fill();
       }
@@ -2688,7 +2778,7 @@ function drawPerf(){
     if(tip){
       const dt = d.dates[i].toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
       let html = '<b>' + dt + '</b><br>Portfolio \u20b9' + d.pf[i].toFixed(2);
-      if(d.bm) html += '<br>' + PF_BENCH_LABEL + ' \u20b9' + d.bm[i].toFixed(2);
+      if(d.bm && d.bm[i] != null) html += '<br>' + PF_BENCH_LABEL + ' \u20b9' + d.bm[i].toFixed(2);
       tip.innerHTML = html;
       tip.style.display = 'block';
       tip.style.left = Math.min(Math.max(X(i) - 55, 0), w - 130) + 'px';
@@ -2726,7 +2816,7 @@ function renderPerfBlock(){
       '<canvas id="perfCanvas"></canvas>' +
       '<div class="perf-tip" id="perfTip"></div>' +
     '</div>' +
-    '<div class="perf-foot">Built from the closed-trade log: each trade\u2019s entry-to-exit return is spread across its holding period and equal-weighted across open positions. Because only entry and exit prices are recorded, the line is smooth between them and does not show real intra-trade drawdown. Past performance does not guarantee future returns.</div>' +
+    '<div class="perf-foot">Curve to 26 Jun 2026 is built from the historical closed-trade log; everything after that date is rebuilt from the Model Portfolio journal using the same method. Each trade\u2019s entry-to-exit return is spread across its holding period and equal-weighted across open positions \u2014 only entry and exit prices exist, so the line is smooth between them and does not show real intra-trade drawdown. Open positions do not move the line until they close. The Nifty comparison is index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
   '</div>';
 }
 
@@ -2806,6 +2896,7 @@ function renderModel(){
       "<td style=\"color:var(--muted);font-size:11px\">"+j.notes+"</td>"+
       "<td class=\"dt\">"+fmtDate(j.date)+"</td></tr>";
   }).join("");
+  if(MARKET==="NSE") extendFromJournal();
   return (MARKET==="NSE" ? renderPerfBlock() : "")+cards+perfHtml+
     "<div class=\"tw\" style=\"margin-bottom:10px\"><table><thead><tr><th>Symbol</th><th>Live Price</th><th>P&L%</th><th>Status</th><th>Chart</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>"+posRows+"</tbody></table></div>"+
     "<div style=\"font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px\">Journal</div>"+
