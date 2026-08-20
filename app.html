@@ -399,8 +399,11 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 .deck-card{
   position:absolute;inset:0;
-  background:linear-gradient(168deg,var(--panel-2),var(--panel));
-  border:1px solid var(--line-soft);border-top:3px solid var(--hue,var(--r99));
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb,var(--hue,var(--r99)) 16%,transparent), transparent 62%),
+    linear-gradient(168deg,var(--panel-2),var(--panel));
+  border:1px solid color-mix(in srgb,var(--hue,var(--r99)) 26%,transparent);
+  border-top:3px solid var(--hue,var(--r99));
   border-radius:16px;overflow:hidden;
   transition:transform .55s var(--ease),opacity .55s var(--ease),box-shadow .55s var(--ease);
   cursor:pointer;
@@ -922,6 +925,26 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   color:var(--muted);border:1px solid var(--b1);border-radius:999px;padding:3px 10px;
 }
+.dash-scope .cap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dash-scope .cap-l{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px}
+.dash-scope .cap-in{
+  display:inline-flex;align-items:center;gap:2px;
+  background:var(--s2);border:1px solid var(--b1);border-radius:6px;
+  padding:5px 10px;transition:border-color .15s ease;
+}
+.dash-scope .cap-in:focus-within{border-color:var(--tab-accent)}
+.dash-scope .cap-in span{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
+.dash-scope .cap-in input{
+  width:110px;border:none;background:transparent;outline:none;padding:0;margin:0;
+  font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--text);
+}
+.dash-scope .cap-out{margin-top:11px;font-size:13.5px;color:var(--muted);display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.dash-scope .cap-out b{
+  font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;
+  color:var(--purple);letter-spacing:-.02em;
+}
+.dash-scope .cap-note{margin-top:7px;font-size:11.5px;color:var(--muted);opacity:.8}
+
 .dash-scope .perf-tops{
   display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px;
   padding-bottom:14px;border-bottom:1px solid var(--b1);margin-bottom:12px;
@@ -992,7 +1015,27 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   margin-top:10px;font-size:10px;color:var(--muted);line-height:1.6;font-style:italic;
 }
 @media(max-width:768px){
-  .dash-scope .perf-tops{grid-template-columns:1fr;gap:10px}
+  .dash-scope .cap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dash-scope .cap-l{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px}
+.dash-scope .cap-in{
+  display:inline-flex;align-items:center;gap:2px;
+  background:var(--s2);border:1px solid var(--b1);border-radius:6px;
+  padding:5px 10px;transition:border-color .15s ease;
+}
+.dash-scope .cap-in:focus-within{border-color:var(--tab-accent)}
+.dash-scope .cap-in span{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
+.dash-scope .cap-in input{
+  width:110px;border:none;background:transparent;outline:none;padding:0;margin:0;
+  font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--text);
+}
+.dash-scope .cap-out{margin-top:11px;font-size:13.5px;color:var(--muted);display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.dash-scope .cap-out b{
+  font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;
+  color:var(--purple);letter-spacing:-.02em;
+}
+.dash-scope .cap-note{margin-top:7px;font-size:11.5px;color:var(--muted);opacity:.8}
+
+.dash-scope .perf-tops{grid-template-columns:1fr;gap:10px}
   .dash-scope #perfCanvas{height:200px}
 }
 .dash-scope ::-webkit-scrollbar{width:4px;height:4px}
@@ -1032,7 +1075,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
     </div>
   </header>
 
-  <div class="wrap-x">
+  <div class="wrap-x" id="hero-wrap">
     <div class="hero">
       <div class="hero-grid">
         <div>
@@ -1165,7 +1208,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 
   <!-- ============ SCREENER PREVIEW ============ -->
   <div class="ltab-pane" id="ltab-screener">
-    <div class="sec" style="padding-top:0">
+    <div class="sec" style="padding-top:44px">
       <div class="wrap-x">
         <div class="pitch">
           <div class="pitch-l">
@@ -1196,7 +1239,7 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 
   <!-- ============ MODEL PORTFOLIO (public) ============ -->
   <div class="ltab-pane" id="ltab-model">
-    <div class="sec" style="padding-top:0">
+    <div class="sec" style="padding-top:44px">
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">Model Portfolio</div>
@@ -1584,6 +1627,14 @@ function setLandingTab(tab, btn){
   var pane = document.getElementById('ltab-' + tab);
   if(pane) pane.classList.add('on');
 
+  /* The hero is the overview's own opening block. Hiding it on the
+     other tabs puts their content straight under the header instead
+     of below a screenful the visitor has to scroll past. */
+  var hero = document.getElementById('hero-wrap');
+  if(hero) hero.style.display = (tab === 'overview') ? '' : 'none';
+
+  window.scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
+
   if(tab === 'screener') loadScreenerPreview();
   if(tab === 'model') buildPublicModel();
 }
@@ -1598,14 +1649,14 @@ var deckIdx = 0;
 var deckTimer = null;
 
 var DECK_SEGMENTS = [
-  ['ALL', 'Full universe',  '--r99'],
-  ['LC',  'Large cap',      '--r90'],
-  ['MC',  'Mid cap',        '--r85'],
-  ['SC',  'Small cap',      '--r80'],
-  ['FO',  'F&O',            '--r70'],
-  ['ET',  'ETFs',           '--r90'],
-  ['LM',  'Large + mid',    '--r85'],
-  ['MS',  'Mid + small',    '--r80']
+  ['ALL', 'Full universe',  '#F2B441'],
+  ['LC',  'Large cap',      '#4ED8A0'],
+  ['MC',  'Mid cap',        '#3EC9D6'],
+  ['SC',  'Small cap',      '#A97CF0'],
+  ['FO',  'F&O',            '#FF8A5B'],
+  ['ET',  'ETFs',           '#6E8BFF'],
+  ['LM',  'Large + mid',    '#E36FA8'],
+  ['MS',  'Mid + small',    '#8FD14F']
 ];
 
 function loadScreenerPreview(){
@@ -1672,13 +1723,13 @@ function renderDeck(updated){
         ' 16%,transparent);color:' + colour + '">' + n + ' ' + label + '</span>' : '';
     }
 
-    return '<div class="deck-card" style="--hue:var(' + c.hue + ')" data-i="' + i + '" onclick="deckTo(' + i + ')">' +
+    return '<div class="deck-card" style="--hue:' + c.hue + '" data-i="' + i + '" onclick="deckTo(' + i + ')">' +
       '<div class="dc-hd"><span class="dc-name">' + c.name + '</span>' +
         '<span class="dc-count">' + c.total.toLocaleString() + ' ranked</span></div>' +
       '<div class="dc-tiers">' +
-        chip(c.sb, 'strong buy', 'var(--r99)') +
+        chip(c.sb, 'strong buy', c.hue) +
         chip(c.bu, 'buy', 'var(--r85)') +
-        chip(c.wa, 'watch', 'var(--r70)') +
+        chip(c.wa, 'watch', 'var(--muted)') +
       '</div>' +
       '<div class="dc-rows">' + rows + '</div>' +
       '<div class="dc-foot"><span>Top ' + FREE + ' shown</span><span>' + stamp + '</span></div>' +
@@ -1687,7 +1738,7 @@ function renderDeck(updated){
 
   if(chips){
     chips.innerHTML = DECK.map(function(c, i){
-      return '<button class="deck-chip" style="--hue:var(' + c.hue + ')" data-i="' + i +
+      return '<button class="deck-chip" style="--hue:' + c.hue + '" data-i="' + i +
              '" onclick="deckTo(' + i + ')">' + c.name + '</button>';
     }).join('');
   }
@@ -3674,19 +3725,41 @@ const PF_TRADES = [
    Signals sometimes call for more positions than the cash can fund;
    those entries are simply missed, exactly as they would be in a
    real account. */
-const PF_CAPITAL_START = 500410;
 const PF_ENTRY_PCT = 0.04;
 const PF_CASH_YIELD = 0.10;
 
-function pfCapital(){ return PF_CAPITAL_START; }
+/* The curve is stored as a multiple, so the account it is applied to
+   is just a number the reader picks. It opens at 100 and can be set
+   to whatever they would actually invest. */
+var PF_USER_CAPITAL = 100;
+
+function pfCapital(){ return PF_USER_CAPITAL; }
 
 function pfValueNow(){
-  return PF_CAPITAL_START * (PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0]);
+  return PF_USER_CAPITAL * (PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0]);
 }
 
-/* What a fresh entry would be worth today. */
 function pfLotNow(){
   return PF_ENTRY_PCT * pfValueNow();
+}
+
+function pfMoney(v){
+  return '\u20b9' + Math.round(v).toLocaleString('en-IN');
+}
+
+/* Re-runs the rupee figures against a capital the reader types in.
+   The percentages never move — only what they are worth. */
+function setPfCapital(v){
+  var n = parseFloat(String(v).replace(/[^0-9.]/g, ''));
+  PF_USER_CAPITAL = (isFinite(n) && n > 0) ? n : 100;
+
+  paintPerfHeads();
+
+  var host = document.getElementById('mainContent');
+  if(host && typeof ACTIVE_TAB !== 'undefined' && ACTIVE_TAB === 'MODEL' && host.querySelector('#perfCanvas')){
+    host.innerHTML = renderModel();
+    setTimeout(function(){ drawPerf(); paintPerfHeads(); }, 20);
+  }
 }
 
 
@@ -3824,9 +3897,7 @@ function paintPerfHeads(){
      selected — the percentages above it are the window's return. */
   const rupees = pfValueNow();
   const val = document.getElementById('perfRupee');
-  if(val) val.textContent = '\u20b9' + Math.round(rupees).toLocaleString('en-IN');
-  const seed = document.getElementById('perfSeed');
-  if(seed) seed.textContent = '\u20b9' + Math.round(pfCapital()).toLocaleString('en-IN');
+  if(val) val.textContent = pfMoney(rupees);
 
   const span = document.getElementById('perfSpan');
   if(span){
@@ -4181,7 +4252,16 @@ function renderPerfBlock(){
       '<div class="perf-ctl">' + btns + '</div>' +
     '</div>' +
     '<div class="perf-tops">' +
-      '<div class="perf-lede">A <b id="perfSeed"></b> account, committing ' + (PF_ENTRY_PCT*100).toFixed(0) + '% to each fresh entry, is now worth <b id="perfRupee" style="color:var(--purple)"></b>. <br><span style="opacity:.75">Percentages below are for the selected window.</span></div>' +
+      '<div class="perf-lede">' +
+        '<div class="cap-row">' +
+          '<label class="cap-l" for="perfCapIn">Invested at inception</label>' +
+          '<div class="cap-in"><span>\u20b9</span>' +
+            '<input id="perfCapIn" type="text" inputmode="numeric" value="' +
+              PF_USER_CAPITAL.toLocaleString('en-IN') + '" oninput="setPfCapital(this.value)"></div>' +
+        '</div>' +
+        '<div class="cap-out">would be worth <b id="perfRupee"></b> today</div>' +
+        '<div class="cap-note">Percentages below are for the selected window.</div>' +
+      '</div>' +
       '<div><div class="perf-k-l" style="color:var(--purple)">Model Portfolio' +
         '<span class="perf-k-p" id="perfPfPct"></span></div>' +
         '<div class="perf-k-v" id="perfPfVal">\u2014</div></div>' +
@@ -4451,7 +4531,7 @@ function renderModel(){
         "<div class=\"card\"><div class=\"card-l\">Max Drawdown</div><div class=\"card-v\" style=\"color:var(--red)\">"+curveP.maxDD.toFixed(1)+"%</div>"+
           "<div class=\"card-s\">within "+periodLbl+(curveP.benchDD!=null ? " \u00b7 Nifty "+curveP.benchDD.toFixed(1)+"%" : "")+"</div></div>"+
         "</div>"+
-        "<div class=\"mp-note\">Each fresh entry takes "+(PF_ENTRY_PCT*100).toFixed(0)+"% of the account \u2014 "+cur+Math.round(lotNow).toLocaleString("en-IN")+" at today's size, across "+liveOpen+" holding"+(liveOpen===1?"":"s")+". Cash awaiting deployment is assumed to earn "+(PF_CASH_YIELD*100).toFixed(0)+"% a year. Drawdown uses weekly closes, so it understates intra-week lows.</div>";
+        "<div class=\"mp-note\">Drawdown uses weekly closes, so it understates intra-week lows.</div>";
     } else {
       perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
       "<div class=\"card\"><div class=\"card-l\">CAGR*</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
