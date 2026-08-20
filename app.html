@@ -354,21 +354,23 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .pane-actions{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
 
 /* ---------- landing tabs ---------- */
-.ltabs{
-  display:flex;gap:4px;flex-wrap:wrap;
-  border-bottom:1px solid var(--line-soft);padding-bottom:0;margin-bottom:4px;
-}
+.ltabs{display:flex;align-items:center;gap:2px;flex:1;justify-content:center;min-width:0}
 .ltab-btn{
-  padding:11px 20px;border-radius:10px 10px 0 0;
-  font-size:14px;font-weight:650;letter-spacing:-.01em;color:var(--muted);
-  border:1px solid transparent;border-bottom:none;
+  padding:9px 16px;border-radius:999px;
+  font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--muted);
+  white-space:nowrap;
   transition:color .18s var(--ease),background .18s var(--ease);
 }
-.ltab-btn:hover{color:var(--text)}
+.ltab-btn:hover{color:var(--text);background:color-mix(in srgb,var(--panel) 70%,transparent)}
 .ltab-btn.on{
-  color:var(--text);background:var(--panel);
-  border-color:var(--line-soft);
-  box-shadow:inset 0 2px 0 var(--brand);
+  color:var(--text);
+  background:color-mix(in srgb,var(--brand) 16%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--brand) 34%,transparent);
+}
+@media(max-width:980px){
+  .ltabs{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;padding-bottom:2px}
+  .ltabs::-webkit-scrollbar{display:none}
+  .nav-in{height:auto;padding:10px 0;flex-wrap:wrap;gap:8px}
 }
 .ltab-pane{display:none}
 .ltab-pane.on{display:block;animation:paneIn .3s var(--ease)}
@@ -387,6 +389,64 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   content:'';position:absolute;left:0;top:8px;
   width:7px;height:7px;border-radius:2px;background:var(--r90);
 }
+
+/* screener deck: one card per segment, shuffling on a timer */
+.deck-wrap{position:relative}
+.deck{position:relative;height:404px;perspective:1400px}
+.deck-load{
+  display:flex;align-items:center;justify-content:center;height:100%;
+  color:var(--muted);font-size:14px;
+}
+.deck-card{
+  position:absolute;inset:0;
+  background:linear-gradient(168deg,var(--panel-2),var(--panel));
+  border:1px solid var(--line-soft);border-top:3px solid var(--hue,var(--r99));
+  border-radius:16px;overflow:hidden;
+  transition:transform .55s var(--ease),opacity .55s var(--ease),box-shadow .55s var(--ease);
+  cursor:pointer;
+}
+.deck-card.s0{transform:translateY(0) scale(1);opacity:1;z-index:4;box-shadow:0 26px 60px -30px rgba(0,0,0,.75)}
+.deck-card.s1{transform:translateY(16px) scale(.955);opacity:.55;z-index:3}
+.deck-card.s2{transform:translateY(30px) scale(.912);opacity:.28;z-index:2}
+.deck-card.s3{transform:translateY(42px) scale(.875);opacity:.12;z-index:1}
+.deck-card.sx{transform:translateY(52px) scale(.85);opacity:0;z-index:0;pointer-events:none}
+
+.dc-hd{display:flex;align-items:baseline;justify-content:space-between;padding:16px 18px 12px}
+.dc-name{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.02em}
+.dc-count{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+.dc-tiers{display:flex;gap:6px;padding:0 18px 12px}
+.dc-tier{
+  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.05em;
+  padding:3px 9px;border-radius:5px;
+}
+.dc-rows{border-top:1px solid var(--line-soft)}
+.dc-row{
+  display:grid;grid-template-columns:30px 1fr auto 46px;align-items:center;gap:10px;
+  padding:10px 18px;border-bottom:1px solid var(--line-soft);font-size:13.5px;
+}
+.dc-row:last-child{border-bottom:none}
+.dc-n{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.dc-sym{font-family:var(--mono);font-weight:700;letter-spacing:-.01em}
+.dc-sec{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc-rank{font-family:var(--mono);font-weight:700;text-align:right;color:var(--hue,var(--r99))}
+.dc-row.locked .dc-sym,.dc-row.locked .dc-sec{filter:blur(4px);user-select:none}
+.dc-foot{
+  padding:11px 18px;border-top:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel-2) 70%,transparent);
+  font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;
+}
+
+.deck-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.deck-chip{
+  padding:5px 12px;border-radius:999px;border:1px solid var(--line-soft);
+  font-size:11.5px;font-weight:600;color:var(--muted);background:transparent;
+  transition:color .2s var(--ease),border-color .2s var(--ease);
+}
+.deck-chip:hover{color:var(--text)}
+.deck-chip.on{color:var(--text);border-color:var(--hue,var(--r99));background:color-mix(in srgb,var(--hue,var(--r99)) 13%,transparent)}
+
+@media(max-width:820px){ .deck{height:380px} }
+@media(prefers-reduced-motion:reduce){ .deck-card{transition:none} }
 
 /* screener preview: real rows on top, the rest teased */
 #scrPreview .tbl td{padding:13px 18px}
@@ -950,6 +1010,11 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   <header class="nav">
     <div class="wrap-x nav-in">
       <div class="brand">Alpha<span>Intel</span></div>
+      <nav class="ltabs" id="ltabs">
+        <button class="ltab-btn on" onclick="setLandingTab('overview',this)">Overview</button>
+        <button class="ltab-btn" onclick="setLandingTab('screener',this)">Screeners</button>
+        <button class="ltab-btn" onclick="setLandingTab('model',this)">Model Portfolio</button>
+      </nav>
       <div class="nav-actions">
         <div class="theme-dots" id="theme-dots">
           <span class="tdot tdot-dark"    data-theme="dark"    title="Dark"></span>
@@ -1011,14 +1076,6 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
       <div class="stat" style="--hue:var(--r90)"><div class="stat-k">3</div><div class="stat-l">Conviction tiers</div></div>
       <div class="stat" style="--hue:var(--r85)"><div class="stat-k">Daily</div><div class="stat-l">Post-close refresh</div></div>
       <div class="stat" style="--hue:var(--r80)"><div class="stat-k">0</div><div class="stat-l">Tips or calls</div></div>
-    </div>
-  </div>
-
-  <div class="wrap-x">
-    <div class="ltabs" id="ltabs">
-      <button class="ltab-btn on" onclick="setLandingTab('overview',this)">Overview</button>
-      <button class="ltab-btn" onclick="setLandingTab('screener',this)">Screener</button>
-      <button class="ltab-btn" onclick="setLandingTab('model',this)">Model Portfolio</button>
     </div>
   </div>
 
@@ -1125,8 +1182,11 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
             <button class="btn btn-gold cta" id="cta-screener" data-guest="Get access" data-guest-mode="signup" onclick="ctaClick(this)">Get access</button>
           </div>
           <div class="pitch-r">
-            <div class="locked" id="scrPreview">
-              <div class="lad-note" style="height:220px">Loading today's list&hellip;</div>
+            <div class="deck-wrap">
+              <div class="deck" id="scrDeck">
+                <div class="deck-load">Loading today's lists&hellip;</div>
+              </div>
+              <div class="deck-chips" id="deckChips"></div>
             </div>
           </div>
         </div>
@@ -1528,58 +1588,144 @@ function setLandingTab(tab, btn){
   if(tab === 'model') buildPublicModel();
 }
 
-/* --- Screener: real rows, cut short --- */
+/* --- Screeners: one card per segment, auto-shuffling ---
+   Every card is today's real output for that segment. The top rows
+   read clean so the list is visibly genuine; the rest are teased.
+   Auto-advances, pauses on hover, and any card or chip can be
+   clicked to bring that segment to the front. */
+var DECK = [];
+var deckIdx = 0;
+var deckTimer = null;
+
+var DECK_SEGMENTS = [
+  ['ALL', 'Full universe',  '--r99'],
+  ['LC',  'Large cap',      '--r90'],
+  ['MC',  'Mid cap',        '--r85'],
+  ['SC',  'Small cap',      '--r80'],
+  ['FO',  'F&O',            '--r70'],
+  ['ET',  'ETFs',           '--r90'],
+  ['LM',  'Large + mid',    '--r85'],
+  ['MS',  'Mid + small',    '--r80']
+];
+
 function loadScreenerPreview(){
   if(scrLoaded) return;
   scrLoaded = true;
 
-  var host = document.getElementById('scrPreview');
+  var host = document.getElementById('scrDeck');
   if(!host) return;
 
   fetch(FEED_URL, { redirect: 'follow' })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      var all = (data && data.tabs && data.tabs.ALL) || [];
-      var rows = all
-        .filter(function(x){ return x && typeof x.rank === 'number' && x.symbol; })
-        .sort(function(a, b){ return b.rank - a.rank; });
-      if(!rows.length) throw new Error('empty');
+      var tabs = (data && data.tabs) || {};
 
-      var FREE = 4, TEASE = 9;
-      var shown = rows.slice(0, FREE + TEASE);
+      DECK = DECK_SEGMENTS.map(function(seg){
+        var rows = (tabs[seg[0]] || [])
+          .filter(function(x){ return x && typeof x.rank === 'number' && x.symbol; })
+          .sort(function(a, b){ return b.rank - a.rank; });
+        if(rows.length < 3) return null;
+        return {
+          key: seg[0], name: seg[1], hue: seg[2],
+          total: rows.length,
+          rows: rows.slice(0, 6),
+          sb: rows.filter(function(x){ return x.signal === 'STRONG BUY'; }).length,
+          bu: rows.filter(function(x){ return x.signal === 'BUY'; }).length,
+          wa: rows.filter(function(x){ return x.signal === 'WATCH'; }).length
+        };
+      }).filter(Boolean);
 
-      function tier(sig){
-        if(sig === 'STRONG BUY') return '<span class="tag tag-sb">Strong Buy</span>';
-        if(sig === 'BUY') return '<span class="tag tag-b">Buy</span>';
-        return '<span class="tag tag-w">Watch</span>';
-      }
-
-      var body = shown.map(function(r, i){
-        var locked = i >= FREE;
-        var sym = locked ? '\u2022'.repeat(Math.max(4, (r.symbol || '').length)) : r.symbol;
-        return '<tr' + (locked ? ' class="row-locked"' : '') + '>' +
-          '<td class="num">' + (i + 1) + '</td>' +
-          '<td class="tkr">' + sym + '</td>' +
-          '<td>' + tier(r.signal) + '</td>' +
-          '<td>' + (locked ? '\u2022\u2022\u2022\u2022\u2022\u2022' : (r.sector || '')) + '</td>' +
-          '<td class="num">' + Math.round(r.rank) + '</td>' +
-        '</tr>';
-      }).join('');
-
-      host.innerHTML =
-        '<table class="tbl"><thead><tr>' +
-          '<th>#</th><th>Symbol</th><th>Signal</th><th>Sector</th><th>Rank</th>' +
-        '</tr></thead><tbody>' + body + '</tbody></table>' +
-        '<div class="scr-foot">' +
-          '<span>Showing ' + FREE + ' of ' + rows.length.toLocaleString() + ' ranked names' +
-          (data.updated ? ' \u00b7 ' + new Date(data.updated).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) : '') +
-          '</span>' +
-        '</div>';
+      if(!DECK.length) throw new Error('empty');
+      renderDeck(data.updated);
+      startDeckTimer();
     })
     .catch(function(){
-      host.innerHTML = '<div class="lad-note" style="height:220px">Live list unavailable right now.</div>';
+      host.innerHTML = '<div class="deck-load">Live lists unavailable right now.</div>';
       scrLoaded = false;
     });
+}
+
+function renderDeck(updated){
+  var host = document.getElementById('scrDeck');
+  var chips = document.getElementById('deckChips');
+  if(!host) return;
+
+  var FREE = 2;
+  var stamp = updated
+    ? new Date(updated).toLocaleDateString('en-IN', { day:'numeric', month:'short' })
+    : '';
+
+  host.innerHTML = DECK.map(function(c, i){
+    var rows = c.rows.map(function(r, k){
+      var locked = k >= FREE;
+      var sym = locked ? '\u2022'.repeat(Math.max(4, Math.min(9, (r.symbol||'').length))) : r.symbol;
+      return '<div class="dc-row' + (locked ? ' locked' : '') + '">' +
+        '<span class="dc-n">' + (k + 1) + '</span>' +
+        '<span class="dc-sym">' + sym + '</span>' +
+        '<span class="dc-sec">' + (locked ? '\u2022\u2022\u2022\u2022\u2022\u2022' : (r.sector || '')) + '</span>' +
+        '<span class="dc-rank">' + Math.round(r.rank) + '</span>' +
+      '</div>';
+    }).join('');
+
+    function chip(n, label, colour){
+      return n ? '<span class="dc-tier" style="background:color-mix(in srgb,' + colour +
+        ' 16%,transparent);color:' + colour + '">' + n + ' ' + label + '</span>' : '';
+    }
+
+    return '<div class="deck-card" style="--hue:var(' + c.hue + ')" data-i="' + i + '" onclick="deckTo(' + i + ')">' +
+      '<div class="dc-hd"><span class="dc-name">' + c.name + '</span>' +
+        '<span class="dc-count">' + c.total.toLocaleString() + ' ranked</span></div>' +
+      '<div class="dc-tiers">' +
+        chip(c.sb, 'strong buy', 'var(--r99)') +
+        chip(c.bu, 'buy', 'var(--r85)') +
+        chip(c.wa, 'watch', 'var(--r70)') +
+      '</div>' +
+      '<div class="dc-rows">' + rows + '</div>' +
+      '<div class="dc-foot"><span>Top ' + FREE + ' shown</span><span>' + stamp + '</span></div>' +
+    '</div>';
+  }).join('');
+
+  if(chips){
+    chips.innerHTML = DECK.map(function(c, i){
+      return '<button class="deck-chip" style="--hue:var(' + c.hue + ')" data-i="' + i +
+             '" onclick="deckTo(' + i + ')">' + c.name + '</button>';
+    }).join('');
+  }
+
+  host.addEventListener('mouseenter', stopDeckTimer);
+  host.addEventListener('mouseleave', startDeckTimer);
+
+  paintDeck();
+}
+
+function paintDeck(){
+  var n = DECK.length;
+  document.querySelectorAll('#scrDeck .deck-card').forEach(function(el, i){
+    var off = (i - deckIdx + n) % n;
+    el.className = 'deck-card ' + (off < 4 ? 's' + off : 'sx');
+  });
+  document.querySelectorAll('#deckChips .deck-chip').forEach(function(el, i){
+    el.classList.toggle('on', i === deckIdx);
+  });
+}
+
+function deckTo(i){
+  deckIdx = i;
+  paintDeck();
+  startDeckTimer();
+}
+
+function startDeckTimer(){
+  stopDeckTimer();
+  if(REDUCED || DECK.length < 2) return;
+  deckTimer = setInterval(function(){
+    deckIdx = (deckIdx + 1) % DECK.length;
+    paintDeck();
+  }, 3800);
+}
+
+function stopDeckTimer(){
+  if(deckTimer){ clearInterval(deckTimer); deckTimer = null; }
 }
 
 /* --- Model Portfolio: performance only --- */
