@@ -840,6 +840,29 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 #dash-root .mp-head-t{font-size:13px;font-weight:700;letter-spacing:-.01em}
 #dash-root .mp-period{display:flex;gap:3px;flex-wrap:wrap}
 #dash-root .mp-note{font-size:9.5px;color:var(--muted);margin:-2px 0 8px;font-style:italic}
+#dash-root .vs-band{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:18px;
+  background:var(--s1);border:1px solid var(--b1);
+  border-left:4px solid var(--green);
+  border-radius:6px;padding:14px 20px;margin-bottom:10px;
+}
+#dash-root .vs-main{display:flex;flex-direction:column;gap:2px}
+#dash-root .vs-num{
+  font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;
+  letter-spacing:-.02em;line-height:1;
+}
+#dash-root .vs-cap{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.03em}
+#dash-root .vs-split{display:flex;gap:34px}
+#dash-root .vs-leg{display:flex;flex-direction:column;gap:3px;text-align:right}
+#dash-root .vs-leg-l{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#dash-root .vs-leg-v{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700}
+@media(max-width:768px){
+  #dash-root .vs-band{padding:12px 14px;gap:12px}
+  #dash-root .vs-num{font-size:26px}
+  #dash-root .vs-split{gap:22px}
+  #dash-root .vs-leg-v{font-size:16px}
+}
 #dash-root .perf-periods .tw{border-top-width:1px;max-height:none}
 #dash-root .perf-periods td{padding:7px 9px;font-size:12.5px}
 #dash-root .perf-periods th{cursor:default}
@@ -2434,48 +2457,48 @@ const PF_START = '2013-11-01';
    day. Only entry and exit prices exist, so the line is smooth
    between them and hides real intra-trade drawdown. */
 const PF_BASE = [
-  100.21,100.71,101.22,101.72,102.23,102.74,103.26,103.77,104.29,104.81,105.34,105.86,106.39,106.93,107.46,108.0,
-  108.54,109.08,109.63,110.17,110.72,111.28,111.83,112.39,112.95,113.52,114.09,114.66,115.23,115.81,116.39,116.97,
-  117.55,118.14,118.73,119.32,119.92,120.52,121.12,121.73,122.34,122.95,123.56,124.18,124.8,125.43,126.05,126.68,
-  127.32,127.95,128.59,129.23,129.88,130.53,131.18,131.84,132.5,133.16,133.83,134.49,135.17,135.84,136.52,137.2,
-  137.89,138.58,139.27,139.97,140.67,141.37,142.08,142.79,143.5,144.22,144.94,145.67,146.39,147.13,147.86,148.6,
-  149.34,150.09,150.84,151.59,152.35,153.11,153.88,154.65,155.42,156.2,157.06,158.15,159.24,160.34,161.44,162.56,
-  163.68,164.81,165.94,167.09,168.24,169.4,170.57,171.74,172.93,174.12,175.32,176.53,177.75,178.97,180.21,181.45,
-  182.61,183.73,184.86,185.85,186.75,187.64,188.55,189.46,190.37,191.28,192.1,192.65,193.21,193.26,193.17,193.23,
-  193.41,194.0,194.68,195.57,196.62,197.7,198.77,199.62,200.44,201.29,202.25,203.55,204.77,205.8,206.75,207.77,
-  208.77,209.16,210.33,211.33,212.26,213.18,214.12,214.9,214.81,215.25,215.61,215.81,215.94,216.17,216.97,218.2,
-  220.33,221.59,222.59,223.61,224.54,225.26,226.1,226.95,227.68,228.67,229.7,231.13,232.89,235.2,237.8,240.52,
-  243.93,247.51,251.03,254.35,257.04,259.75,262.74,265.4,267.77,268.95,270.62,272.15,273.47,274.72,275.62,276.48,
-  276.84,276.75,276.91,277.04,277.24,278.13,280.43,282.54,284.76,287.19,288.81,290.06,292.04,294.21,296.2,298.01,
-  299.91,302.14,305.0,308.11,311.04,313.74,316.68,319.4,321.8,323.54,324.73,324.6,324.3,323.2,322.18,324.61,
-  326.59,328.26,329.3,329.21,325.86,324.72,327.34,329.87,331.15,330.91,328.26,324.62,319.97,315.4,313.68,312.62,
-  313.01,314.28,315.64,317.33,319.96,321.46,322.33,324.4,325.88,327.2,328.36,328.03,327.77,328.65,325.85,320.83,
-  315.37,312.67,312.67,312.67,312.67,310.97,306.82,303.73,303.51,305.18,303.28,302.42,302.13,301.6,300.56,299.02,
-  295.53,293.49,293.15,292.92,291.95,292.43,292.91,293.56,294.83,294.5,295.15,296.33,297.14,297.02,296.54,295.95,
-  293.84,290.76,289.96,283.8,280.84,278.65,278.04,277.43,276.82,276.21,275.51,272.94,271.65,271.65,271.65,271.65,
-  270.57,268.32,262.18,258.88,259.45,259.74,260.19,260.68,262.01,263.44,264.43,265.74,268.13,269.79,272.95,276.27,
-  279.63,283.03,286.4,289.09,291.79,294.13,295.93,297.9,298.27,296.77,294.5,291.9,290.14,290.14,290.14,290.14,
-  289.59,289.14,287.34,284.9,282.55,283.5,288.33,289.75,292.58,295.18,297.56,298.72,297.4,301.1,310.73,316.4,
-  317.06,323.8,334.25,334.73,332.99,331.3,331.35,330.66,328.86,329.12,328.16,328.12,328.46,327.55,330.37,332.38,
-  336.47,341.01,345.16,349.3,353.15,357.42,362.07,370.29,374.01,377.12,379.42,383.42,387.84,393.32,399.55,403.82,
-  405.7,407.87,412.97,418.14,422.49,424.73,430.35,435.85,440.57,444.81,448.84,452.77,456.82,461.07,465.34,469.66,
-  473.75,477.75,481.73,485.44,488.81,490.64,493.74,498.03,503.29,508.31,512.66,517.9,524.32,530.32,536.14,540.0,
-  542.63,544.42,546.22,549.31,551.78,556.59,563.55,569.28,568.14,571.43,576.25,578.66,579.2,578.85,577.98,574.35,
-  569.99,569.99,569.99,569.99,569.99,569.99,560.09,556.86,561.19,562.91,555.28,553.72,552.55,551.8,551.8,551.8,
-  551.8,551.8,551.8,551.8,551.8,551.8,551.8,554.32,558.71,570.21,577.84,584.04,594.1,607.7,616.79,622.01,
-  613.04,609.36,609.36,609.36,609.36,609.36,606.42,590.53,577.19,566.99,561.46,557.09,551.46,546.88,548.45,549.79,
-  549.79,549.79,549.79,549.79,549.79,549.14,546.86,546.21,546.21,546.21,546.21,546.21,546.21,548.55,550.34,551.62,
-  554.69,560.02,565.71,575.78,590.0,610.46,632.97,653.0,671.86,690.99,709.73,724.28,737.01,749.6,764.48,779.23,
-  789.92,795.68,802.29,803.58,805.23,806.56,807.79,806.36,795.77,788.58,788.58,788.58,792.29,804.08,814.86,825.41,
-  835.08,845.01,855.01,865.22,875.43,885.38,896.5,905.71,913.27,922.24,932.32,940.16,947.94,957.34,971.31,985.77,
-  996.56,1005.13,1012.44,1016.47,1014.91,1010.99,1008.76,1006.78,1002.71,984.68,992.04,999.98,1007.77,1015.05,1021.74,1028.47,
-  1034.71,1037.43,1043.45,1052.51,1059.09,1062.36,1064.77,1068.98,1073.03,1077.08,1080.65,1077.57,1064.47,1052.98,1050.34,1047.7,
-  1045.7,1044.54,1041.5,1032.31,1020.76,1006.44,991.26,975.76,957.12,938.65,920.11,908.82,901.73,896.74,892.04,879.12,
-  878.59,874.91,870.1,867.61,865.73,865.93,867.23,868.71,870.09,871.38,872.52,873.26,873.9,874.38,874.71,875.1,
-  875.38,875.91,876.33,875.78,874.96,874.31,874.65,876.04,877.72,879.53,881.54,882.97,884.09,884.0,882.81,881.6,
-  881.27,881.68,881.97,881.8,881.33,880.59,880.14,879.61,879.08,878.56,877.6,875.08,866.45,858.79,855.33,851.81,
-  848.7,843.55,837.64,830.42,819.5,809.62,802.43,809.54,820.35,832.79,849.75,866.3,875.25,876.2,872.76,877.93,
-  881.99,884.27,881.01,874.53,873.37
+  100.0,100.5,101.0,101.51,102.01,102.52,103.04,103.55,104.07,104.59,105.11,105.64,106.17,106.7,107.23,107.77,
+  108.31,108.85,109.39,109.94,110.49,111.04,111.6,112.15,112.71,113.28,113.84,114.41,114.98,115.56,116.14,116.72,
+  117.3,117.89,118.48,119.07,119.66,120.26,120.86,121.47,122.08,122.69,123.3,123.92,124.53,125.16,125.78,126.41,
+  127.04,127.68,128.32,128.96,129.6,130.25,130.9,131.56,132.21,132.88,133.54,134.21,134.88,135.55,136.23,136.91,
+  137.6,138.28,138.98,139.67,140.37,141.07,141.78,142.48,143.2,143.91,144.63,145.35,146.08,146.81,147.55,148.28,
+  149.02,149.77,150.52,151.27,152.03,152.79,153.55,154.32,155.09,155.86,156.73,157.81,158.9,159.99,161.1,162.21,
+  163.33,164.45,165.59,166.73,167.88,169.04,170.2,171.38,172.56,173.75,174.95,176.15,177.37,178.59,179.82,181.06,
+  182.22,183.33,184.46,185.49,186.38,187.28,188.18,189.09,190.0,190.91,191.73,192.28,192.83,192.88,192.8,192.86,
+  193.03,193.62,194.3,195.14,196.19,197.26,198.34,199.18,200.0,200.84,201.74,203.04,204.25,205.27,206.22,207.23,
+  208.24,208.35,209.52,210.51,211.44,212.35,213.3,214.08,213.36,213.8,214.16,214.37,214.51,214.63,215.45,216.45,
+  218.56,219.81,220.81,221.81,222.77,223.49,224.32,225.17,225.89,226.87,227.87,229.29,231.0,233.29,235.88,238.47,
+  241.85,245.4,248.85,252.14,254.82,257.42,260.41,263.05,265.44,266.39,268.05,269.57,270.88,272.12,272.98,273.84,
+  274.2,274.06,274.22,274.37,274.54,275.16,277.43,279.53,281.72,284.13,285.73,286.97,288.78,290.92,292.89,294.68,
+  296.5,298.68,301.41,304.48,307.38,310.05,312.89,315.59,317.96,319.67,320.85,320.73,320.38,319.26,317.78,320.03,
+  321.99,323.64,324.67,324.66,321.59,319.19,321.77,324.25,325.51,325.28,322.67,318.98,314.36,309.55,307.6,306.52,
+  306.64,307.88,309.21,310.58,313.15,314.61,315.23,317.35,318.73,320.03,321.11,320.79,320.43,320.96,318.84,314.29,
+  308.62,305.32,305.32,305.32,305.32,303.66,299.6,296.58,296.2,297.91,296.05,294.86,294.57,294.06,293.09,291.59,
+  287.01,285.03,284.17,284.1,282.98,283.4,283.87,284.5,285.7,285.37,285.69,286.89,287.68,287.56,287.12,286.55,
+  284.59,280.41,279.6,269.83,267.01,264.62,264.04,263.46,262.88,262.3,261.63,259.34,257.56,257.56,257.56,257.56,
+  256.54,254.4,248.58,244.8,245.3,245.57,246.0,246.45,247.71,249.07,250.0,251.3,253.42,253.76,256.69,259.81,
+  262.97,266.17,269.42,271.95,274.54,276.76,278.49,280.26,280.83,279.48,277.4,275.01,272.98,272.98,272.98,272.98,
+  272.46,272.04,270.34,268.05,265.54,265.93,270.46,271.79,274.44,276.88,278.6,280.03,278.58,281.09,290.08,295.38,
+  296.35,302.54,314.73,315.19,313.54,311.54,311.59,310.94,308.6,308.84,307.94,307.71,308.04,306.78,309.19,309.66,
+  313.49,317.69,321.56,325.39,328.98,332.81,337.15,346.04,349.55,352.45,354.34,358.07,362.13,367.24,372.98,376.97,
+  378.71,380.32,385.08,389.89,393.95,395.05,400.27,405.4,409.78,413.73,417.47,421.13,424.9,428.85,432.82,436.84,
+  440.64,444.33,448.03,451.48,454.68,456.41,458.86,462.82,467.64,472.3,476.37,481.24,487.23,492.8,498.15,501.73,
+  504.24,505.91,507.59,510.06,512.29,515.78,522.23,527.54,526.48,528.47,532.93,535.08,535.58,535.42,534.55,531.73,
+  526.36,526.36,526.36,526.36,526.36,526.36,517.22,513.14,517.13,520.05,509.08,507.15,506.36,505.33,505.33,505.33,
+  505.33,505.33,505.33,505.33,505.33,505.33,505.33,507.64,510.64,521.15,528.12,533.31,541.97,554.66,562.96,568.98,
+  561.09,556.05,556.05,556.05,556.05,556.05,553.36,538.86,526.39,516.42,511.17,506.86,501.83,496.5,497.92,499.34,
+  499.34,499.34,499.34,499.34,499.34,498.75,496.68,495.8,495.8,495.8,495.8,495.8,495.8,497.92,499.55,500.71,
+  503.25,507.73,512.69,521.78,534.19,552.71,572.98,591.02,608.09,625.26,642.78,656.32,667.85,679.14,692.28,705.87,
+  715.53,720.85,726.84,723.66,725.14,726.33,727.28,726.07,717.0,708.24,708.24,708.24,711.57,722.16,731.85,741.31,
+  750.01,758.92,767.9,777.07,786.17,794.93,804.83,813.39,820.24,827.99,837.04,844.1,851.07,858.96,870.93,883.89,
+  893.57,901.65,908.21,911.83,910.5,906.98,904.68,902.9,899.14,868.03,874.52,881.51,888.38,894.8,900.7,906.63,
+  912.13,914.94,919.34,927.06,933.05,935.93,938.19,942.01,945.57,949.14,952.51,950.24,938.68,927.27,924.94,922.61,
+  920.67,919.65,916.97,908.88,898.71,886.1,872.64,858.99,842.55,826.36,810.1,798.83,792.6,787.57,783.44,770.29,
+  769.83,766.61,762.39,760.2,758.56,758.38,759.52,760.81,762.02,763.15,764.15,764.8,765.36,765.78,766.1,766.43,
+  766.68,767.15,767.52,767.03,766.31,765.71,765.77,766.98,768.45,770.0,771.76,773.01,774.0,773.96,772.92,771.85,
+  771.41,771.77,772.03,771.88,771.39,770.75,770.36,769.89,769.43,768.97,768.2,765.93,758.29,750.64,747.59,744.34,
+  741.44,736.94,731.78,725.58,716.05,706.71,700.44,705.2,714.62,725.46,741.14,756.82,766.87,772.46,774.49,783.1,
+  791.03,797.82,802.11,807.28,814.13,823.19,833.95,846.41,858.55,869.69,879.89,889.49
 ];
 
 /* Benchmark: left empty because no Nifty 50 history is available to
@@ -3272,31 +3295,27 @@ const PF_TRADES = [
 ];
 
 
-/* Sizing model.
-   PF_LOT_TODAY is what one position is worth in today's money. The
-   run starts more than a decade back, so the opening lot is that
-   figure discounted at PF_INFLATION a year — a 2013 rupee bought
-   more than a 2026 one. From there nothing is indexed again: the
-   portfolio's own compounding carries the lot forward, which is what
-   offsets inflation in every later year.
+/* Sizing model: fully invested, equal weight across whatever is
+   open. Profits are redeployed into the book rather than sitting as
+   cash, so each position is simply the account divided by the number
+   of holdings.
 
-   Equal-weighting needs enough capital for the worst-case number of
-   simultaneous positions in the record, so the account opens at
-   startLot × PF_SLOTS. */
-const PF_LOT_TODAY = 10000;
-const PF_INFLATION = 0.06;
-const PF_SLOTS = 34;
+   PF_CAPITAL_START is calibrated so that today's per-position share
+   lands on PF_LOT_TODAY across the current holdings. It is a fixed
+   number, so the rupee figures on this tab stay put. */
+const PF_CAPITAL_START = 64214;
+const PF_LOT_TODAY = 25000;
 
-function pfYears(){
-  const WEEK = 7*24*3600*1000;
-  const n = (typeof PF_WEEKLY !== 'undefined' && PF_WEEKLY.length) ? PF_WEEKLY.length : PF_BASE.length;
-  return (n - 1) * 7 / 365.25;
+function pfCapital(){ return PF_CAPITAL_START; }
+
+function pfValueNow(){
+  return PF_CAPITAL_START * (PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0]);
 }
-function pfStartLot(){
-  return PF_LOT_TODAY / Math.pow(1 + PF_INFLATION, pfYears());
-}
-function pfCapital(){
-  return pfStartLot() * PF_SLOTS;
+
+/* Per-position size = account / holdings. Falls back to the figure
+   the curve was calibrated against before the sheet has loaded. */
+function pfLotNow(openCount){
+  return openCount ? pfValueNow() / openCount : PF_LOT_TODAY;
 }
 
 
@@ -3432,7 +3451,7 @@ function paintPerfHeads(){
   }
   /* Rupee readout always runs from inception, whatever window is
      selected — the percentages above it are the window's return. */
-  const rupees = pfCapital() * (PF_WEEKLY[PF_WEEKLY.length-1] / 100);
+  const rupees = pfValueNow();
   const val = document.getElementById('perfRupee');
   if(val) val.textContent = '\u20b9' + Math.round(rupees).toLocaleString('en-IN');
   const seed = document.getElementById('perfSeed');
@@ -3791,7 +3810,7 @@ function renderPerfBlock(){
       '<div class="perf-ctl">' + btns + '</div>' +
     '</div>' +
     '<div class="perf-tops">' +
-      '<div class="perf-lede">Starting at <b>\u20b9' + Math.round(pfStartLot()).toLocaleString('en-IN') + '</b> per position on a <b id="perfSeed"></b> account, with profits redeployed, the portfolio is now worth <b id="perfRupee" style="color:var(--purple)"></b>. <br><span style="opacity:.75">Percentages below are for the selected window.</span></div>' +
+      '<div class="perf-lede">A <b id="perfSeed"></b> account, fully invested and equally weighted across its holdings, is now worth <b id="perfRupee" style="color:var(--purple)"></b>. <br><span style="opacity:.75">Percentages below are for the selected window.</span></div>' +
       '<div><div class="perf-k-l" style="color:var(--purple)">Model Portfolio' +
         '<span class="perf-k-p" id="perfPfPct"></span></div>' +
         '<div class="perf-k-v" id="perfPfVal">\u2014</div></div>' +
@@ -3846,7 +3865,7 @@ function computeCurvePerformance(){
     realized: value - pfCapital(),
     totalPct: (mult - 1) * 100,
     maxDD: maxDD,
-    lotNow: pfStartLot() * mult
+    lotNow: null
   };
 }
 
@@ -3934,7 +3953,7 @@ function curveStatsForPeriod(){
     realized: endValue - startValue,
     endValue: endValue,
     maxDD: dd,
-    lotNow: pfStartLot() * (PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0])
+    lotNow: null
   };
 }
 
@@ -3994,12 +4013,33 @@ function renderModel(){
   }
   var cur=MARKET==="NSE"?"Rs.":"$";
   var C = tradeCountsForPeriod(jrnl);
+  var CP = (MARKET==="NSE") ? curveStatsForPeriod() : null;
   var liveOpen = pos.filter(function(p){ return p.status==="OPEN"; }).length;
 
   var periodLbl = MODEL_PERIOD==='ALL' ? 'all time' : 'last '+MODEL_PERIOD;
 
+  var vsBand = "";
+  if(CP && CP.bench != null){
+    var edge = CP.retPct - CP.bench;
+    var edgeClr = edge >= 0 ? "var(--green)" : "var(--red)";
+    vsBand =
+      "<div class=\"vs-band\" style=\"border-left-color:"+edgeClr+"\">"+
+        "<div class=\"vs-main\">"+
+          "<div class=\"vs-num\" style=\"color:"+edgeClr+"\">"+(edge>=0?"+":"")+edge.toFixed(1)+"%</div>"+
+          "<div class=\"vs-cap\">"+(edge>=0?"ahead of":"behind")+" Nifty 50 \u00b7 "+periodLbl+"</div>"+
+        "</div>"+
+        "<div class=\"vs-split\">"+
+          "<div class=\"vs-leg\"><span class=\"vs-leg-l\">Model Portfolio</span>"+
+            "<span class=\"vs-leg-v\" style=\"color:"+(CP.retPct>=0?"var(--green)":"var(--red)")+"\">"+(CP.retPct>=0?"+":"")+CP.retPct.toFixed(1)+"%</span></div>"+
+          "<div class=\"vs-leg\"><span class=\"vs-leg-l\">Nifty 50</span>"+
+            "<span class=\"vs-leg-v\" style=\"color:"+(CP.bench>=0?"var(--green)":"var(--red)")+"\">"+(CP.bench>=0?"+":"")+CP.bench.toFixed(1)+"%</span></div>"+
+        "</div>"+
+      "</div>";
+  }
+
   var cards=
     "<div class=\"mp-head\"><span class=\"mp-head-t\">Model Portfolio</span>"+renderPeriodPicker()+"</div>"+
+    vsBand+
     "<div class=\"card-grid\">"+
     "<div class=\"card\"><div class=\"card-l\">Entries</div><div class=\"card-v\" style=\"color:var(--gold)\">"+C.entries.toLocaleString()+"</div>"+"</div>"+
     "<div class=\"card\"><div class=\"card-l\">Target Hit</div><div class=\"card-v\" style=\"color:var(--green)\">"+C.hit.toLocaleString()+"</div>"+"</div>"+
@@ -4018,30 +4058,29 @@ function renderModel(){
     var realClr = perf.realizedPnl>=0 ? "var(--green)" : "var(--red)";
     var unrealClr = perf.unrealizedPnl>=0 ? "var(--green)" : "var(--red)";
     var totalTrades = perf.realizedCount + perf.unrealizedCount;
-    var curveP = (MARKET==="NSE") ? curveStatsForPeriod() : null;
+    var curveP = CP;
 
     if(curveP){
       /* Rupee figures for the selected window. Realised is what the
          curve actually added across it; unrealised is current-only,
          so it is labelled as such rather than pretending to be
          window-scoped. */
-      var unreal = perf.unrealizedPnl * (curveP.lotNow / perf.tradeAmount);
+      var lotNow = pfLotNow(liveOpen);
+      var unreal = perf.unrealizedPnl * (lotNow / perf.tradeAmount);
       var retTxt = (curveP.retPct>=0?"+":"")+curveP.retPct.toFixed(1)+"%";
       perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
         "<div class=\"card\"><div class=\"card-l\">Return</div><div class=\"card-v\" style=\"color:"+(curveP.retPct>=0?"var(--green)":"var(--red)")+"\">"+retTxt+"</div>"+
           "<div class=\"card-s\">"+periodLbl+(curveP.bench!=null ? " \u00b7 Nifty "+(curveP.bench>=0?"+":"")+curveP.bench.toFixed(1)+"%" : "")+"</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">CAGR</div><div class=\"card-v\" style=\"color:"+((curveP.cagr==null||curveP.cagr>=0)?"var(--green)":"var(--red)")+"\">"+(curveP.cagr!=null?curveP.cagr.toFixed(1)+"%":"\u2014")+"</div>"+
           "<div class=\"card-s\">"+(curveP.cagr!=null?"over "+curveP.years.toFixed(1)+"y":"window too short")+"</div></div>"+
-        "<div class=\"card\"><div class=\"card-l\">Realized P&L</div><div class=\"card-v\" style=\"color:"+(curveP.realized>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(curveP.realized).toLocaleString("en-IN")+"</div>"+
+        "<div class=\"card\"><div class=\"card-l\">Realized P&L</div><div class=\"card-v\" style=\"color:"+((curveP.realized-unreal)>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(curveP.realized-unreal).toLocaleString("en-IN")+"</div>"+
           "<div class=\"card-s\">"+C.closed.toLocaleString()+" closed \u00b7 "+periodLbl+"</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">Unrealized P&L</div><div class=\"card-v\" style=\"color:"+(unreal>=0?"var(--green)":"var(--red)")+"\">"+cur+Math.round(unreal).toLocaleString("en-IN")+"</div>"+
           "<div class=\"card-s\">"+perf.unrealizedCount+" open now \u00b7 current only</div></div>"+
         "<div class=\"card\"><div class=\"card-l\">Max Drawdown</div><div class=\"card-v\" style=\"color:var(--red)\">"+curveP.maxDD.toFixed(1)+"%</div>"+
           "<div class=\"card-s\">within "+periodLbl+(curveP.benchDD!=null ? " \u00b7 Nifty "+curveP.benchDD.toFixed(1)+"%" : "")+"</div></div>"+
-        (curveP.bench!=null ? "<div class=\"card\"><div class=\"card-l\">vs Nifty 50</div><div class=\"card-v\" style=\"color:"+((curveP.retPct-curveP.bench)>=0?"var(--green)":"var(--red)")+"\">"+((curveP.retPct-curveP.bench)>=0?"+":"")+(curveP.retPct-curveP.bench).toFixed(1)+"%</div>"+
-          "<div class=\"card-s\">outperformance \u00b7 "+periodLbl+"</div></div>" : "")+
         "</div>"+
-        "<div class=\"mp-note\">Position size scales with equity: the opening trade was "+cur+Math.round(pfStartLot()).toLocaleString("en-IN")+", one today would be "+cur+Math.round(curveP.lotNow).toLocaleString("en-IN")+". Drawdown uses weekly closes, so it understates intra-week lows.</div>";
+        "<div class=\"mp-note\">Every holding carries an equal share of the account \u2014 currently "+cur+Math.round(lotNow).toLocaleString("en-IN")+" across "+liveOpen+" position"+(liveOpen===1?"":"s")+". Drawdown uses weekly closes, so it understates intra-week lows.</div>";
     } else {
       perfHtml = "<div class=\"card-grid\" style=\"margin-top:6px\">"+
       "<div class=\"card\"><div class=\"card-l\">CAGR*</div><div class=\"card-v\" style=\"color:"+cagrClr+"\">"+cagrTxt+"</div></div>"+
