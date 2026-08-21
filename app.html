@@ -576,8 +576,22 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .mp-sec{margin-top:26px}
 .mp-sec-t{
   font-family:var(--disp);font-size:19px;font-weight:800;
-  letter-spacing:-.025em;margin-bottom:12px;
+  letter-spacing:-.025em;
 }
+.mp-sec-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;flex-wrap:wrap;margin-bottom:14px;
+}
+
+/* cards / table switch */
+.view-tog{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-soft);border-radius:999px}
+.vt-btn{
+  padding:6px 15px;border-radius:999px;
+  font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;
+  transition:color .18s var(--ease),background .18s var(--ease);
+}
+.vt-btn:hover{color:var(--text)}
+.vt-btn.on{color:var(--text);background:color-mix(in srgb,var(--brand) 16%,transparent)}
 
 /* screener deck: one card per segment, shuffling on a timer */
 .deck-wrap{position:relative}
@@ -1857,6 +1871,30 @@ function setLandingTab(tab, btn){
   if(tab === 'calls') buildCallsTab();
 }
 
+/* Cards read well for a handful of items; a table wins when you are
+   scanning twenty. The choice is the reader's, and it sticks. */
+var VIEW_MODE = 'cards';
+try { VIEW_MODE = localStorage.getItem('ai_view') || 'cards'; } catch(e){}
+
+function setViewMode(m){
+  VIEW_MODE = m;
+  try { localStorage.setItem('ai_view', m); } catch(e){}
+  document.querySelectorAll('.view-tog .vt-btn').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-view') === m);
+  });
+  if(LANDING_TAB === 'model') buildPublicModel(true);
+  if(LANDING_TAB === 'calls') paintCalls();
+}
+
+function viewToggle(){
+  return '<div class="view-tog">' +
+    '<button class="vt-btn' + (VIEW_MODE === 'cards' ? ' on' : '') +
+      '" data-view="cards" onclick="setViewMode(\'cards\')">Cards</button>' +
+    '<button class="vt-btn' + (VIEW_MODE === 'table' ? ' on' : '') +
+      '" data-view="table" onclick="setViewMode(\'table\')">Table</button>' +
+  '</div>';
+}
+
 /* --- Plans --- */
 function buildPricing(){
   var grid = document.getElementById('plansGrid');
@@ -1947,7 +1985,7 @@ function paintCalls(){
     return;
   }
 
-  body.innerHTML = '<div class="call-grid">' + rows.map(function(c){
+  var cards = rows.map(function(c){
     var hz = (c.horizon || '').toLowerCase();
     var hue = hz === 'short' ? 'var(--r99)' : hz === 'medium' ? 'var(--r85)' : 'var(--r70)';
     return '<div class="call" style="--hue:' + hue + '">' +
@@ -1955,7 +1993,7 @@ function paintCalls(){
         '<span class="call-sym">' + (c.symbol || '') + '</span>' +
         '<span class="call-hz">' + (c.horizon || '') + '</span>' +
       '</div>' +
-      '<div class="call-nums">' +
+      '<div class="call-nums" style="border-top:none;padding-top:0">' +
         '<div><span>Entry</span><b>' + fmtLevel(c.entry) + '</b></div>' +
         '<div><span>Target</span><b>' + fmtLevel(c.target) + '</b></div>' +
         '<div><span>Stop</span><b>' + fmtLevel(c.stop) + '</b></div>' +
@@ -1963,7 +2001,25 @@ function paintCalls(){
       (c.rationale ? '<p class="call-why">' + c.rationale + '</p>' : '') +
       (c.date ? '<div class="call-date">' + fmtDate(c.date) + '</div>' : '') +
     '</div>';
-  }).join('') + '</div>';
+  }).join('');
+
+  var tableRows = rows.map(function(c){
+    var hz = (c.horizon || '').toLowerCase();
+    var hue = hz === 'short' ? 'var(--r99)' : hz === 'medium' ? 'var(--r85)' : 'var(--r70)';
+    return '<tr><td class="sym">' + (c.symbol || '') + '</td>' +
+      '<td><span class="tag" style="background:color-mix(in srgb,' + hue + ' 16%,transparent);color:' + hue + '">' +
+        (c.horizon || '') + '</span></td>' +
+      '<td class="price">' + fmtLevel(c.entry) + '</td>' +
+      '<td class="price">' + fmtLevel(c.target) + '</td>' +
+      '<td class="price">' + fmtLevel(c.stop) + '</td>' +
+      '<td style="color:var(--muted);font-size:12.5px;max-width:340px">' + (c.rationale || '') + '</td>' +
+      '<td class="dt">' + (c.date ? fmtDate(c.date) : '') + '</td></tr>';
+  }).join('');
+
+  body.innerHTML = viewToggle() +
+    (VIEW_MODE === 'table'
+      ? '<div class="tw" style="margin-top:14px"><table><thead><tr><th>Symbol</th><th>Horizon</th><th>Entry</th><th>Target</th><th>Stop</th><th>Rationale</th><th>Date</th></tr></thead><tbody>' + tableRows + '</tbody></table></div>'
+      : '<div class="call-grid" style="margin-top:14px">' + cards + '</div>');
 }
 
 function fmtLevel(v){
@@ -2163,11 +2219,11 @@ function exportSegment(){
 }
 
 /* --- Model Portfolio: performance only --- */
-function buildPublicModel(){
+function buildPublicModel(force){
   var host = document.getElementById('pub-model-body');
   if(!host) return;
 
-  if(!host.innerHTML.trim()){
+  if(force || !host.innerHTML.trim()){
     extendFromJournal();
     host.innerHTML = renderPerfBlock();
     setTimeout(function(){
@@ -2182,7 +2238,7 @@ function buildPublicModel(){
 
   if(canSeeModel()){
     gate.className = 'dash-scope';
-    gate.innerHTML = '<div class="scr-load">Loading the book\u2026</div>';
+    if(!force) gate.innerHTML = '<div class="scr-load">Loading the book\u2026</div>';
     ensureFeed()
       .then(function(){ gate.innerHTML = renderMpTables(); })
       .catch(function(){ gate.innerHTML = '<div class="scr-load">Unavailable right now.</div>'; });
@@ -4946,10 +5002,30 @@ function renderMpTables(){
       '<td class="dt">' + fmtDate(j.date) + '</td></tr>';
   }).join('');
 
-  return '<div class="mp-sec"><div class="mp-sec-t">Current holdings</div>' +
-    (pos.length
-      ? '<div class="call-grid">' + posCards + '</div>'
-      : '<div class="empty" style="padding:2rem">No open positions right now.</div>') +
+  var posRows = pos.map(function(p){
+    var pnl = +p.pnlPct || 0;
+    var st = p.status === 'TARGET HIT' ? '<span class="st-hit">HIT</span>'
+           : p.status === 'STOPPED OUT' ? '<span class="st-stop">STOP</span>'
+           : '<span class="st-open">OPEN</span>';
+    return '<tr><td class="sym">' + p.symbol + '</td>' +
+      '<td>' + st + '</td>' +
+      '<td><span class="' + (pnl >= 0 ? 'pos' : 'neg') + '">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</span></td>' +
+      '<td class="price">' + money(p.currPrice) + '</td>' +
+      '<td class="price">' + money(p.entryPrice) + '</td>' +
+      '<td class="price">' + money(p.target) + '</td>' +
+      '<td class="price">' + money(p.stopLoss) + '</td>' +
+      '<td class="dt">' + (p.daysHeld || 0) + 'd</td></tr>';
+  }).join('');
+
+  var posBody = !pos.length
+    ? '<div class="empty" style="padding:2rem">No open positions right now.</div>'
+    : (VIEW_MODE === 'table'
+        ? '<div class="tw"><table><thead><tr><th>Symbol</th><th>Status</th><th>P&L</th><th>Price</th><th>Entry</th><th>Target</th><th>Stop</th><th>Held</th></tr></thead><tbody>' + posRows + '</tbody></table></div>'
+        : '<div class="call-grid">' + posCards + '</div>');
+
+  return '<div class="mp-sec">' +
+    '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings</div>' + viewToggle() + '</div>' +
+    posBody +
     '</div>' +
     '<div class="mp-sec"><div class="mp-sec-t">Trade journal</div>' +
       '<div class="tw"><table><thead><tr><th>Symbol</th><th>Action</th><th>Price</th><th>P&L%</th><th>Notes</th><th>Date</th></tr></thead><tbody>' + jRows + '</tbody></table></div>' +
