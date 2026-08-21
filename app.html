@@ -83,8 +83,11 @@ body.s-saffron{
   --brand:#F59E0B; --aura-1:rgba(245,158,11,.22); --aura-2:rgba(217,119,6,.14);
 }
 body.s-light{
-  --ink:#FAFBFD; --panel:#FFFFFF; --panel-2:#F2F5FA;
-  --line:#D3DAE6; --line-soft:#E4E9F2;
+  /* The page background sits a shade below the cards, and the lines
+     are dark enough to hold an edge — otherwise the translucent
+     surfaces used everywhere else dissolve into one white sheet. */
+  --ink:#EEF1F6; --panel:#FFFFFF; --panel-2:#F4F7FB;
+  --line:#BFC8D8; --line-soft:#D6DEEB;
   --text:#0B1220; --muted:#5A6474;
   --gold:#9A6E12; --gold-dim:#B99236;
   --green:#0D7D3B; --red:#C8102E;
@@ -133,8 +136,6 @@ input{font-family:inherit}
   opacity:.35;animation:bootPulse 1.4s ease-in-out infinite;
 }
 @keyframes bootPulse{0%,100%{opacity:.25}50%{opacity:.6}}
-.view{display:none}
-.view.active{display:block}
 
 .wrap-x{max-width:1140px;margin:0 auto;padding:0 24px}
 
@@ -354,6 +355,15 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .pane-actions{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
 
 /* ---------- landing tabs ---------- */
+.zone-sw{display:flex;gap:0;border:1px solid var(--line-soft);border-radius:999px;padding:3px;flex-shrink:0}
+.zone-btn{
+  padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:700;
+  color:var(--muted);white-space:nowrap;letter-spacing:-.01em;
+  transition:color .18s var(--ease),background .18s var(--ease);
+}
+.zone-btn:hover{color:var(--text)}
+.zone-btn.on{color:var(--ink);background:var(--brand)}
+body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .ltabs{display:flex;align-items:center;gap:2px;flex:1;justify-content:center;min-width:0}
 .ltab-btn{
   padding:9px 16px;border-radius:999px;
@@ -446,6 +456,69 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 .scr-gate-t{font-family:var(--disp);font-size:19px;font-weight:800;letter-spacing:-.02em}
 .scr-gate-p{margin:8px auto 18px;max-width:46ch;font-size:14px;color:var(--muted);line-height:1.55}
+
+/* plans */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+.plan{
+  position:relative;padding:30px 26px 26px;
+  background:color-mix(in srgb,var(--panel) 74%,transparent);
+  border:1px solid var(--line-soft);border-radius:18px;
+  backdrop-filter:blur(10px);
+}
+.plan--best{border-color:var(--brand);box-shadow:0 24px 60px -34px color-mix(in srgb,var(--brand) 70%,transparent)}
+.plan--mine{border-color:var(--green)}
+.plan-flag{
+  position:absolute;top:-11px;left:26px;
+  padding:4px 12px;border-radius:999px;
+  font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--brand);color:var(--ink);
+}
+.plan-flag--mine{background:var(--green);left:auto;right:26px}
+.plan-name{font-family:var(--disp);font-size:21px;font-weight:800;letter-spacing:-.025em}
+.plan-line{margin-top:6px;font-size:13.5px;color:var(--muted);line-height:1.5;min-height:40px}
+.plan-price{
+  margin:16px 0 18px;font-family:var(--mono);font-size:34px;font-weight:700;
+  letter-spacing:-.03em;
+}
+.plan-price span{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--muted);margin-left:4px}
+.plan-ul{list-style:none;margin:0 0 22px;padding:0}
+.plan-ul li{position:relative;padding-left:26px;margin-bottom:10px;font-size:14px;line-height:1.5}
+.plan-ul li::before{position:absolute;left:0;top:0;font-weight:700}
+.plan-ul li.yes::before{content:'\2713';color:var(--green)}
+.plan-ul li.no{color:var(--muted);opacity:.7}
+.plan-ul li.no::before{content:'\2715';color:var(--red);opacity:.7}
+.plan .btn{width:100%}
+.plan-foot{margin-top:24px;font-size:12px;color:var(--muted);opacity:.85;line-height:1.6}
+
+/* fundamental calls */
+.horizon-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
+.call-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.call{
+  padding:20px 22px;border-radius:16px;
+  border:1px solid color-mix(in srgb,var(--hue) 34%,transparent);
+  border-top:3px solid var(--hue);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--hue) 12%,var(--panel)),var(--panel));
+}
+.call-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px}
+.call-sym{font-family:var(--mono);font-size:17px;font-weight:700;letter-spacing:-.01em}
+.call-hz{
+  font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--hue);
+}
+.call-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.call-nums div{display:flex;flex-direction:column;gap:3px}
+.call-nums span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.call-nums b{font-family:var(--mono);font-size:15px;font-weight:700}
+.call-nums b.up{color:var(--green)}
+.call-nums b.dn{color:var(--red)}
+.call-why{margin-top:14px;font-size:13.5px;color:var(--muted);line-height:1.55}
+.call-date{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+.seg-locked{opacity:.72}
+.seg-lk{font-size:10px;opacity:.8}
+.scr-gate .lock-ico{font-size:24px;margin-bottom:10px}
+
+@media(max-width:900px){ .plans{grid-template-columns:1fr} }
 
 /* model portfolio: gated tables */
 .mp-sec{margin-top:26px}
@@ -1133,21 +1206,21 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .dash-scope ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:9px}
 </style>
 </head>
-<body class="s-light">
+<body class="s-navy">
 
 <div class="aura" aria-hidden="true"></div>
 <div id="boot"><div class="boot-mark">Alpha<span style="color:#D9A94C">Intel</span></div></div>
 
 <!-- ==================== LANDING ==================== -->
-<div id="view-landing" class="view">
+<div id="view-landing" class="view active">
   <header class="nav">
     <div class="wrap-x nav-in">
       <div class="brand">Alpha<span>Intel</span></div>
-      <nav class="ltabs" id="ltabs">
-        <button class="ltab-btn on" onclick="setLandingTab('overview',this)">Overview</button>
-        <button class="ltab-btn" onclick="setLandingTab('screener',this)">Screeners</button>
-        <button class="ltab-btn" onclick="setLandingTab('model',this)">Model Portfolio</button>
-      </nav>
+      <div class="zone-sw" id="zoneSw">
+        <button class="zone-btn on" onclick="setZone('free')">Free Zone</button>
+        <button class="zone-btn" onclick="setZone('member')">Member Zone</button>
+      </div>
+      <nav class="ltabs" id="ltabs"></nav>
       <div class="nav-actions">
         <div class="theme-dots" id="theme-dots">
           <span class="tdot tdot-dark"    data-theme="dark"    title="Dark"></span>
@@ -1328,6 +1401,36 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
     </div>
   </div>
 
+  <!-- ============ PRICING ============ -->
+  <div class="ltab-pane" id="ltab-pricing">
+    <div class="sec" style="padding-top:40px">
+      <div class="wrap-x">
+        <div class="sec-head">
+          <div class="sec-tag">Membership</div>
+          <h2>Pick what you actually use.</h2>
+          <p>Three plans. Take the screeners, take the portfolio, or take everything. Prices are per month, billed for the period you choose.</p>
+        </div>
+        <div class="plans" id="plansGrid"></div>
+        <p class="plan-foot">Alpha Intel is a research tool, not investment advice. We are not registered with SEBI as an Investment Adviser or Research Analyst.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FUNDAMENTAL CALLS ============ -->
+  <div class="ltab-pane" id="ltab-calls">
+    <div class="sec" style="padding-top:40px">
+      <div class="wrap-x">
+        <div class="sec-head">
+          <div class="sec-tag">Fundamental Calls</div>
+          <h2>Conviction ideas, with a horizon attached.</h2>
+          <p id="callsLede">Every call carries the horizon it is meant for, the level it was taken at, and where it gets cut.</p>
+        </div>
+        <div class="horizon-bar" id="horizonBar"></div>
+        <div id="callsBody"></div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <div class="wrap-x">
       <div class="foot-top">
@@ -1438,7 +1541,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const THEMES = ['dark','navy','green','saffron','light'];
 
 function setAppTheme(name, persist){
-  if(THEMES.indexOf(name) === -1) name = 'light';
+  if(THEMES.indexOf(name) === -1) name = 'navy';
   document.body.className = 's-' + name;
 
   document.querySelectorAll('.dash-scope').forEach(function(el){
@@ -1464,7 +1567,7 @@ function setAppTheme(name, persist){
 }
 
 function currentTheme(){
-  try{ return localStorage.getItem('ai_th') || 'light'; }catch(e){ return 'light'; }
+  try{ return localStorage.getItem('ai_th') || 'navy'; }catch(e){ return 'navy'; }
 }
 
 document.querySelectorAll('#theme-dots .tdot').forEach(d => {
@@ -1597,6 +1700,88 @@ const DOUGLAS = [
 })();
 
 /* ============================================================
+   ZONES, PLANS AND ACCESS
+   Free Zone is the shop window. Member Zone is what the plan buys.
+   Everything a plan does NOT include still appears in the same
+   place — locked — so the layout never shifts when someone upgrades.
+   ============================================================ */
+var ZONE = 'free';
+var ACCOUNT_PLAN = '';
+
+var PLANS = [
+  { key:'core',  name:'Screener Core',   price:499,
+    line:'Large and mid cap lists, ranked daily.',
+    segs:['LC','MC','LM'], model:false, calls:false,
+    has:['Large cap and mid cap segments','Full ranked table, no cap on rows',
+         'Filters, sectors and CSV export','Updated after every close'],
+    hasnt:['Small cap, F&O and ETF segments','Model Portfolio','Fundamental calls'] },
+
+  { key:'model', name:'Model Portfolio', price:699,
+    line:'The book we actually run, position by position.',
+    segs:[], model:true, calls:false,
+    has:['Every open position with entry, stop and target','The full trade journal',
+         'Equity curve and year-by-year record','Alerts when the book changes'],
+    hasnt:['Screener segments','Fundamental calls'] },
+
+  { key:'full',  name:'Complete',        price:999,
+    line:'Everything, with nothing held back.',
+    segs:'all', model:true, calls:true,
+    has:['All eight screener segments','Model Portfolio in full',
+         'Fundamental calls across short, medium and long term','Filters, export and US market list'],
+    hasnt:[] }
+];
+
+function planDef(key){
+  return PLANS.filter(function(p){ return p.key === key; })[0] || null;
+}
+
+/* Is this segment open to the signed-in member? */
+function canSeeSegment(seg){
+  if(AUTH_STATE !== 'active') return false;
+  var p = planDef(ACCOUNT_PLAN);
+  if(!p) return false;
+  return p.segs === 'all' || p.segs.indexOf(seg) !== -1;
+}
+
+function canSeeModel(){
+  if(AUTH_STATE !== 'active') return false;
+  var p = planDef(ACCOUNT_PLAN);
+  return !!(p && p.model);
+}
+
+function canSeeCalls(){
+  if(AUTH_STATE !== 'active') return false;
+  var p = planDef(ACCOUNT_PLAN);
+  return !!(p && p.calls);
+}
+
+var ZONE_TABS = {
+  free:   [['overview','Overview'], ['screener','Screeners'],
+           ['model','Model Portfolio'], ['pricing','Plans']],
+  member: [['screener','Screeners'], ['model','Model Portfolio'],
+           ['calls','Fundamental Calls'], ['pricing','Your plan']]
+};
+
+function setZone(z){
+  ZONE = z;
+  document.querySelectorAll('#zoneSw .zone-btn').forEach(function(b, i){
+    b.classList.toggle('on', (i === 0) === (z === 'free'));
+  });
+  paintZoneTabs();
+  var first = ZONE_TABS[z][0][0];
+  setLandingTab(first, document.querySelector('#ltabs .ltab-btn'));
+}
+
+function paintZoneTabs(){
+  var bar = document.getElementById('ltabs');
+  if(!bar) return;
+  bar.innerHTML = ZONE_TABS[ZONE].map(function(t){
+    return '<button class="ltab-btn' + (t[0] === LANDING_TAB ? ' on' : '') +
+           '" onclick="setLandingTab(\'' + t[0] + '\',this)">' + t[1] + '</button>';
+  }).join('');
+}
+
+/* ============================================================
    LANDING TABS
    Overview / Screener preview / Model Portfolio.
    Both extra panes build on demand: the screener preview hits the
@@ -1618,12 +1803,146 @@ function setLandingTab(tab, btn){
      other tabs puts their content straight under the header instead
      of below a screenful the visitor has to scroll past. */
   var hero = document.getElementById('hero-wrap');
-  if(hero) hero.style.display = (tab === 'overview') ? '' : 'none';
+  if(hero) hero.style.display = (tab === 'overview' && ZONE === 'free') ? '' : 'none';
 
   window.scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
 
   if(tab === 'screener') buildScreenerTab();
   if(tab === 'model') buildPublicModel();
+  if(tab === 'pricing') buildPricing();
+  if(tab === 'calls') buildCallsTab();
+}
+
+/* --- Plans --- */
+function buildPricing(){
+  var grid = document.getElementById('plansGrid');
+  if(!grid) return;
+
+  grid.innerHTML = PLANS.map(function(p){
+    var mine = (AUTH_STATE === 'active' && ACCOUNT_PLAN === p.key);
+    var rows = p.has.map(function(h){
+      return '<li class="yes">' + h + '</li>';
+    }).concat(p.hasnt.map(function(h){
+      return '<li class="no">' + h + '</li>';
+    })).join('');
+
+    return '<div class="plan' + (p.key === 'full' ? ' plan--best' : '') + (mine ? ' plan--mine' : '') + '">' +
+      (p.key === 'full' ? '<div class="plan-flag">Most complete</div>' : '') +
+      (mine ? '<div class="plan-flag plan-flag--mine">Your plan</div>' : '') +
+      '<div class="plan-name">' + p.name + '</div>' +
+      '<div class="plan-line">' + p.line + '</div>' +
+      '<div class="plan-price">\u20b9' + p.price.toLocaleString('en-IN') +
+        '<span>/month</span></div>' +
+      '<ul class="plan-ul">' + rows + '</ul>' +
+      (mine
+        ? '<button class="btn btn-ghost" disabled>Active</button>'
+        : '<button class="btn btn-gold cta" data-guest="Choose ' + p.name +
+          '" data-guest-mode="signup" onclick="ctaClick(this)">Choose ' + p.name + '</button>') +
+    '</div>';
+  }).join('');
+}
+
+/* --- Fundamental calls ---
+   Reads a `calls` array off the same feed:
+   { symbol, horizon: short|medium|long, action, entry, target, stop,
+     rationale, date }. Absent until the sheet publishes it. */
+var CALL_HORIZON = 'all';
+var HORIZONS = [
+  ['all',    'All horizons'],
+  ['short',  'Short term'],
+  ['medium', 'Medium term'],
+  ['long',   'Long term']
+];
+
+function buildCallsTab(){
+  var bar = document.getElementById('horizonBar');
+  if(bar){
+    bar.innerHTML = HORIZONS.map(function(h){
+      return '<button class="seg-btn' + (h[0] === CALL_HORIZON ? ' on' : '') +
+             '" style="--hue:var(--brand)" onclick="setCallHorizon(\'' + h[0] + '\')">' + h[1] + '</button>';
+    }).join('');
+  }
+
+  var body = document.getElementById('callsBody');
+  if(!body) return;
+
+  if(!canSeeCalls()){
+    body.innerHTML = lockPanel(
+      'Fundamental calls',
+      'Short, medium and long term ideas with entry, target and stop on each one.',
+      'full');
+    return;
+  }
+
+  body.innerHTML = '<div class="scr-load">Loading calls\u2026</div>';
+  ensureFeed()
+    .then(paintCalls)
+    .catch(function(){ body.innerHTML = '<div class="scr-load">Calls are unavailable right now.</div>'; });
+}
+
+function setCallHorizon(h){
+  CALL_HORIZON = h;
+  document.querySelectorAll('#horizonBar .seg-btn').forEach(function(b, i){
+    b.classList.toggle('on', HORIZONS[i][0] === h);
+  });
+  paintCalls();
+}
+
+function paintCalls(){
+  var body = document.getElementById('callsBody');
+  if(!body) return;
+
+  var all = (SCR_DATA && SCR_DATA.calls) || [];
+  var rows = CALL_HORIZON === 'all'
+    ? all
+    : all.filter(function(c){ return (c.horizon || '').toLowerCase() === CALL_HORIZON; });
+
+  if(!rows.length){
+    body.innerHTML = '<div class="scr-load">No calls published' +
+      (CALL_HORIZON === 'all' ? ' yet.' : ' for this horizon.') + '</div>';
+    return;
+  }
+
+  body.innerHTML = '<div class="call-grid">' + rows.map(function(c){
+    var hz = (c.horizon || '').toLowerCase();
+    var hue = hz === 'short' ? 'var(--r99)' : hz === 'medium' ? 'var(--r85)' : 'var(--r70)';
+    return '<div class="call" style="--hue:' + hue + '">' +
+      '<div class="call-top">' +
+        '<span class="call-sym">' + (c.symbol || '') + '</span>' +
+        '<span class="call-hz">' + (c.horizon || '') + '</span>' +
+      '</div>' +
+      '<div class="call-nums">' +
+        '<div><span>Entry</span><b>' + fmtLevel(c.entry) + '</b></div>' +
+        '<div><span>Target</span><b class="up">' + fmtLevel(c.target) + '</b></div>' +
+        '<div><span>Stop</span><b class="dn">' + fmtLevel(c.stop) + '</b></div>' +
+      '</div>' +
+      (c.rationale ? '<p class="call-why">' + c.rationale + '</p>' : '') +
+      (c.date ? '<div class="call-date">' + fmtDate(c.date) + '</div>' : '') +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function fmtLevel(v){
+  var n = parseFloat(v);
+  return isFinite(n) ? '\u20b9' + n.toLocaleString('en-IN') : '\u2014';
+}
+
+/* Shared locked panel, so every gated slot reads the same way. */
+function lockPanel(title, line, needPlan){
+  var p = planDef(needPlan);
+  var label = p ? p.name : 'a subscription';
+  return '<div class="scr-gate">' +
+    '<div class="lock-ico">\u{1F512}</div>' +
+    '<div class="scr-gate-t">' + title + '</div>' +
+    '<div class="scr-gate-p">' + line + '</div>' +
+    '<button class="btn btn-gold" onclick="goPricing()">' +
+      (AUTH_STATE === 'active' ? 'Upgrade to ' + label : 'See plans') + '</button>' +
+  '</div>';
+}
+
+function goPricing(){
+  var idx = ZONE_TABS[ZONE].map(function(t){ return t[0]; }).indexOf('pricing');
+  setLandingTab('pricing', document.querySelectorAll('#ltabs .ltab-btn')[idx]);
 }
 
 /* --- Screeners tab ---
@@ -1684,8 +2003,10 @@ function buildScreenerTab(){
   }
 
   bar.innerHTML = SEG_LIST.map(function(x){
-    return '<button class="seg-btn' + (x[0] === SCR_SEG ? ' on' : '') +
-           '" style="--hue:' + x[2] + '" onclick="setScrSeg(\'' + x[0] + '\')">' + x[1] + '</button>';
+    var open = canSeeSegment(x[0]);
+    return '<button class="seg-btn' + (x[0] === SCR_SEG ? ' on' : '') + (open ? '' : ' seg-locked') +
+           '" style="--hue:' + x[2] + '" onclick="setScrSeg(\'' + x[0] + '\')">' +
+           x[1] + (open ? '' : ' <span class="seg-lk">\u{1F512}</span>') + '</button>';
   }).join('');
 
   if(SCR_DATA){ paintScreenerSegment(); return; }
@@ -1720,7 +2041,7 @@ function paintScreenerSegment(){
     return;
   }
 
-  var open = AUTH_STATE === 'active';
+  var open = canSeeSegment(SCR_SEG);
   var FREE = 3;
   var shown = open ? rows : rows.slice(0, 10);
 
@@ -1770,20 +2091,22 @@ function paintScreenerSegment(){
       (open ? '<th>Chart</th>' : '') +
     '</tr></thead><tbody>' + tbody + '</tbody></table></div>';
 
+  /* Which plan would unlock THIS segment — Core covers large and mid,
+     Complete covers the rest. */
+  var need = (SCR_SEG === 'LC' || SCR_SEG === 'MC' || SCR_SEG === 'LM') ? 'core' : 'full';
   var foot = open
     ? '<div class="scr-foot"><span>Showing all ' + rows.length.toLocaleString() + ' names</span>' +
       '<button class="ibtn-lite" onclick="exportSegment()">Export CSV</button></div>'
-    : '<div class="scr-gate">' +
-        '<div class="scr-gate-t">' + (rows.length - FREE).toLocaleString() + ' more names in this segment</div>' +
-        '<div class="scr-gate-p">Every segment, the filters, rank history and CSV export open up with a subscription.</div>' +
-        '<button class="btn btn-gold cta" data-guest="Get access" data-guest-mode="signup" onclick="ctaClick(this)">Get access</button>' +
-      '</div>';
+    : lockPanel(
+        (rows.length - FREE).toLocaleString() + ' more names in ' + meta[1],
+        'The full table, filters and CSV export come with ' + (planDef(need) || {}).name + '.',
+        need);
 
   body.innerHTML = head + table + foot;
 }
 
 function exportSegment(){
-  if(!SCR_DATA || AUTH_STATE !== 'active') return;
+  if(!SCR_DATA || !canSeeSegment(SCR_SEG)) return;
   var rows = ((SCR_DATA.tabs || {})[SCR_SEG] || [])
     .filter(function(x){ return x && x.symbol; })
     .sort(function(a, b){ return b.rank - a.rank; });
@@ -1813,7 +2136,7 @@ function buildPublicModel(){
   var gate = document.getElementById('mpGated');
   if(!gate) return;
 
-  if(AUTH_STATE === 'active'){
+  if(canSeeModel()){
     gate.className = 'dash-scope';
     gate.innerHTML = '<div class="scr-load">Loading the book\u2026</div>';
     ensureFeed()
@@ -1821,18 +2144,10 @@ function buildPublicModel(){
       .catch(function(){ gate.innerHTML = '<div class="scr-load">Unavailable right now.</div>'; });
   } else {
     gate.className = '';
-    gate.innerHTML =
-      '<div class="locked-pair">' +
-        '<div class="lockbox"><div class="lock-ico">\u{1F512}</div>' +
-          '<h4>Current holdings</h4>' +
-          '<p>Entry, stop, target and live P&L on every open position.</p></div>' +
-        '<div class="lockbox"><div class="lock-ico">\u{1F512}</div>' +
-          '<h4>Trade journal</h4>' +
-          '<p>Every entry and exit on the record, with the reason and the result.</p></div>' +
-      '</div>' +
-      '<div style="text-align:center;margin-top:22px">' +
-        '<button class="btn btn-gold cta" data-guest="Get access" data-guest-mode="signup" onclick="ctaClick(this)">Get access</button>' +
-      '</div>';
+    gate.innerHTML = lockPanel(
+      'Holdings and journal',
+      'Every open position with entry, stop and target, and the trade-by-trade journal behind the curve above.',
+      'model');
   }
 }
 
@@ -1983,8 +2298,11 @@ function rebuildTabs(){
   scrLoaded = false;
   const pub = document.getElementById('pub-model-body');
   if(pub) pub.innerHTML = '';
+  paintZoneTabs();
   if(LANDING_TAB === 'screener') buildScreenerTab();
   if(LANDING_TAB === 'model') buildPublicModel();
+  if(LANDING_TAB === 'pricing') buildPricing();
+  if(LANDING_TAB === 'calls') buildCallsTab();
 }
 
 /* Landing stays reachable at all times. These move between it and
@@ -2128,6 +2446,7 @@ async function route(){
   if(!session){
     AUTH_STATE = 'out';
     ACCOUNT_EMAIL = '';
+    ACCOUNT_PLAN = '';
   } else {
     ACCOUNT_EMAIL = session.user.email;
     const { data: profile } = await db
@@ -2136,6 +2455,10 @@ async function route(){
       .eq('id', session.user.id)
       .single();
     AUTH_STATE = (profile && profile.subscription_status === 'active') ? 'active' : 'inactive';
+    /* Anything unrecognised falls back to the widest plan rather than
+       locking a paying member out of what they bought. */
+    ACCOUNT_PLAN = (profile && profile.plan) ? String(profile.plan).toLowerCase() : '';
+    if(AUTH_STATE === 'active' && !planDef(ACCOUNT_PLAN)) ACCOUNT_PLAN = 'full';
   }
 
   paintLandingState();
@@ -2150,6 +2473,7 @@ async function refreshStatus(){ await route(); }
 
 
 (async function(){
+  paintZoneTabs();
   try { await route(); }
   catch(e){ console.error(e); show('view-landing'); }
   finally { document.getElementById('boot').style.display = 'none'; }
