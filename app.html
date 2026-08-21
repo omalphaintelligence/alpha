@@ -145,10 +145,14 @@ header.nav{
   backdrop-filter:blur(18px) saturate(140%);
   border-bottom:1px solid var(--line-soft);
 }
-.nav-in{display:flex;align-items:center;justify-content:space-between;height:66px}
+.nav-in{
+  display:flex;align-items:center;gap:18px;
+  min-height:66px;padding:10px 0;flex-wrap:wrap;
+}
+.brand{flex-shrink:0}
 .brand{font-family:var(--disp);font-size:20px;font-weight:800;letter-spacing:-.03em}
 .brand span{color:var(--brand)}
-.nav-actions{display:flex;align-items:center;gap:10px}
+.nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto}
 
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -355,7 +359,10 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .pane-actions{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
 
 /* ---------- landing tabs ---------- */
-.zone-sw{display:flex;gap:0;border:1px solid var(--line-soft);border-radius:999px;padding:3px;flex-shrink:0}
+.zone-sw{
+  display:flex;gap:2px;flex-shrink:0;
+  border:1px solid var(--line-soft);border-radius:999px;padding:3px;
+}
 .zone-btn{
   padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:700;
   color:var(--muted);white-space:nowrap;letter-spacing:-.01em;
@@ -364,7 +371,15 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 .zone-btn:hover{color:var(--text)}
 .zone-btn.on{color:var(--ink);background:var(--brand)}
 body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
-.ltabs{display:flex;align-items:center;gap:2px;flex:1;justify-content:center;min-width:0}
+/* The tab row takes the leftover space and scrolls inside itself.
+   Without min-width:0 a flex child refuses to shrink below its
+   content, which is what pushed these on top of their neighbours. */
+.ltabs{
+  display:flex;align-items:center;gap:2px;
+  flex:1 1 auto;min-width:0;overflow-x:auto;
+  scrollbar-width:none;
+}
+.ltabs::-webkit-scrollbar{display:none}
 .ltab-btn{
   padding:9px 16px;border-radius:999px;
   font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--muted);
@@ -377,10 +392,16 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   background:color-mix(in srgb,var(--brand) 16%,transparent);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--brand) 34%,transparent);
 }
-@media(max-width:980px){
-  .ltabs{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;padding-bottom:2px}
-  .ltabs::-webkit-scrollbar{display:none}
-  .nav-in{height:auto;padding:10px 0;flex-wrap:wrap;gap:8px}
+@media(max-width:1180px){
+  /* Below this the row cannot hold everything without crowding, so
+     the tabs drop to their own line instead of being squeezed. */
+  .ltabs{order:3;flex-basis:100%;padding-top:2px}
+  .nav-in{gap:12px}
+}
+@media(max-width:600px){
+  .nav-in{gap:10px}
+  .zone-btn{padding:6px 12px;font-size:12px}
+  .ltab-btn{padding:8px 12px;font-size:13px}
 }
 .ltab-pane{display:none}
 .ltab-pane.on{display:block;animation:paneIn .3s var(--ease)}
@@ -492,36 +513,58 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 
 /* fundamental calls */
 .horizon-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
-.call-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.call-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:22px}
+
+/* Colour sits on one hairline and one number, not the whole surface.
+   Tinting every card made a wall of green and red with nothing to
+   rest on. */
 .call{
-  padding:20px 22px;border-radius:16px;
-  border:1px solid color-mix(in srgb,var(--hue) 34%,transparent);
-  border-top:3px solid var(--hue);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--hue) 12%,var(--panel)),var(--panel));
+  position:relative;padding:30px 30px 26px;border-radius:18px;
+  border:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel) 78%,transparent);
+  backdrop-filter:blur(10px);
+  transition:border-color .22s var(--ease),transform .22s var(--ease);
 }
-.call-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px}
-.call-sym{font-family:var(--mono);font-size:17px;font-weight:700;letter-spacing:-.01em}
+.call::before{
+  content:'';position:absolute;left:30px;right:30px;top:0;height:2px;
+  border-radius:0 0 2px 2px;background:var(--hue);
+}
+.call:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--hue) 40%,transparent)}
+
+.call-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}
+.call-sym{
+  font-family:var(--disp);font-size:21px;font-weight:800;letter-spacing:-.03em;
+}
 .call-hz{
-  font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--hue);
+  flex-shrink:0;padding:4px 11px;border-radius:999px;
+  font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--hue);background:color-mix(in srgb,var(--hue) 13%,transparent);
 }
-.call-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.call-nums div{display:flex;flex-direction:column;gap:3px}
-.call-nums span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-.call-nums b{font-family:var(--mono);font-size:15px;font-weight:700}
-.call-nums b.up{color:var(--green)}
-.call-nums b.dn{color:var(--red)}
-.call-why{margin-top:14px;font-size:13.5px;color:var(--muted);line-height:1.55}
+
+.call-nums{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  padding-top:20px;border-top:1px solid var(--line-soft);
+}
+.call-nums div{display:flex;flex-direction:column;gap:6px}
+.call-nums span{
+  font-size:10px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;font-weight:600;
+}
+.call-nums b{font-family:var(--mono);font-size:16px;font-weight:600;letter-spacing:-.01em}
+.call-nums b.up,.call-nums b.dn{color:var(--text)}
+
+.call-why{margin-top:20px;font-size:14px;color:var(--muted);line-height:1.6}
+
 .pos-pnl{
-  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
-  font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-.02em;
-  margin:-4px 0 14px;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:40px;font-weight:700;letter-spacing:-.035em;
+  line-height:1;margin:0 0 4px;
 }
 .pos-pnl span{
-  font-family:var(--sans);font-size:12px;font-weight:600;
+  font-family:var(--sans);font-size:13px;font-weight:500;
   color:var(--muted);letter-spacing:0;
 }
-.call-date{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.call-date{margin-top:20px;font-size:12px;color:var(--muted)}
 
 .seg-locked{opacity:.72}
 .seg-lk{font-size:10px;opacity:.8}
@@ -630,24 +673,19 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 }
 
 /* ---------- theme dots ---------- */
-.theme-dots{display:flex;align-items:center;gap:6px;margin-right:6px}
+.theme-tog{
+  width:34px;height:34px;flex-shrink:0;border-radius:50%;
+  border:1px solid var(--line);color:var(--muted);
+  font-size:15px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:color .18s var(--ease),border-color .18s var(--ease);
+}
+.theme-tog:hover{color:var(--text);border-color:var(--brand)}
 .nav-who{
   font-family:var(--mono);font-size:11.5px;color:var(--muted);
   max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 @media(max-width:980px){ .nav-who{display:none!important} }
-.tdot{
-  width:16px;height:16px;border-radius:50%;cursor:pointer;
-  border:2px solid transparent;
-  transition:transform .18s var(--ease),border-color .18s var(--ease);
-}
-.tdot:hover{transform:scale(1.22)}
-.tdot.on{border-color:var(--brand)}
-.tdot-dark{background:#0a0d13}
-.tdot-navy{background:#0f1729}
-.tdot-green{background:#0d1f12}
-.tdot-saffron{background:#1f1200}
-.tdot-light{background:#cbd5e1}
 
 /* ---------- scroll reveal ---------- */
 .rv{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
@@ -845,7 +883,11 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
      #dash-root for the same reason.
      ============================================================ -->
 <style>
-.dash-scope,.dash-scope *{box-sizing:border-box;margin:0;padding:0}
+/* A blanket padding:0 here also stripped padding from shared
+   components rendered inside this scope (the holding cards), and
+   * beats a class selector. Only lists actually need the reset. */
+.dash-scope,.dash-scope *{box-sizing:border-box;margin:0}
+.dash-scope ul,.dash-scope ol{padding:0;list-style:none}
 .dash-scope{overflow-x:hidden;position:relative;width:100%;font-family:var(--sans);font-size:13.5px;min-height:100vh;line-height:normal}
 .dash-scope .mono{font-family:var(--mono)}
 /* The dashboard was built with its own palette. Rather than keep two
@@ -1231,13 +1273,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
       </div>
       <nav class="ltabs" id="ltabs"></nav>
       <div class="nav-actions">
-        <div class="theme-dots" id="theme-dots">
-          <span class="tdot tdot-dark"    data-theme="dark"    title="Dark"></span>
-          <span class="tdot tdot-navy"    data-theme="navy"    title="Navy"></span>
-          <span class="tdot tdot-green"   data-theme="green"   title="Green"></span>
-          <span class="tdot tdot-saffron" data-theme="saffron" title="Saffron"></span>
-          <span class="tdot tdot-light"   data-theme="light"   title="Light"></span>
-        </div>
+        <button class="theme-tog" id="theme-tog" onclick="toggleTheme()" title="Switch theme"></button>
         <span id="nav-guest" style="display:flex;gap:10px">
           <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
           <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
@@ -1547,7 +1583,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
    THEME — one key ('ai_th') drives the shell and the dashboard,
    so a choice made on the landing page carries into the screener.
    ============================================================ */
-const THEMES = ['dark','navy','green','saffron','light'];
+const THEMES = ['navy','light'];
 
 function setAppTheme(name, persist){
   if(THEMES.indexOf(name) === -1) name = 'navy';
@@ -1557,9 +1593,8 @@ function setAppTheme(name, persist){
     el.className = 'dash-scope t-' + name;
   });
 
-  document.querySelectorAll('#theme-dots .tdot').forEach(d => {
-    d.classList.toggle('on', d.getAttribute('data-theme') === name);
-  });
+  const tog = document.getElementById('theme-tog');
+  if(tog) tog.textContent = name === 'light' ? '\u25D3' : '\u25D2';
   document.querySelectorAll('#dash-root .td').forEach(d => d.classList.remove('on'));
   const dd = document.querySelector('#dash-root .td-' + name);
   if(dd) dd.classList.add('on');
@@ -1579,9 +1614,9 @@ function currentTheme(){
   try{ return localStorage.getItem('ai_th') || 'navy'; }catch(e){ return 'navy'; }
 }
 
-document.querySelectorAll('#theme-dots .tdot').forEach(d => {
-  d.addEventListener('click', () => setAppTheme(d.getAttribute('data-theme')));
-});
+function toggleTheme(){
+  setAppTheme(document.body.classList.contains('s-light') ? 'navy' : 'light');
+}
 
 setAppTheme(currentTheme(), false);
 
@@ -1922,8 +1957,8 @@ function paintCalls(){
       '</div>' +
       '<div class="call-nums">' +
         '<div><span>Entry</span><b>' + fmtLevel(c.entry) + '</b></div>' +
-        '<div><span>Target</span><b class="up">' + fmtLevel(c.target) + '</b></div>' +
-        '<div><span>Stop</span><b class="dn">' + fmtLevel(c.stop) + '</b></div>' +
+        '<div><span>Target</span><b>' + fmtLevel(c.target) + '</b></div>' +
+        '<div><span>Stop</span><b>' + fmtLevel(c.stop) + '</b></div>' +
       '</div>' +
       (c.rationale ? '<p class="call-why">' + c.rationale + '</p>' : '') +
       (c.date ? '<div class="call-date">' + fmtDate(c.date) + '</div>' : '') +
@@ -4872,14 +4907,13 @@ function renderMpTables(){
       '</div>' +
       '<div class="pos-pnl" style="color:' + hue + '">' +
         (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%' +
-        '<span>' + money(p.currPrice) + ' now</span>' +
+        '<span>' + money(p.currPrice) + ' now \u00b7 held ' + (p.daysHeld || 0) + ' days</span>' +
       '</div>' +
       '<div class="call-nums">' +
         '<div><span>Entry</span><b>' + money(p.entryPrice) + '</b></div>' +
-        '<div><span>Target</span><b class="up">' + money(p.target) + '</b></div>' +
-        '<div><span>Stop</span><b class="dn">' + money(p.stopLoss) + '</b></div>' +
+        '<div><span>Target</span><b>' + money(p.target) + '</b></div>' +
+        '<div><span>Stop</span><b>' + money(p.stopLoss) + '</b></div>' +
       '</div>' +
-      '<div class="call-date">Held ' + (p.daysHeld || 0) + ' days</div>' +
     '</div>';
   }).join('');
 
