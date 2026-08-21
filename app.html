@@ -492,7 +492,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 
 /* fundamental calls */
 .horizon-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
-.call-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.call-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
 .call{
   padding:20px 22px;border-radius:16px;
   border:1px solid color-mix(in srgb,var(--hue) 34%,transparent);
@@ -512,6 +512,15 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .call-nums b.up{color:var(--green)}
 .call-nums b.dn{color:var(--red)}
 .call-why{margin-top:14px;font-size:13.5px;color:var(--muted);line-height:1.55}
+.pos-pnl{
+  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-.02em;
+  margin:-4px 0 14px;
+}
+.pos-pnl span{
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  color:var(--muted);letter-spacing:0;
+}
 .call-date{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
 
 .seg-locked{opacity:.72}
@@ -4842,18 +4851,36 @@ function renderMpTables(){
   var pos = mp.positions || [], jrnl = mp.journal || [];
   var cur = MARKET === 'NSE' ? '\u20b9' : '$';
 
-  var posRows = pos.map(function(p){
-    var st = p.status === 'OPEN' ? '<span class="st-open">OPEN</span>'
-           : p.status === 'TARGET HIT' ? '<span class="st-hit">HIT</span>'
-           : '<span class="st-stop">STOP</span>';
-    return '<tr><td class="sym">' + p.symbol + '</td>' +
-      '<td class="price">' + cur + (+p.currPrice || 0).toFixed(2) + '</td>' +
-      '<td><span class="' + ((p.pnlPct >= 0) ? 'pos' : 'neg') + '">' + (+p.pnlPct || 0).toFixed(1) + '%</span></td>' +
-      '<td>' + st + '</td>' +
-      '<td class="dt">' + (p.daysHeld || 0) + 'd</td>' +
-      '<td class="price">' + cur + (+p.entryPrice || 0).toFixed(2) + '</td>' +
-      '<td style="color:var(--red);font-family:var(--mono);font-size:12px">' + cur + (+p.stopLoss || 0).toFixed(2) + '</td>' +
-      '<td style="color:var(--green);font-family:var(--mono);font-size:12px">' + cur + (+p.target || 0).toFixed(2) + '</td></tr>';
+  /* Holdings read as cards, same shape as the fundamental calls, so
+     the two products look like one product. Hue follows the P&L, so
+     the book's state is legible before any number is read. */
+  function money(v){
+    var n = parseFloat(v);
+    return isFinite(n) && n ? cur + n.toLocaleString('en-IN', {maximumFractionDigits:2}) : '\u2014';
+  }
+
+  var posCards = pos.map(function(p){
+    var pnl = +p.pnlPct || 0;
+    var hue = pnl > 0.01 ? 'var(--green)' : pnl < -0.01 ? 'var(--red)' : 'var(--brand)';
+    var st  = p.status === 'TARGET HIT' ? 'HIT'
+            : p.status === 'STOPPED OUT' ? 'STOP'
+            : 'OPEN';
+    return '<div class="call" style="--hue:' + hue + '">' +
+      '<div class="call-top">' +
+        '<span class="call-sym">' + p.symbol + '</span>' +
+        '<span class="call-hz">' + st + '</span>' +
+      '</div>' +
+      '<div class="pos-pnl" style="color:' + hue + '">' +
+        (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%' +
+        '<span>' + money(p.currPrice) + ' now</span>' +
+      '</div>' +
+      '<div class="call-nums">' +
+        '<div><span>Entry</span><b>' + money(p.entryPrice) + '</b></div>' +
+        '<div><span>Target</span><b class="up">' + money(p.target) + '</b></div>' +
+        '<div><span>Stop</span><b class="dn">' + money(p.stopLoss) + '</b></div>' +
+      '</div>' +
+      '<div class="call-date">Held ' + (p.daysHeld || 0) + ' days</div>' +
+    '</div>';
   }).join('');
 
   var events = jrnl.map(function(j){
@@ -4887,7 +4914,7 @@ function renderMpTables(){
 
   return '<div class="mp-sec"><div class="mp-sec-t">Current holdings</div>' +
     (pos.length
-      ? '<div class="tw"><table><thead><tr><th>Symbol</th><th>Price</th><th>P&L%</th><th>Status</th><th>Days</th><th>Entry</th><th>Stop</th><th>Target</th></tr></thead><tbody>' + posRows + '</tbody></table></div>'
+      ? '<div class="call-grid">' + posCards + '</div>'
       : '<div class="empty" style="padding:2rem">No open positions right now.</div>') +
     '</div>' +
     '<div class="mp-sec"><div class="mp-sec-t">Trade journal</div>' +
