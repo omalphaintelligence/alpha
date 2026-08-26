@@ -415,16 +415,42 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 .field input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
 .field input::placeholder{color:var(--muted)}
-.field-phone{display:flex;align-items:center;gap:0}
-.field-phone .cc{
-  flex-shrink:0;padding:13px 12px 13px 15px;
-  background:var(--panel-2);border:1px solid var(--line);border-right:none;
-  border-radius:9px 0 0 9px;font-family:var(--mono);font-size:15px;color:var(--muted);
+.sheet-pay{max-width:392px;text-align:center}
+.sheet-pay .sheet-head{text-align:left}
+.pay-amt{
+  font-family:var(--mono);font-size:38px;font-weight:700;
+  letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin:2px 0 18px;
 }
-.field-phone input{border-radius:0 9px 9px 0;letter-spacing:.06em}
-#m-otp{text-align:center;font-family:var(--mono);font-size:22px;letter-spacing:.4em}
-.otp-to{font-size:13px;color:var(--muted);margin-bottom:14px}
-.otp-to b{color:var(--text);font-family:var(--mono)}
+.pay-qr{
+  display:flex;align-items:center;justify-content:center;
+  min-height:252px;padding:8px;border-radius:14px;
+  background:#fff;border:1px solid var(--line);
+}
+.pay-qr canvas{display:block;border-radius:6px}
+.qr-load{font-size:13px;color:#5A6474;padding:0 20px;line-height:1.5}
+.pay-app{margin-top:16px}
+.pay-rows{margin-top:18px;text-align:left}
+.pay-rows div{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:11px 0;border-bottom:1px solid var(--line-soft);
+}
+.pay-rows div:last-child{border-bottom:none}
+.pay-rows span{font-size:13px;color:var(--muted)}
+.pay-rows b{font-family:var(--mono);font-size:13.5px;font-weight:600;word-break:break-all;text-align:right}
+.pay-fine{margin:14px 0 18px;font-size:12px;color:var(--muted);line-height:1.55;text-align:left}
+/* link-sent confirmation */
+.sent-mark{
+  width:52px;height:52px;margin:4px auto 18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 13%,transparent);
+}
+.sent-to{text-align:center;font-size:14.5px;color:var(--muted);line-height:1.7}
+.sent-to b{color:var(--text);font-family:var(--mono);font-size:14px}
+.sent-fine{
+  margin:14px auto 20px;max-width:32ch;text-align:center;
+  font-size:12.5px;color:var(--muted);line-height:1.6;
+}
 .lnk{color:var(--brand);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .lnk-block{display:block;width:100%;text-align:center;margin-top:14px}
 .auth-fine{margin-top:18px;font-size:11.5px;color:var(--muted);opacity:.8;line-height:1.5;text-align:center}
@@ -1717,6 +1743,32 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   </div>
 </div>
 
+<!-- ==================== PAYMENT ==================== -->
+<div class="authwrap" id="paywrap" onclick="if(event.target===this)closePay()">
+  <div class="sheet sheet-pay">
+    <div class="sheet-head">
+      <div>
+        <h3>Scan to pay</h3>
+        <p id="payPlan"></p>
+      </div>
+      <button class="x" onclick="closePay()" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="pay-amt" id="payAmt"></div>
+    <div class="pay-qr" id="payQr"></div>
+    <a class="btn btn-gold btn-block pay-app" id="payApp">Open a UPI app</a>
+
+    <div class="pay-rows">
+      <div><span>UPI ID</span><b id="payVpa"></b></div>
+      <div><span>Reference</span><b id="payRef"></b></div>
+    </div>
+    <p class="pay-fine">Pay from any UPI app. Keep the reference — it is how your payment is matched to this account.</p>
+
+    <button class="btn btn-ghost btn-block" id="payDone" onclick="claimPaid()">I have paid</button>
+    <div class="msg" id="payMsg"></div>
+  </div>
+</div>
+
 <!-- ==================== CHART ==================== -->
 <div class="chartwrap" id="chartwrap" onclick="if(event.target===this)closeChart()">
   <div class="chart-sheet">
@@ -1745,25 +1797,21 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
       <button class="x" onclick="closeAuth()" aria-label="Close">&times;</button>
     </div>
     <!-- phone step -->
-    <div id="auth-phone">
-      <div class="field field-phone">
-        <span class="cc">+91</span>
-        <input type="tel" id="m-phone" placeholder="Mobile number" inputmode="numeric"
-               autocomplete="tel" maxlength="10">
+    <div id="auth-email">
+      <div class="field">
+        <input type="email" id="m-email" placeholder="you@example.com"
+               autocomplete="email" inputmode="email">
       </div>
-      <button class="btn btn-gold btn-block" id="m-send" onclick="sendOtp()">Send OTP</button>
+      <button class="btn btn-gold btn-block" id="m-send" onclick="sendOtp()">Send code</button>
     </div>
 
-    <!-- otp step -->
-    <div id="auth-otp" style="display:none">
-      <p class="otp-to">Code sent to <b id="m-to"></b>
-        <button class="lnk" onclick="backToPhone()">change</button></p>
-      <div class="field">
-        <input type="text" id="m-otp" placeholder="6-digit code" inputmode="numeric"
-               autocomplete="one-time-code" maxlength="6">
-      </div>
-      <button class="btn btn-gold btn-block" id="m-verify" onclick="verifyOtp()">Verify &amp; continue</button>
-      <button class="lnk lnk-block" id="m-resend" onclick="sendOtp(true)">Resend code</button>
+    <!-- sent step -->
+    <div id="auth-sent" style="display:none">
+      <div class="sent-mark">&#9993;</div>
+      <p class="sent-to">A sign-in link is on its way to<br><b id="m-to"></b></p>
+      <p class="sent-fine">Open it on this device and you will land back here, signed in. Check the spam folder if it is slow.</p>
+      <button class="lnk lnk-block" id="m-resend" onclick="sendOtp(true)">Send it again</button>
+      <button class="lnk lnk-block" onclick="backToEmail()">Use a different address</button>
     </div>
 
     <div class="msg" id="m-msg"></div>
@@ -1956,7 +2004,6 @@ var ACCOUNT_PLAN = '';
 
 var PLANS = [
   { key:'core',  name:'Screener Core',   price:499,
-    pay:{ m1:'', m3:'', m12:'' },   /* <- Razorpay links */
     line:'Large and mid cap lists, ranked daily.',
     segs:['LC','MC','LM'], model:false, calls:false,
     has:['Large cap and mid cap segments','Full ranked table, no cap on rows',
@@ -1964,7 +2011,6 @@ var PLANS = [
     hasnt:['Small cap, F&O and ETF segments','Model Portfolio','Fundamental calls'] },
 
   { key:'model', name:'Model Portfolio', price:699,
-    pay:{ m1:'', m3:'', m12:'' },
     line:'The book we actually run, position by position.',
     segs:[], model:true, calls:false,
     has:['Every open position with entry, stop and target','The full trade journal',
@@ -1972,7 +2018,6 @@ var PLANS = [
     hasnt:['Screener segments','Fundamental calls'] },
 
   { key:'full',  name:'Complete',        price:999,
-    pay:{ m1:'', m3:'', m12:'' },
     line:'Everything, with nothing held back.',
     segs:'all', model:true, calls:true,
     has:['All eight screener segments','Model Portfolio in full',
@@ -1980,14 +2025,8 @@ var PLANS = [
     hasnt:[] }
 ];
 
-/* Razorpay Payment Links.
-   Create one link per plan per duration in the Razorpay dashboard
-   (Payment Links → New), then paste the URLs into the `pay` blocks
-   above. They are public URLs — nothing secret lives here.
-
-   Activation is manual for now: a payment notification arrives, you
-   set profiles.plan and subscription_status. Wiring a webhook to do
-   that automatically needs a server, which this static page is not. */
+/* Billing cycles. Longer commitments carry a discount; the multiplier
+   is applied to the monthly price. */
 var BILLING = [
   { key:'m1',  label:'1 month',   months:1,  mult:1,    note:'' },
   { key:'m3',  label:'3 months',  months:3,  mult:2.7,  note:'save 10%' },
@@ -2134,42 +2173,120 @@ function choosePlan(key){
   startCheckout(key);
 }
 
+/* Payment is a UPI QR shown in place. The QR is generated in the
+   browser from a upi:// intent, so the amount and reference are never
+   handed to a third party just to draw a square.
+
+   Every payment carries a reference tied to the account, which is how
+   a transfer gets matched back to a person. */
+var UPI_ID   = 'yourvpa@upi';        /* <- your UPI ID */
+var UPI_NAME = 'Alpha Intel';
+var CHECKOUT = null;
+
+function payRef(planKey, cycKey){
+  var seed = (ACCOUNT_EMAIL || 'guest').split('@')[0].replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+  return ('AI' + planKey + cycKey + seed).toUpperCase().slice(0, 22);
+}
+
 function startCheckout(key){
   setPendingPlan('');
-  const plan = planDef(key);
-  const cyc  = BILLING.filter(function(c){ return c.key === BILL_CYCLE; })[0] || BILLING[0];
+  var plan = planDef(key);
+  var cyc  = BILLING.filter(function(c){ return c.key === BILL_CYCLE; })[0] || BILLING[0];
   if(!plan) return;
 
-  const link = (plan.pay || {})[cyc.key];
-  if(!link){
-    say2('Payment link for ' + plan.name + ' (' + cyc.label + ') is not set up yet. ' +
-         'Write to us and we will send one.');
-    return;
+  var amount = cyclePrice(plan, cyc);
+  var ref    = payRef(plan.key, cyc.key);
+  CHECKOUT = { plan: plan, cyc: cyc, amount: amount, ref: ref };
+
+  document.getElementById('payPlan').textContent = plan.name + ' \u00b7 ' + cyc.label;
+  document.getElementById('payAmt').textContent  = '\u20b9' + amount.toLocaleString('en-IN');
+  document.getElementById('payVpa').textContent  = UPI_ID;
+  document.getElementById('payRef').textContent  = ref;
+  document.getElementById('payMsg').className    = 'msg';
+  document.getElementById('payDone').disabled    = false;
+  document.getElementById('payDone').textContent = 'I have paid';
+
+  var upi = 'upi://pay?pa=' + encodeURIComponent(UPI_ID) +
+            '&pn=' + encodeURIComponent(UPI_NAME) +
+            '&am=' + amount +
+            '&cu=INR' +
+            '&tn=' + encodeURIComponent(plan.name + ' ' + cyc.label) +
+            '&tr=' + encodeURIComponent(ref);
+  document.getElementById('payApp').href = upi;
+
+  drawUpiQr(upi);
+  document.getElementById('paywrap').classList.add('open');
+}
+
+function closePay(){
+  var w = document.getElementById('paywrap');
+  if(w) w.classList.remove('open');
+}
+
+/* The QR encoder is fetched only when someone actually pays. */
+function drawUpiQr(text){
+  var box = document.getElementById('payQr');
+  if(!box) return;
+  box.innerHTML = '<div class="qr-load">Generating\u2026</div>';
+
+  function render(){
+    box.innerHTML = '';
+    var cv = document.createElement('canvas');
+    box.appendChild(cv);
+    window.QRCode.toCanvas(cv, text, {
+      width: 236, margin: 1,
+      color: { dark: '#000000', light: '#ffffff' }
+    }, function(err){
+      if(err) box.innerHTML = '<div class="qr-load">Could not draw the code. Use the UPI ID below.</div>';
+    });
   }
 
-  /* Passing the phone through pre-fills Razorpay and, more usefully,
-     is how a payment gets matched back to an account. */
-  const url = link + (link.indexOf('?') === -1 ? '?' : '&') +
-              'prefill[contact]=' + encodeURIComponent(ACCOUNT_PHONE.replace('+', ''));
+  if(window.QRCode && window.QRCode.toCanvas){ render(); return; }
 
-  window.open(url, '_blank', 'noopener');
-  showPending(plan, cyc);
+  var sc = document.createElement('script');
+  sc.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+  sc.onload = render;
+  sc.onerror = function(){
+    box.innerHTML = '<div class="qr-load">Could not load the code. Use the UPI ID below.</div>';
+  };
+  document.head.appendChild(sc);
 }
 
-function say2(t){
-  const box = document.getElementById('planNote');
-  if(!box) return;
-  box.textContent = t;
-  box.className = 'plan-note show';
-}
+/* Records the claim so it can be checked against the bank, rather
+   than relying on someone emailing a screenshot. Activation stays
+   manual — verifying a payment needs a server, not a browser. */
+async function claimPaid(){
+  if(!CHECKOUT) return;
+  var btn = document.getElementById('payDone');
+  var msg = document.getElementById('payMsg');
+  btn.disabled = true;
+  btn.textContent = 'Recording\u2026';
 
-function showPending(plan, cyc){
-  const box = document.getElementById('planNote');
-  if(!box) return;
-  box.innerHTML = '<b>Payment opened in a new tab.</b><br>' +
-    'Once ' + plan.name + ' \u00b7 ' + cyc.label + ' is paid from ' + ACCOUNT_PHONE +
-    ', your access opens up. If it has not within a few minutes, send us the payment reference.';
-  box.className = 'plan-note show';
+  try {
+    var { data:{ session } } = await db.auth.getSession();
+    if(!session) throw new Error('signed out');
+
+    var { error } = await db.from('payment_claims').insert({
+      user_id: session.user.id,
+      email: ACCOUNT_EMAIL,
+      plan: CHECKOUT.plan.key,
+      cycle: CHECKOUT.cyc.key,
+      amount: CHECKOUT.amount,
+      reference: CHECKOUT.ref
+    });
+    if(error) throw error;
+
+    msg.textContent = 'Noted. Once the transfer shows up against ' + CHECKOUT.ref +
+                      ', your access opens up — usually within a few hours.';
+    msg.className = 'msg show ok';
+    btn.textContent = 'Recorded';
+  } catch(e){
+    msg.textContent = 'Could not record it automatically. Send us the reference ' +
+                      CHECKOUT.ref + ' and we will open your access.';
+    msg.className = 'msg show err';
+    btn.disabled = false;
+    btn.textContent = 'I have paid';
+  }
 }
 
 function buildPricing(){
@@ -2518,7 +2635,7 @@ function paintLandingState(){
   const who = document.getElementById('nav-who');
   if(who){
     who.style.display = signedIn ? 'inline' : 'none';
-    who.textContent = ACCOUNT_PHONE || ACCOUNT_EMAIL;
+    who.textContent = ACCOUNT_EMAIL;
   }
 
   document.querySelectorAll('.cta').forEach(function(b){
@@ -2892,24 +3009,24 @@ var redrawHeroChart = function(){};
    Supabase Auth → Providers → Phone. Nothing here holds a secret.
    ============================================================ */
 let busy = false;
-let OTP_PHONE = '';
+let SENT_TO = '';
 
 /* 'out' | 'inactive' | 'active' */
 let AUTH_STATE = 'out';
 
 function openAuth(){
   document.getElementById('m-msg').className = 'msg';
-  backToPhone();
+  backToEmail();
   document.getElementById('authwrap').classList.add('open');
-  setTimeout(function(){ document.getElementById('m-phone').focus(); }, 60);
+  setTimeout(function(){ document.getElementById('m-email').focus(); }, 60);
 }
 function closeAuth(){ document.getElementById('authwrap').classList.remove('open'); }
 
-function backToPhone(){
-  document.getElementById('auth-phone').style.display = '';
-  document.getElementById('auth-otp').style.display = 'none';
+function backToEmail(){
+  document.getElementById('auth-email').style.display = '';
+  document.getElementById('auth-sent').style.display = 'none';
   document.getElementById('m-title').textContent = 'Sign in';
-  document.getElementById('m-sub').textContent = 'We will text you a code.';
+  document.getElementById('m-sub').textContent = 'We will email you a code.';
   document.getElementById('m-msg').className = 'msg';
 }
 
@@ -2927,57 +3044,47 @@ function setBusy(id, state, label, idle){
   b.textContent = state ? label : idle;
 }
 
-/* 10 digits, Indian mobile. Stored in E.164 as Supabase expects. */
-function normalisePhone(v){
-  const digits = String(v).replace(/\D/g, '').slice(-10);
-  return digits.length === 10 ? '+91' + digits : null;
+function validEmail(v){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v).trim());
 }
 
 async function sendOtp(isResend){
   if(busy) return;
-  const phone = normalisePhone(document.getElementById('m-phone').value);
-  if(!phone){ say('Enter a 10-digit mobile number.', 'err'); return; }
+  const email = String(document.getElementById('m-email').value).trim().toLowerCase();
+  if(!validEmail(email)){ say('Enter a valid email address.', 'err'); return; }
 
-  setBusy(isResend ? 'm-resend' : 'm-send', true, 'Sending\u2026', isResend ? 'Resend code' : 'Send OTP');
-  const { error } = await db.auth.signInWithOtp({ phone: phone });
-  setBusy(isResend ? 'm-resend' : 'm-send', false, '', isResend ? 'Resend code' : 'Send OTP');
+  const btn = isResend ? 'm-resend' : 'm-send';
+  const idle = isResend ? 'Resend code' : 'Send code';
+  setBusy(btn, true, 'Sending\u2026', idle);
+
+  /* shouldCreateUser lets a first-time visitor sign up with the same
+     step — no separate registration screen to get lost in. */
+  /* The link has to come back to this exact page, or the session
+     lands somewhere the app cannot read it. */
+  const { error } = await db.auth.signInWithOtp({
+    email: email,
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
+  });
+  setBusy(btn, false, '', idle);
 
   if(error){ say(error.message, 'err'); return; }
 
-  OTP_PHONE = phone;
-  document.getElementById('auth-phone').style.display = 'none';
-  document.getElementById('auth-otp').style.display = '';
-  document.getElementById('m-to').textContent = phone;
-  document.getElementById('m-title').textContent = 'Enter the code';
-  document.getElementById('m-sub').textContent = 'Valid for a few minutes.';
+  SENT_TO = email;
+  document.getElementById('auth-email').style.display = 'none';
+  document.getElementById('auth-sent').style.display = '';
+  document.getElementById('m-to').textContent = email;
+  document.getElementById('m-title').textContent = 'Check your email';
+  document.getElementById('m-sub').textContent = 'One click and you are in.';
   document.getElementById('m-msg').className = 'msg';
-  setTimeout(function(){ document.getElementById('m-otp').focus(); }, 60);
-}
-
-async function verifyOtp(){
-  if(busy) return;
-  const token = String(document.getElementById('m-otp').value).replace(/\D/g, '');
-  if(token.length < 4){ say('Enter the code you received.', 'err'); return; }
-
-  setBusy('m-verify', true, 'Checking\u2026', 'Verify & continue');
-  const { error } = await db.auth.verifyOtp({ phone: OTP_PHONE, token: token, type: 'sms' });
-  setBusy('m-verify', false, '', 'Verify & continue');
-
-  if(error){ say(error.message, 'err'); return; }
-
-  closeAuth();
-  await route();
-
-  /* Someone who came here by picking a plan goes straight to paying. */
-  const want = pendingPlan();
-  if(want) startCheckout(want);
 }
 
 document.addEventListener('keydown', function(e){
   if(e.key === 'Escape') closeAuth();
   if(e.key === 'Enter' && document.getElementById('authwrap').classList.contains('open') && !busy){
-    if(document.getElementById('auth-otp').style.display === 'none') sendOtp();
-    else verifyOtp();
+    sendOtp();
   }
 });
 
@@ -2985,7 +3092,6 @@ async function signOut(){
   await db.auth.signOut();
   AUTH_STATE = 'out';
   ACCOUNT_EMAIL = '';
-  ACCOUNT_PHONE = '';
   paintLandingState();
   rebuildTabs();
 }
@@ -2996,11 +3102,9 @@ async function route(){
   if(!session){
     AUTH_STATE = 'out';
     ACCOUNT_EMAIL = '';
-    ACCOUNT_PHONE = '';
     ACCOUNT_PLAN = '';
   } else {
     ACCOUNT_EMAIL = session.user.email || '';
-    ACCOUNT_PHONE = session.user.phone ? '+' + String(session.user.phone).replace(/^\+/, '') : '';
     const { data: profile } = await db
       .from('profiles')
       .select('subscription_status, plan, expires_at')
@@ -3031,8 +3135,26 @@ async function refreshStatus(){ await route(); }
   finally { document.getElementById('boot').style.display = 'none'; }
 })();
 
-db.auth.onAuthStateChange((event) => {
-  if(event === 'SIGNED_IN' || event === 'SIGNED_OUT') route();
+db.auth.onAuthStateChange(async (event) => {
+  if(event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+
+  await route();
+
+  if(event === 'SIGNED_IN'){
+    closeAuth();
+
+    /* The link drops the session into the URL fragment. Once the
+       client has read it, clear it — nobody needs a token sitting in
+       their address bar or history. */
+    if(window.location.hash.indexOf('access_token') !== -1){
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    /* Someone who picked a plan before signing in gets taken to
+       payment rather than dropped on the home page. */
+    const want = pendingPlan();
+    if(want) startCheckout(want);
+  }
 });
 </script>
 
