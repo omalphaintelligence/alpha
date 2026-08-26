@@ -332,6 +332,19 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 .field input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
 .field input::placeholder{color:var(--muted)}
+.field-phone{display:flex;align-items:center;gap:0}
+.field-phone .cc{
+  flex-shrink:0;padding:13px 12px 13px 15px;
+  background:var(--panel-2);border:1px solid var(--line);border-right:none;
+  border-radius:9px 0 0 9px;font-family:var(--mono);font-size:15px;color:var(--muted);
+}
+.field-phone input{border-radius:0 9px 9px 0;letter-spacing:.06em}
+#m-otp{text-align:center;font-family:var(--mono);font-size:22px;letter-spacing:.4em}
+.otp-to{font-size:13px;color:var(--muted);margin-bottom:14px}
+.otp-to b{color:var(--text);font-family:var(--mono)}
+.lnk{color:var(--brand);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.lnk-block{display:block;width:100%;text-align:center;margin-top:14px}
+.auth-fine{margin-top:18px;font-size:11.5px;color:var(--muted);opacity:.8;line-height:1.5;text-align:center}
 .swap{margin-top:20px;text-align:center;font-size:14px;color:var(--muted)}
 .swap button{color:var(--brand);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .msg{margin-top:14px;padding:11px 14px;border-radius:9px;font-size:13.5px;line-height:1.5;display:none}
@@ -479,7 +492,19 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .scr-gate-p{margin:8px auto 18px;max-width:46ch;font-size:14px;color:var(--muted);line-height:1.55}
 
 /* plans */
-.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+.plans{display:block}
+.plans-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+.bill-cycle{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-soft);border-radius:999px;margin-bottom:26px}
+.bill-cycle .vt-btn i{font-style:normal;font-size:10.5px;color:var(--green);margin-left:5px}
+.plan-total{margin:-12px 0 18px;font-size:12.5px;color:var(--muted)}
+.plan-note{
+  display:none;margin-top:22px;padding:16px 20px;
+  border:1px solid var(--line-soft);border-left:3px solid var(--brand);
+  border-radius:12px;background:color-mix(in srgb,var(--panel) 70%,transparent);
+  font-size:13.5px;color:var(--muted);line-height:1.6;
+}
+.plan-note.show{display:block}
+.plan-note b{color:var(--text)}
 .plan{
   position:relative;padding:30px 26px 26px;
   background:color-mix(in srgb,var(--panel) 74%,transparent);
@@ -570,7 +595,31 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .seg-lk{font-size:10px;opacity:.8}
 .scr-gate .lock-ico{font-size:24px;margin-bottom:10px}
 
-@media(max-width:900px){ .plans{grid-template-columns:1fr} }
+@media(max-width:900px){ .plans-row{grid-template-columns:1fr} }
+
+/* ready to move: slot counter + queue */
+.slot-strip{
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  padding:20px 24px;margin-bottom:22px;
+  border:1px solid var(--line-soft);border-left:3px solid var(--r99);
+  border-radius:14px;
+  background:color-mix(in srgb,var(--panel) 70%,transparent);
+}
+.slot-strip--open{border-left-color:var(--green)}
+.slot-k{
+  font-family:var(--mono);font-size:34px;font-weight:700;
+  letter-spacing:-.03em;line-height:1;flex-shrink:0;
+}
+.slot-k span{font-size:18px;color:var(--muted);font-weight:500}
+.slot-t{font-size:13.5px;color:var(--muted);line-height:1.6}
+.slot-t b{font-family:var(--disp);font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.02em}
+
+.rdy-line{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.rdy-q{
+  font-family:var(--mono);font-size:26px;font-weight:700;
+  letter-spacing:-.03em;color:var(--hue);
+}
+.rdy-p{font-size:12.5px;color:var(--muted)}
 
 /* model portfolio: gated tables */
 .mp-sec{margin-top:26px}
@@ -1289,8 +1338,8 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
       <div class="nav-actions">
         <button class="theme-tog" id="theme-tog" onclick="toggleTheme()" title="Switch theme"></button>
         <span id="nav-guest" style="display:flex;gap:10px">
-          <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
-          <button class="btn btn-gold" onclick="openAuth('signup')">Get access</button>
+          <button class="btn btn-ghost" onclick="openAuth()">Sign in</button>
+          <button class="btn btn-gold" onclick="goPricing()">See plans</button>
         </span>
         <span id="nav-who" class="nav-who" style="display:none"></span>
         <button id="nav-member" class="btn btn-ghost" style="display:none">Sign out</button>
@@ -1306,7 +1355,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
           <h1>Know which stocks are <em>actually</em> moving.</h1>
           <p class="lede">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
           <div class="hero-cta">
-            <button class="btn btn-gold cta" id="cta-hero" data-guest="Create your account" data-guest-mode="signup" onclick="ctaClick(this)">Create your account</button>
+            <button class="btn btn-gold cta" id="cta-hero" data-guest="See plans" onclick="ctaClick(this)">See plans</button>
             <a class="btn btn-ghost" href="#how">See how it works</a>
           </div>
           <p class="note">Free to create an account. Access to live signals requires an active subscription.</p>
@@ -1412,7 +1461,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
           <div class="lock-ico">&#128274;</div>
           <h4>Locked</h4>
           <p>Create an account and activate your subscription to see the full ranked list.</p>
-          <button class="btn btn-gold cta" id="cta-veil" data-guest="Get access" data-guest-mode="signup" onclick="ctaClick(this)">Get access</button>
+          <button class="btn btn-gold cta" id="cta-veil" data-guest="See plans" onclick="ctaClick(this)">See plans</button>
         </div>
       </div>
     </div>
@@ -1423,7 +1472,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
       <div class="band">
         <h2>Stop guessing which chart to open first.</h2>
         <p>Sign up in under a minute. You'll get the ranked list the moment your subscription is active.</p>
-        <button class="btn btn-gold cta" id="cta-band" data-guest="Create your account" data-guest-mode="signup" onclick="ctaClick(this)">Create your account</button>
+        <button class="btn btn-gold cta" id="cta-band" data-guest="See plans" onclick="ctaClick(this)">See plans</button>
       </div>
     </div>
   </div>
@@ -1475,6 +1524,20 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
     </div>
   </div>
 
+  <!-- ============ READY TO MOVE ============ -->
+  <div class="ltab-pane" id="ltab-ready">
+    <div class="sec" style="padding-top:40px">
+      <div class="wrap-x">
+        <div class="sec-head">
+          <div class="sec-tag">Ready to move</div>
+          <h2>Next in line for the portfolio.</h2>
+          <p>These clear every condition the Model Portfolio requires. The book runs a fixed number of positions — when one closes, the top of this list is what replaces it.</p>
+        </div>
+        <div id="readyBody"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ FUNDAMENTAL CALLS ============ -->
   <div class="ltab-pane" id="ltab-calls">
     <div class="sec" style="padding-top:40px">
@@ -1494,7 +1557,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
     <div class="wrap-x">
       <div class="foot-top">
         <div class="brand">Alpha<span>Intel</span></div>
-        <button class="btn btn-ghost cta" id="cta-footer" data-guest="Sign in" data-guest-mode="signin" onclick="ctaClick(this)">Sign in</button>
+        <button class="btn btn-ghost cta" id="cta-footer" data-guest="See plans" onclick="ctaClick(this)">Sign in</button>
       </div>
       <p class="disc"><strong style="color:var(--text);opacity:.75">Important:</strong> Alpha Intel is a research and screening tool. It is not investment advice, and nothing here is a recommendation to buy or sell any security. We are not registered with SEBI as an Investment Adviser or Research Analyst. Rankings are generated from historical price and volume data; past behaviour does not predict future returns. Markets carry risk of loss. Do your own research and consult a registered adviser before acting on anything you see here.</p>
     </div>
@@ -1572,14 +1635,30 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
       </div>
       <button class="x" onclick="closeAuth()" aria-label="Close">&times;</button>
     </div>
-    <div class="field"><input type="email" id="m-email" placeholder="Email address" autocomplete="email"></div>
-    <div class="field"><input type="password" id="m-pass" placeholder="Password" autocomplete="current-password"></div>
-    <button class="btn btn-gold btn-block" id="m-submit" onclick="submitAuth()">Sign in</button>
-    <div class="msg" id="m-msg"></div>
-    <div class="swap">
-      <span id="m-swap-text">New here?</span>
-      <button onclick="toggleMode()" id="m-swap-btn">Create an account</button>
+    <!-- phone step -->
+    <div id="auth-phone">
+      <div class="field field-phone">
+        <span class="cc">+91</span>
+        <input type="tel" id="m-phone" placeholder="Mobile number" inputmode="numeric"
+               autocomplete="tel" maxlength="10">
+      </div>
+      <button class="btn btn-gold btn-block" id="m-send" onclick="sendOtp()">Send OTP</button>
     </div>
+
+    <!-- otp step -->
+    <div id="auth-otp" style="display:none">
+      <p class="otp-to">Code sent to <b id="m-to"></b>
+        <button class="lnk" onclick="backToPhone()">change</button></p>
+      <div class="field">
+        <input type="text" id="m-otp" placeholder="6-digit code" inputmode="numeric"
+               autocomplete="one-time-code" maxlength="6">
+      </div>
+      <button class="btn btn-gold btn-block" id="m-verify" onclick="verifyOtp()">Verify &amp; continue</button>
+      <button class="lnk lnk-block" id="m-resend" onclick="sendOtp(true)">Resend code</button>
+    </div>
+
+    <div class="msg" id="m-msg"></div>
+    <p class="auth-fine">By continuing you agree that Alpha Intel is a research tool, not investment advice.</p>
   </div>
 </div>
 
@@ -1768,6 +1847,7 @@ var ACCOUNT_PLAN = '';
 
 var PLANS = [
   { key:'core',  name:'Screener Core',   price:499,
+    pay:{ m1:'', m3:'', m12:'' },   /* <- Razorpay links */
     line:'Large and mid cap lists, ranked daily.',
     segs:['LC','MC','LM'], model:false, calls:false,
     has:['Large cap and mid cap segments','Full ranked table, no cap on rows',
@@ -1775,6 +1855,7 @@ var PLANS = [
     hasnt:['Small cap, F&O and ETF segments','Model Portfolio','Fundamental calls'] },
 
   { key:'model', name:'Model Portfolio', price:699,
+    pay:{ m1:'', m3:'', m12:'' },
     line:'The book we actually run, position by position.',
     segs:[], model:true, calls:false,
     has:['Every open position with entry, stop and target','The full trade journal',
@@ -1782,12 +1863,37 @@ var PLANS = [
     hasnt:['Screener segments','Fundamental calls'] },
 
   { key:'full',  name:'Complete',        price:999,
+    pay:{ m1:'', m3:'', m12:'' },
     line:'Everything, with nothing held back.',
     segs:'all', model:true, calls:true,
     has:['All eight screener segments','Model Portfolio in full',
          'Fundamental calls across short, medium and long term','Filters, export and US market list'],
     hasnt:[] }
 ];
+
+/* Razorpay Payment Links.
+   Create one link per plan per duration in the Razorpay dashboard
+   (Payment Links → New), then paste the URLs into the `pay` blocks
+   above. They are public URLs — nothing secret lives here.
+
+   Activation is manual for now: a payment notification arrives, you
+   set profiles.plan and subscription_status. Wiring a webhook to do
+   that automatically needs a server, which this static page is not. */
+var BILLING = [
+  { key:'m1',  label:'1 month',   months:1,  mult:1,    note:'' },
+  { key:'m3',  label:'3 months',  months:3,  mult:2.7,  note:'save 10%' },
+  { key:'m12', label:'12 months', months:12, mult:9.6,  note:'save 20%' }
+];
+var BILL_CYCLE = 'm3';
+
+function setBillCycle(k){
+  BILL_CYCLE = k;
+  buildPricing();
+}
+
+function cyclePrice(plan, cyc){
+  return Math.round(plan.price * cyc.mult);
+}
 
 function planDef(key){
   return PLANS.filter(function(p){ return p.key === key; })[0] || null;
@@ -1815,9 +1921,11 @@ function canSeeCalls(){
 
 var ZONE_TABS = {
   free:   [['overview','Overview'], ['screener','Screeners'],
-           ['model','Model Portfolio'], ['pricing','Plans']],
+           ['model','Model Portfolio'], ['ready','Ready to Move'],
+           ['pricing','Plans']],
   member: [['screener','Screeners'], ['model','Model Portfolio'],
-           ['calls','Fundamental Calls'], ['pricing','Your plan']]
+           ['ready','Ready to Move'], ['calls','Fundamental Calls'],
+           ['pricing','Your plan']]
 };
 
 function setZone(z){
@@ -1869,6 +1977,7 @@ function setLandingTab(tab, btn){
   if(tab === 'model') buildPublicModel();
   if(tab === 'pricing') buildPricing();
   if(tab === 'calls') buildCallsTab();
+  if(tab === 'ready') buildReadyTab();
 }
 
 /* Cards read well for a handful of items; a table wins when you are
@@ -1884,6 +1993,7 @@ function setViewMode(m){
   });
   if(LANDING_TAB === 'model') buildPublicModel(true);
   if(LANDING_TAB === 'calls') paintCalls();
+  if(LANDING_TAB === 'ready') paintReady();
 }
 
 function viewToggle(){
@@ -1895,33 +2005,205 @@ function viewToggle(){
   '</div>';
 }
 
-/* --- Plans --- */
+/* --- Plans + checkout --- */
+
+/* A plan chosen before signing in is remembered so the visitor lands
+   on payment straight after verifying, instead of hunting for it. */
+function pendingPlan(){
+  try { return sessionStorage.getItem('ai_want') || ''; } catch(e){ return ''; }
+}
+function setPendingPlan(k){
+  try { k ? sessionStorage.setItem('ai_want', k) : sessionStorage.removeItem('ai_want'); } catch(e){}
+}
+
+function choosePlan(key){
+  if(AUTH_STATE === 'out'){
+    setPendingPlan(key);
+    openAuth();
+    return;
+  }
+  startCheckout(key);
+}
+
+function startCheckout(key){
+  setPendingPlan('');
+  const plan = planDef(key);
+  const cyc  = BILLING.filter(function(c){ return c.key === BILL_CYCLE; })[0] || BILLING[0];
+  if(!plan) return;
+
+  const link = (plan.pay || {})[cyc.key];
+  if(!link){
+    say2('Payment link for ' + plan.name + ' (' + cyc.label + ') is not set up yet. ' +
+         'Write to us and we will send one.');
+    return;
+  }
+
+  /* Passing the phone through pre-fills Razorpay and, more usefully,
+     is how a payment gets matched back to an account. */
+  const url = link + (link.indexOf('?') === -1 ? '?' : '&') +
+              'prefill[contact]=' + encodeURIComponent(ACCOUNT_PHONE.replace('+', ''));
+
+  window.open(url, '_blank', 'noopener');
+  showPending(plan, cyc);
+}
+
+function say2(t){
+  const box = document.getElementById('planNote');
+  if(!box) return;
+  box.textContent = t;
+  box.className = 'plan-note show';
+}
+
+function showPending(plan, cyc){
+  const box = document.getElementById('planNote');
+  if(!box) return;
+  box.innerHTML = '<b>Payment opened in a new tab.</b><br>' +
+    'Once ' + plan.name + ' \u00b7 ' + cyc.label + ' is paid from ' + ACCOUNT_PHONE +
+    ', your access opens up. If it has not within a few minutes, send us the payment reference.';
+  box.className = 'plan-note show';
+}
+
 function buildPricing(){
-  var grid = document.getElementById('plansGrid');
+  const grid = document.getElementById('plansGrid');
   if(!grid) return;
 
-  grid.innerHTML = PLANS.map(function(p){
-    var mine = (AUTH_STATE === 'active' && ACCOUNT_PLAN === p.key);
-    var rows = p.has.map(function(h){
-      return '<li class="yes">' + h + '</li>';
-    }).concat(p.hasnt.map(function(h){
-      return '<li class="no">' + h + '</li>';
-    })).join('');
+  const cyc = BILLING.filter(function(c){ return c.key === BILL_CYCLE; })[0] || BILLING[0];
+
+  const cycles = '<div class="bill-cycle">' + BILLING.map(function(c){
+    return '<button class="vt-btn' + (c.key === BILL_CYCLE ? ' on' : '') +
+      '" onclick="setBillCycle(\'' + c.key + '\')">' + c.label +
+      (c.note ? ' <i>' + c.note + '</i>' : '') + '</button>';
+  }).join('') + '</div>';
+
+  const cards = PLANS.map(function(p){
+    const mine = (AUTH_STATE === 'active' && ACCOUNT_PLAN === p.key);
+    const rows = p.has.map(function(h){ return '<li class="yes">' + h + '</li>'; })
+      .concat(p.hasnt.map(function(h){ return '<li class="no">' + h + '</li>'; })).join('');
+
+    const total = cyclePrice(p, cyc);
+    const perMo = Math.round(total / cyc.months);
 
     return '<div class="plan' + (p.key === 'full' ? ' plan--best' : '') + (mine ? ' plan--mine' : '') + '">' +
       (p.key === 'full' ? '<div class="plan-flag">Most complete</div>' : '') +
       (mine ? '<div class="plan-flag plan-flag--mine">Your plan</div>' : '') +
       '<div class="plan-name">' + p.name + '</div>' +
       '<div class="plan-line">' + p.line + '</div>' +
-      '<div class="plan-price">\u20b9' + p.price.toLocaleString('en-IN') +
-        '<span>/month</span></div>' +
+      '<div class="plan-price">\u20b9' + perMo.toLocaleString('en-IN') + '<span>/month</span></div>' +
+      '<div class="plan-total">\u20b9' + total.toLocaleString('en-IN') + ' billed for ' + cyc.label + '</div>' +
       '<ul class="plan-ul">' + rows + '</ul>' +
       (mine
         ? '<button class="btn btn-ghost" disabled>Active</button>'
-        : '<button class="btn btn-gold cta" data-guest="Choose ' + p.name +
-          '" data-guest-mode="signup" onclick="ctaClick(this)">Choose ' + p.name + '</button>') +
+        : '<button class="btn btn-gold" onclick="choosePlan(\'' + p.key + '\')">' +
+          (AUTH_STATE === 'out' ? 'Get ' + p.name : 'Pay \u20b9' + total.toLocaleString('en-IN')) +
+          '</button>') +
     '</div>';
   }).join('');
+
+  grid.innerHTML = cycles + '<div class="plans-row">' + cards + '</div>' +
+    '<div class="plan-note" id="planNote"></div>';
+
+  const want = pendingPlan();
+  if(want && AUTH_STATE !== 'out') startCheckout(want);
+}
+
+/* --- Ready to move ---
+   The queue the Model Portfolio draws from. READY means a slot is
+   open today; QUEUED means the name qualifies but the book is full.
+   Same access as the portfolio itself. --- */
+function buildReadyTab(){
+  var body = document.getElementById('readyBody');
+  if(!body) return;
+
+  if(!canSeeModel()){
+    body.innerHTML = lockPanel(
+      'The waiting list',
+      'Every name that already clears the entry bar, ranked, with the levels each one would be taken at.',
+      'model');
+    return;
+  }
+
+  body.innerHTML = '<div class="scr-load">Loading the queue\u2026</div>';
+  ensureFeed()
+    .then(paintReady)
+    .catch(function(){ body.innerHTML = '<div class="scr-load">Unavailable right now.</div>'; });
+}
+
+function paintReady(){
+  var body = document.getElementById('readyBody');
+  if(!body) return;
+
+  var w = (SCR_DATA && SCR_DATA.waitlist) || {};
+  var rows = w.rows || [];
+
+  if(!rows.length){
+    body.innerHTML = '<div class="scr-load">Nothing clears the entry bar today.</div>';
+    return;
+  }
+
+  var free = +w.freeSlots || 0;
+  var held = +w.held || 0;
+  var cap  = +w.capacity || 0;
+
+  var strip =
+    '<div class="slot-strip' + (free ? ' slot-strip--open' : '') + '">' +
+      '<div class="slot-k">' + held + '<span>/' + cap + '</span></div>' +
+      '<div class="slot-t"><b>' +
+        (free ? free + ' slot' + (free === 1 ? '' : 's') + ' open'
+              : 'The book is full') + '</b><br>' +
+        (free
+          ? 'The top ' + Math.min(free, rows.length) + ' below can be taken today.'
+          : 'Every name below qualifies and is waiting for a position to close.') +
+      '</div>' +
+    '</div>';
+
+  var cards = rows.map(function(r){
+    var ready = String(r.state).toUpperCase() === 'READY';
+    var hue = ready ? 'var(--green)' : 'var(--r99)';
+    return '<div class="call" style="--hue:' + hue + '">' +
+      '<div class="call-top">' +
+        '<span class="call-sym">' + r.symbol + '</span>' +
+        '<span class="call-hz">' + r.state + '</span>' +
+      '</div>' +
+      '<div class="rdy-line">' +
+        '<span class="rdy-q">Quality ' + r.quality + '</span>' +
+        '<span class="rdy-p">' + pfMoney(r.price) + ' now \u00b7 ' +
+          fmtPct(r.distFromPivot) + ' from pivot</span>' +
+      '</div>' +
+      '<div class="call-nums">' +
+        '<div><span>Entry</span><b>' + pfMoney(r.entry) + '</b></div>' +
+        '<div><span>Target</span><b>' + pfMoney(r.target) + '</b></div>' +
+        '<div><span>Stop</span><b>' + pfMoney(r.stopLoss) + '</b></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var tableRows = rows.map(function(r, i){
+    var ready = String(r.state).toUpperCase() === 'READY';
+    return '<tr>' +
+      '<td class="num">' + (i + 1) + '</td>' +
+      '<td class="sym">' + r.symbol + '</td>' +
+      '<td><span class="tag ' + (ready ? 'tag-sb' : 'tag-b') + '">' + r.state + '</span></td>' +
+      '<td class="num">' + r.quality + '</td>' +
+      '<td class="price">' + pfMoney(r.price) + '</td>' +
+      '<td class="num">' + fmtPct(r.distFromPivot) + '</td>' +
+      '<td class="price">' + pfMoney(r.entry) + '</td>' +
+      '<td class="price">' + pfMoney(r.target) + '</td>' +
+      '<td class="price">' + pfMoney(r.stopLoss) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  body.innerHTML = strip + viewToggle() +
+    (VIEW_MODE === 'table'
+      ? '<div class="tw" style="margin-top:14px"><table><thead><tr>' +
+        '<th>#</th><th>Symbol</th><th>State</th><th>Quality</th><th>Price</th>' +
+        '<th>From pivot</th><th>Entry</th><th>Target</th><th>Stop</th>' +
+        '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
+      : '<div class="call-grid" style="margin-top:14px">' + cards + '</div>');
+}
+
+function fmtPct(v){
+  var n = parseFloat(v);
+  return isFinite(n) ? n.toFixed(1) + '%' : '\u2014';
 }
 
 /* --- Fundamental calls ---
@@ -2038,6 +2320,72 @@ function lockPanel(title, line, needPlan){
     '<button class="btn btn-gold" onclick="goPricing()">' +
       (AUTH_STATE === 'active' ? 'Upgrade to ' + label : 'See plans') + '</button>' +
   '</div>';
+}
+
+/* One layout throughout; kept so older call sites still work. */
+function show(){ }
+
+/* Re-renders whichever tab is open, at the current access level. */
+function rebuildTabs(){
+  scrLoaded = false;
+  SCR_DATA = null;
+  const pub = document.getElementById('pub-model-body');
+  if(pub) pub.innerHTML = '';
+  paintZoneTabs();
+  if(LANDING_TAB === 'screener') buildScreenerTab();
+  if(LANDING_TAB === 'model') buildPublicModel(true);
+  if(LANDING_TAB === 'pricing') buildPricing();
+  if(LANDING_TAB === 'calls') buildCallsTab();
+  if(LANDING_TAB === 'ready') buildReadyTab();
+}
+
+function goHome(){ setLandingTab('overview', document.querySelector('#ltabs .ltab-btn')); }
+
+function goApp(){
+  if(AUTH_STATE === 'out'){ openAuth(); return; }
+  setLandingTab('screener', document.querySelectorAll('#ltabs .ltab-btn')[0]);
+}
+
+/* Every hero/band CTA leads to the plans — that is where the
+   decision actually gets made. */
+function ctaClick(){ goPricing(); }
+
+/* Header and CTA labels follow the access level. */
+function paintLandingState(){
+  const signedIn = AUTH_STATE !== 'out';
+
+  const guest  = document.getElementById('nav-guest');
+  const member = document.getElementById('nav-member');
+  if(guest)  guest.style.display = signedIn ? 'none' : 'flex';
+  if(member){
+    member.style.display = signedIn ? 'inline-flex' : 'none';
+    member.textContent = 'Sign out';
+    member.onclick = signOut;
+  }
+
+  const who = document.getElementById('nav-who');
+  if(who){
+    who.style.display = signedIn ? 'inline' : 'none';
+    who.textContent = ACCOUNT_PHONE || ACCOUNT_EMAIL;
+  }
+
+  document.querySelectorAll('.cta').forEach(function(b){
+    b.textContent = (AUTH_STATE === 'active')
+      ? 'Your plan'
+      : (b.getAttribute('data-guest') || 'See plans');
+  });
+
+  const veil  = document.querySelector('#view-landing .veil h4');
+  const veilP = document.querySelector('#view-landing .veil p');
+  if(veil && veilP){
+    if(AUTH_STATE === 'active'){
+      veil.textContent = 'You have full access';
+      veilP.textContent = 'Open the Screeners tab to see the live ranked list.';
+    } else {
+      veil.textContent = 'Locked';
+      veilP.textContent = 'A subscription opens the full ranked list.';
+    }
+  }
 }
 
 function goPricing(){
@@ -2380,162 +2728,106 @@ var redrawHeroChart = function(){};
   setInterval(load, 300000);
 })();
 
-let mode = 'signin';
+/* ============================================================
+   AUTH — mobile number + OTP
+   Supabase sends the code; the SMS provider is configured in
+   Supabase Auth → Providers → Phone. Nothing here holds a secret.
+   ============================================================ */
 let busy = false;
+let OTP_PHONE = '';
 
-/* 'out' | 'inactive' | 'active' — drives what the landing page's
-   buttons say and do, so a signed-in reader can browse the marketing
-   pages without being offered "Sign in" again. */
+/* 'out' | 'inactive' | 'active' */
 let AUTH_STATE = 'out';
 
-/* Kept so older call sites still work; there is only one layout now. */
-function show(){ }
-
-var ACCOUNT_EMAIL = '';
-
-/* Re-renders whichever tab is open, at the current access level. */
-function rebuildTabs(){
-  scrLoaded = false;
-  const pub = document.getElementById('pub-model-body');
-  if(pub) pub.innerHTML = '';
-  paintZoneTabs();
-  if(LANDING_TAB === 'screener') buildScreenerTab();
-  if(LANDING_TAB === 'model') buildPublicModel();
-  if(LANDING_TAB === 'pricing') buildPricing();
-  if(LANDING_TAB === 'calls') buildCallsTab();
-}
-
-/* Landing stays reachable at all times. These move between it and
-   wherever the user belongs, without re-querying Supabase. */
-function goHome(){ setLandingTab('overview', document.querySelector('#ltabs .ltab-btn')); }
-
-function goApp(){
-  if(AUTH_STATE === 'out'){ openAuth('signin'); return; }
-  const btn = document.querySelectorAll('#ltabs .ltab-btn')[1];
-  setLandingTab('screener', btn);
-}
-
-function ctaClick(btn){
-  if(AUTH_STATE === 'out'){
-    openAuth(btn.getAttribute('data-guest-mode') || 'signup');
-  } else {
-    goApp();
-  }
-}
-
-function paintLandingState(){
-  const signedIn = AUTH_STATE !== 'out';
-
-  const guest  = document.getElementById('nav-guest');
-  const member = document.getElementById('nav-member');
-  if(guest)  guest.style.display  = signedIn ? 'none' : 'flex';
-  if(member){
-    member.style.display = signedIn ? 'inline-flex' : 'none';
-    member.textContent = 'Sign out';
-    member.onclick = signOut;
-  }
-  const who = document.getElementById('nav-who');
-  if(who){
-    who.style.display = signedIn ? 'inline' : 'none';
-    who.textContent = ACCOUNT_EMAIL;
-  }
-
-  document.querySelectorAll('.cta').forEach(b => {
-    if(!signedIn){
-      b.textContent = b.getAttribute('data-guest') || b.textContent;
-    } else {
-      b.textContent = AUTH_STATE === 'active' ? 'Open dashboard' : 'Check subscription';
-    }
-  });
-
-  /* An active subscriber shouldn't be told their own product is locked. */
-  const veil = document.querySelector('#view-landing .veil h4');
-  const veilP = document.querySelector('#view-landing .veil p');
-  if(veil && veilP){
-    if(AUTH_STATE === 'active'){
-      veil.textContent = 'You have full access';
-      veilP.textContent = 'Open the dashboard to see the live ranked list.';
-    } else if(AUTH_STATE === 'inactive'){
-      veil.textContent = 'Locked';
-      veilP.textContent = 'Your account is ready — activate your subscription to unlock the full list.';
-    } else {
-      veil.textContent = 'Locked';
-      veilP.textContent = 'Create an account and activate your subscription to see the full ranked list.';
-    }
-  }
-}
-
-function openAuth(m){
-  mode = m || 'signin';
-  paintMode();
+function openAuth(){
   document.getElementById('m-msg').className = 'msg';
+  backToPhone();
   document.getElementById('authwrap').classList.add('open');
-  setTimeout(() => document.getElementById('m-email').focus(), 60);
+  setTimeout(function(){ document.getElementById('m-phone').focus(); }, 60);
 }
 function closeAuth(){ document.getElementById('authwrap').classList.remove('open'); }
-function toggleMode(){
-  mode = (mode === 'signin') ? 'signup' : 'signin';
+
+function backToPhone(){
+  document.getElementById('auth-phone').style.display = '';
+  document.getElementById('auth-otp').style.display = 'none';
+  document.getElementById('m-title').textContent = 'Sign in';
+  document.getElementById('m-sub').textContent = 'We will text you a code.';
   document.getElementById('m-msg').className = 'msg';
-  paintMode();
 }
-function paintMode(){
-  const signin = mode === 'signin';
-  document.getElementById('m-title').textContent    = signin ? 'Sign in' : 'Create your account';
-  document.getElementById('m-sub').textContent      = signin ? 'Welcome back.' : 'Takes about a minute.';
-  document.getElementById('m-submit').textContent   = signin ? 'Sign in' : 'Create account';
-  document.getElementById('m-swap-text').textContent= signin ? 'New here?' : 'Already have an account?';
-  document.getElementById('m-swap-btn').textContent = signin ? 'Create an account' : 'Sign in';
-  document.getElementById('m-pass').setAttribute('autocomplete', signin ? 'current-password' : 'new-password');
-}
+
 function say(text, kind){
   const el = document.getElementById('m-msg');
   el.textContent = text;
   el.className = 'msg show ' + kind;
 }
-function setBusy(state, label){
+
+function setBusy(id, state, label, idle){
   busy = state;
-  const b = document.getElementById('m-submit');
+  const b = document.getElementById(id);
+  if(!b) return;
   b.disabled = state;
-  b.textContent = state ? label : (mode === 'signin' ? 'Sign in' : 'Create account');
+  b.textContent = state ? label : idle;
 }
 
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape') closeAuth();
-  if(e.key === 'Enter' && document.getElementById('authwrap').classList.contains('open') && !busy) submitAuth();
-});
+/* 10 digits, Indian mobile. Stored in E.164 as Supabase expects. */
+function normalisePhone(v){
+  const digits = String(v).replace(/\D/g, '').slice(-10);
+  return digits.length === 10 ? '+91' + digits : null;
+}
 
-async function submitAuth(){
+async function sendOtp(isResend){
   if(busy) return;
-  const email = document.getElementById('m-email').value.trim();
-  const pass  = document.getElementById('m-pass').value;
+  const phone = normalisePhone(document.getElementById('m-phone').value);
+  if(!phone){ say('Enter a 10-digit mobile number.', 'err'); return; }
 
-  if(!email || !pass){ say('Enter your email and password to continue.','err'); return; }
-  if(mode === 'signup' && pass.length < 6){ say('Password needs at least 6 characters.','err'); return; }
+  setBusy(isResend ? 'm-resend' : 'm-send', true, 'Sending\u2026', isResend ? 'Resend code' : 'Send OTP');
+  const { error } = await db.auth.signInWithOtp({ phone: phone });
+  setBusy(isResend ? 'm-resend' : 'm-send', false, '', isResend ? 'Resend code' : 'Send OTP');
 
-  if(mode === 'signup'){
-    setBusy(true,'Creating\u2026');
-    const { error } = await db.auth.signUp({
-      email, password: pass,
-      options: { emailRedirectTo: window.location.origin + window.location.pathname }
-    });
-    setBusy(false);
-    if(error){ say(error.message,'err'); return; }
-    say('Account created. Check your inbox for the confirmation link, then sign in.','ok');
-    mode = 'signin'; paintMode();
-  } else {
-    setBusy(true,'Signing in\u2026');
-    const { error } = await db.auth.signInWithPassword({ email, password: pass });
-    setBusy(false);
-    if(error){ say(error.message,'err'); return; }
-    closeAuth();
-    await route();
-  }
+  if(error){ say(error.message, 'err'); return; }
+
+  OTP_PHONE = phone;
+  document.getElementById('auth-phone').style.display = 'none';
+  document.getElementById('auth-otp').style.display = '';
+  document.getElementById('m-to').textContent = phone;
+  document.getElementById('m-title').textContent = 'Enter the code';
+  document.getElementById('m-sub').textContent = 'Valid for a few minutes.';
+  document.getElementById('m-msg').className = 'msg';
+  setTimeout(function(){ document.getElementById('m-otp').focus(); }, 60);
 }
+
+async function verifyOtp(){
+  if(busy) return;
+  const token = String(document.getElementById('m-otp').value).replace(/\D/g, '');
+  if(token.length < 4){ say('Enter the code you received.', 'err'); return; }
+
+  setBusy('m-verify', true, 'Checking\u2026', 'Verify & continue');
+  const { error } = await db.auth.verifyOtp({ phone: OTP_PHONE, token: token, type: 'sms' });
+  setBusy('m-verify', false, '', 'Verify & continue');
+
+  if(error){ say(error.message, 'err'); return; }
+
+  closeAuth();
+  await route();
+
+  /* Someone who came here by picking a plan goes straight to paying. */
+  const want = pendingPlan();
+  if(want) startCheckout(want);
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeAuth();
+  if(e.key === 'Enter' && document.getElementById('authwrap').classList.contains('open') && !busy){
+    if(document.getElementById('auth-otp').style.display === 'none') sendOtp();
+    else verifyOtp();
+  }
+});
 
 async function signOut(){
   await db.auth.signOut();
   AUTH_STATE = 'out';
   ACCOUNT_EMAIL = '';
+  ACCOUNT_PHONE = '';
   paintLandingState();
   rebuildTabs();
 }
@@ -2546,9 +2838,11 @@ async function route(){
   if(!session){
     AUTH_STATE = 'out';
     ACCOUNT_EMAIL = '';
+    ACCOUNT_PHONE = '';
     ACCOUNT_PLAN = '';
   } else {
-    ACCOUNT_EMAIL = session.user.email;
+    ACCOUNT_EMAIL = session.user.email || '';
+    ACCOUNT_PHONE = session.user.phone ? '+' + String(session.user.phone).replace(/^\+/, '') : '';
     const { data: profile } = await db
       .from('profiles')
       .select('subscription_status, plan, expires_at')
