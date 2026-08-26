@@ -304,6 +304,39 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 
 /* auth modal */
+.chartwrap{
+  position:fixed;inset:0;z-index:600;
+  background:color-mix(in srgb,var(--ink) 82%,transparent);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.chartwrap.open{display:flex}
+.chart-sheet{
+  width:100%;max-width:1060px;height:min(78vh,720px);
+  display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:18px;overflow:hidden;
+  animation:rise .22s cubic-bezier(.2,.8,.3,1);
+}
+.chart-hd{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:18px 22px;border-bottom:1px solid var(--line-soft);flex-shrink:0;
+}
+.chart-sym{font-family:var(--disp);font-size:22px;font-weight:800;letter-spacing:-.03em}
+.chart-sub{margin-top:3px;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+.chart-acts{display:flex;align-items:center;gap:14px}
+.chart-out{
+  font-size:12.5px;font-weight:600;color:var(--brand);
+  text-decoration:none;white-space:nowrap;
+}
+.chart-out:hover{text-decoration:underline;text-underline-offset:3px}
+.chart-body{flex:1;min-height:0;position:relative}
+.chart-body iframe{width:100%;height:100%;border:none;display:block}
+@media(max-width:700px){
+  .chartwrap{padding:0}
+  .chart-sheet{height:100vh;max-width:none;border-radius:0;border:none}
+  .chart-out{display:none}
+}
+
 .authwrap{
   position:fixed;inset:0;z-index:500;
   background:color-mix(in srgb,var(--ink) 78%,transparent);backdrop-filter:blur(6px);
@@ -469,7 +502,18 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 }
 .scr-table .tbl th{position:sticky;top:0;z-index:2}
 .scr-table .tbl td{padding:12px 20px}
-.scr-tv{color:var(--brand);text-decoration:none;font-weight:700}
+.chart-btn{
+  color:var(--brand);font-weight:700;font-size:15px;
+  padding:2px 6px;border-radius:6px;
+}
+.chart-btn:hover{background:color-mix(in srgb,var(--brand) 14%,transparent)}
+/* A symbol is a chart you have not opened yet. */
+.as-link{
+  background:none;border:none;padding:0;font:inherit;color:inherit;
+  cursor:pointer;text-align:left;
+  border-bottom:1px dashed color-mix(in srgb,var(--muted) 50%,transparent);
+}
+.as-link:hover{color:var(--brand);border-bottom-color:var(--brand)}
 .row-locked .tkr,.row-locked td:nth-child(4){filter:blur(4px);user-select:none}
 .scr-foot{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -1625,6 +1669,23 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   </div>
 </div>
 
+<!-- ==================== CHART ==================== -->
+<div class="chartwrap" id="chartwrap" onclick="if(event.target===this)closeChart()">
+  <div class="chart-sheet">
+    <div class="chart-hd">
+      <div>
+        <div class="chart-sym" id="chartSym"></div>
+        <div class="chart-sub" id="chartSub"></div>
+      </div>
+      <div class="chart-acts">
+        <a class="chart-out" id="chartOut" target="_blank" rel="noopener">Open in TradingView &#8599;</a>
+        <button class="x" onclick="closeChart()" aria-label="Close">&times;</button>
+      </div>
+    </div>
+    <div class="chart-body" id="chartBody"></div>
+  </div>
+</div>
+
 <!-- ==================== AUTH MODAL ==================== -->
 <div class="authwrap" id="authwrap" onclick="if(event.target===this)closeAuth()">
   <div class="sheet">
@@ -2106,6 +2167,45 @@ function buildPricing(){
   if(want && AUTH_STATE !== 'out') startCheckout(want);
 }
 
+/* --- Chart ---
+   TradingView's free widget, opened in place. Sending people off to
+   tradingview.com to check a name is a good way to lose them for the
+   session; this keeps the check inside the page. --- */
+function openChart(symbol, note){
+  var wrap = document.getElementById('chartwrap');
+  if(!wrap || !symbol) return;
+
+  var sym = String(symbol).toUpperCase();
+  document.getElementById('chartSym').textContent = sym;
+  document.getElementById('chartSub').textContent = note || 'NSE \u00b7 daily';
+  document.getElementById('chartOut').href =
+    'https://www.tradingview.com/chart/?symbol=NSE%3A' + encodeURIComponent(sym) + '&interval=D';
+
+  /* Rebuilt each time so the widget picks up the current theme. */
+  var dark = !document.body.classList.contains('s-light');
+  var body = document.getElementById('chartBody');
+  body.innerHTML = '<iframe title="' + sym + ' chart" loading="lazy" src="' +
+    'https://s.tradingview.com/widgetembed/?symbol=NSE%3A' + encodeURIComponent(sym) +
+    '&interval=D&theme=' + (dark ? 'dark' : 'light') +
+    '&style=1&locale=in&hide_side_toolbar=0&allow_symbol_change=0&save_image=0' +
+    '&withdateranges=1&hide_legend=0' + '"></iframe>';
+
+  wrap.classList.add('open');
+}
+
+function closeChart(){
+  var wrap = document.getElementById('chartwrap');
+  if(!wrap) return;
+  wrap.classList.remove('open');
+  /* Drop the iframe so it stops streaming in the background. */
+  var body = document.getElementById('chartBody');
+  if(body) body.innerHTML = '';
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeChart();
+});
+
 /* --- Ready to move ---
    The queue the Model Portfolio draws from. READY means a slot is
    open today; QUEUED means the name qualifies but the book is full.
@@ -2161,7 +2261,8 @@ function paintReady(){
     var hue = ready ? 'var(--green)' : 'var(--r99)';
     return '<div class="call" style="--hue:' + hue + '">' +
       '<div class="call-top">' +
-        '<span class="call-sym">' + r.symbol + '</span>' +
+        '<button class="call-sym as-link" onclick="openChart(\'' + r.symbol +
+          '\',\'quality ' + r.quality + '\')">' + r.symbol + '</button>' +
         '<span class="call-hz">' + r.state + '</span>' +
       '</div>' +
       '<div class="rdy-line">' +
@@ -2181,7 +2282,8 @@ function paintReady(){
     var ready = String(r.state).toUpperCase() === 'READY';
     return '<tr>' +
       '<td class="num">' + (i + 1) + '</td>' +
-      '<td class="sym">' + r.symbol + '</td>' +
+      '<td><button class="sym as-link" onclick="openChart(\'' + r.symbol + '\')">' +
+        r.symbol + '</button></td>' +
       '<td><span class="tag ' + (ready ? 'tag-sb' : 'tag-b') + '">' + r.state + '</span></td>' +
       '<td class="num">' + r.quality + '</td>' +
       '<td class="price">' + pfMoney(r.price) + '</td>' +
@@ -2272,7 +2374,8 @@ function paintCalls(){
     var hue = hz === 'short' ? 'var(--r99)' : hz === 'medium' ? 'var(--r85)' : 'var(--r70)';
     return '<div class="call" style="--hue:' + hue + '">' +
       '<div class="call-top">' +
-        '<span class="call-sym">' + (c.symbol || '') + '</span>' +
+        '<button class="call-sym as-link" onclick="openChart(\'' + (c.symbol || '') +
+          '\',\'' + (c.horizon || '') + ' term\')">' + (c.symbol || '') + '</button>' +
         '<span class="call-hz">' + (c.horizon || '') + '</span>' +
       '</div>' +
       '<div class="call-nums" style="border-top:none;padding-top:0">' +
@@ -2288,7 +2391,8 @@ function paintCalls(){
   var tableRows = rows.map(function(c){
     var hz = (c.horizon || '').toLowerCase();
     var hue = hz === 'short' ? 'var(--r99)' : hz === 'medium' ? 'var(--r85)' : 'var(--r70)';
-    return '<tr><td class="sym">' + (c.symbol || '') + '</td>' +
+    return '<tr><td><button class="sym as-link" onclick="openChart(\'' + (c.symbol || '') + '\')">' +
+      (c.symbol || '') + '</button></td>' +
       '<td><span class="tag" style="background:color-mix(in srgb,' + hue + ' 16%,transparent);color:' + hue + '">' +
         (c.horizon || '') + '</span></td>' +
       '<td class="price">' + fmtLevel(c.entry) + '</td>' +
@@ -2521,7 +2625,7 @@ function paintScreenerSegment(){
   var tbody = shown.map(function(r, i){
     var hidden = !open && i >= FREE;
     var sym = hidden ? '\u2022'.repeat(Math.max(4, Math.min(9, r.symbol.length))) : r.symbol;
-    var tv = 'https://www.tradingview.com/chart/?symbol=NSE%3A' + r.symbol + '&interval=D';
+
     return '<tr' + (hidden ? ' class="row-locked"' : '') + '>' +
       '<td class="num">' + (i + 1) + '</td>' +
       '<td class="tkr">' + sym + '</td>' +
@@ -2529,7 +2633,8 @@ function paintScreenerSegment(){
       '<td>' + (hidden ? '\u2022\u2022\u2022\u2022\u2022\u2022' : (r.sector || '')) + '</td>' +
       '<td class="num">' + Math.round(r.rank) + '</td>' +
       '<td class="num">' + (r.price != null ? '\u20b9' + Number(r.price).toLocaleString('en-IN') : '\u2014') + '</td>' +
-      (open ? '<td><a class="scr-tv" href="' + tv + '" target="_blank" rel="noopener">\u2197</a></td>' : '') +
+      (open ? '<td><button class="chart-btn" onclick="openChart(\'' + r.symbol +
+              '\',\'' + (r.sector || '').replace(/'/g, '') + '\')" title="Chart">\u2197</button></td>' : '') +
     '</tr>';
   }).join('');
 
@@ -5252,7 +5357,8 @@ function renderMpTables(){
             : 'OPEN';
     return '<div class="call" style="--hue:' + hue + '">' +
       '<div class="call-top">' +
-        '<span class="call-sym">' + p.symbol + '</span>' +
+        '<button class="call-sym as-link" onclick="openChart(\'' + p.symbol + '\',\'held ' +
+          (p.daysHeld || 0) + ' days\')">' + p.symbol + '</button>' +
         '<span class="call-hz">' + st + '</span>' +
       '</div>' +
       '<div class="pos-pnl" style="color:' + hue + '">' +
@@ -5301,7 +5407,8 @@ function renderMpTables(){
     var st = p.status === 'TARGET HIT' ? '<span class="st-hit">HIT</span>'
            : p.status === 'STOPPED OUT' ? '<span class="st-stop">STOP</span>'
            : '<span class="st-open">OPEN</span>';
-    return '<tr><td class="sym">' + p.symbol + '</td>' +
+    return '<tr><td><button class="sym as-link" onclick="openChart(\'' + p.symbol + '\')">' +
+      p.symbol + '</button></td>' +
       '<td>' + st + '</td>' +
       '<td><span class="' + (pnl >= 0 ? 'pos' : 'neg') + '">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</span></td>' +
       '<td class="price">' + money(p.currPrice) + '</td>' +
