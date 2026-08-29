@@ -321,10 +321,15 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 .sig-long{color:var(--r70)}
 
 /* The ticker takes its tier colour too, so a column of symbols shows
-   the shape of the list before a single row is read. */
-.tkr-sb{color:var(--tier-sb)}
-.tkr-b{color:var(--tier-b)}
-.tkr-w{color:var(--tier-w)}
+   the shape of the list before a single row is read.
+
+   Doubled-up selectors on purpose: .as-link sets color:inherit and is
+   declared later, so at equal specificity it would win and every
+   symbol would come out plain. */
+.tkr.tkr-sb{color:var(--tier-sb)}
+.tkr.tkr-b{color:var(--tier-b)}
+.tkr.tkr-w{color:var(--tier-w)}
+.tkr.as-link:hover{color:var(--brand)}
 
 /* Each segment stamps its own colour on the table it opens. */
 .scr-table{border-top:2px solid var(--seg,var(--line))}
@@ -339,10 +344,17 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 /* rank: the number, with its own magnitude behind it */
 .rankcell{display:flex;align-items:center;gap:10px;justify-content:flex-end}
 .rankbar{
-  width:34px;height:3px;border-radius:2px;flex-shrink:0;
-  background:color-mix(in srgb,var(--muted) 22%,transparent);overflow:hidden;
+  width:46px;height:6px;border-radius:3px;flex-shrink:0;
+  background:color-mix(in srgb,var(--muted) 16%,transparent);overflow:hidden;
 }
-.rankbar i{display:block;height:100%;background:var(--r90)}
+.rankbar i{display:block;height:100%;border-radius:3px}
+
+/* Alternating rows give the eye a rail to follow across a wide table. */
+.tbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--muted) 4%,transparent)}
+.tbl tbody tr:hover td{background:color-mix(in srgb,var(--seg,var(--brand)) 10%,transparent)}
+
+/* Price is the other number people scan for. */
+.tbl td.px{font-family:var(--mono);font-size:13.5px;font-weight:600;letter-spacing:-.015em}
 
 .blur{filter:blur(7px);user-select:none;pointer-events:none}
 .veil{
@@ -3000,13 +3012,14 @@ function paintScreenerSegment(){
         : '<button class="tkr tkr-' + tierOf(r.signal) + ' as-link" onclick="openChart(\'' +
           r.symbol + '\',\'' + (r.sector || '').replace(/'/g, '') + '\')">' + sym + '</button>') + '</td>' +
       '<td>' + sigMark(r.signal) + '</td>' +
-      '<td class="dim">' + (hidden ? '\u2022\u2022\u2022\u2022\u2022\u2022' : (r.sector || '')) + '</td>' +
+      '<td class="dim">' + (hidden ? '\u2022\u2022\u2022\u2022\u2022\u2022'
+        : (!r.sector || r.sector === 'Other' ? '\u2014' : r.sector)) + '</td>' +
       '<td class="r"><div class="rankcell">' +
         '<span class="num" style="color:' + rhue + ';font-weight:700">' + rank + '</span>' +
         '<span class="rankbar"><i style="width:' + pct + '%;background:' + rhue + '"></i></span>' +
       '</div></td>' +
-      '<td class="num r">' + (r.price != null
-        ? Number(r.price).toLocaleString('en-IN', {maximumFractionDigits:2}) : '\u2014') + '</td>' +
+      '<td class="px r">' + (r.price != null
+        ? '\u20b9' + Number(r.price).toLocaleString('en-IN', {maximumFractionDigits:2}) : '\u2014') + '</td>' +
     '</tr>';
   }).join('');
 
