@@ -12,7 +12,7 @@
  * Bump CACHE_VERSION whenever you upload a new app.html.
  */
 
-const CACHE_VERSION = 'alpha-intel-v1';
+const CACHE_VERSION = 'alpha-intel-v2';
 
 const SHELL = [
   'app.html',
