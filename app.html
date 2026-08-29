@@ -49,6 +49,7 @@ body.s-dark{
 }
 body.s-navy{
   --tier-sb:#3DDC84; --tier-b:#8FE3B6; --tier-w:#F2B441;
+  --on-fill:#08111C;
   --ink:#010613; --panel:#0B1426; --panel-2:#111E38;
   --line:#1E3661; --line-soft:#152547;
   --text:#E2E8F0; --muted:#5A7099;
@@ -88,7 +89,8 @@ body.s-saffron{
   --brand:#F59E0B; --aura-1:rgba(245,158,11,.22); --aura-2:rgba(217,119,6,.14);
 }
 body.s-light{
-  --tier-sb:#0D7D3B; --tier-b:#4A9E6B; --tier-w:#B07908;
+  --tier-sb:#0D7D3B; --tier-b:#2E7D53; --tier-w:#8A6108;
+  --on-fill:#FFFFFF;
   /* The page background sits a shade below the cards, and the lines
      are dark enough to hold an edge — otherwise the translucent
      surfaces used everywhere else dissolve into one white sheet. */
@@ -339,9 +341,9 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 
 /* Each segment stamps its own colour on the table it opens. */
 .scr-table .tbl th{
-  background:color-mix(in srgb,var(--seg,var(--panel-2)) 20%,var(--panel-2));
-  color:color-mix(in srgb,var(--seg,var(--muted)) 70%,var(--text));
-  border-bottom:2px solid color-mix(in srgb,var(--seg,var(--line)) 45%,transparent);
+  background:color-mix(in srgb,var(--seg,var(--panel-2)) 88%,var(--panel));
+  color:var(--on-fill);
+  border-bottom:none;
 }
 .scr-table .tbl tbody tr:hover td{
   background:color-mix(in srgb,var(--seg,var(--brand)) 8%,transparent);
@@ -350,25 +352,24 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 /* Sector and cap read as coloured chips. The colour is the point —
    scanning a long list, the eye groups by industry before it reads a
    single word. */
+/* Solid, not tinted. A wash of 15% reads as grey from two feet away;
+   the whole point of colouring a sector is that it registers before
+   the word does. */
 .chip{
   display:inline-flex;align-items:center;
-  padding:3px 9px;border-radius:6px;
-  font-size:11.5px;font-weight:600;letter-spacing:-.005em;
-  color:var(--c);
-  background:color-mix(in srgb,var(--c) 15%,transparent);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent);
+  padding:3px 10px;border-radius:6px;
+  font-size:11.5px;font-weight:700;letter-spacing:-.005em;
+  color:var(--on-fill);background:var(--c);
   white-space:nowrap;
 }
-.chip-sm{padding:2px 7px;font-size:10.5px;opacity:.85}
+.chip-sm{padding:2px 8px;font-size:10.5px;opacity:.88}
 
 .rankpill{
   display:inline-flex;align-items:center;justify-content:center;
-  min-width:34px;padding:3px 7px;border-radius:6px;
+  min-width:36px;padding:4px 8px;border-radius:6px;
   font-family:var(--mono);font-size:12.5px;font-weight:700;
   font-variant-numeric:tabular-nums;
-  color:var(--c);
-  background:color-mix(in srgb,var(--c) 16%,transparent);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent);
+  color:var(--on-fill);background:var(--c);
 }
 
 /* rank: the number, with its own magnitude behind it */
@@ -383,19 +384,26 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
    tint is meant to group rows at a glance, not to be read. Zebra
    sits underneath for anything untiered. */
 .tbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--muted) 4%,transparent)}
-.tbl tbody tr.t-sb td{background:color-mix(in srgb,var(--tier-sb) 9%,transparent)}
-.tbl tbody tr.t-sb:nth-child(even) td{background:color-mix(in srgb,var(--tier-sb) 13%,transparent)}
-.tbl tbody tr.t-b td{background:color-mix(in srgb,var(--tier-b) 8%,transparent)}
-.tbl tbody tr.t-b:nth-child(even) td{background:color-mix(in srgb,var(--tier-b) 12%,transparent)}
-.tbl tbody tr.t-w td{background:color-mix(in srgb,var(--tier-w) 7%,transparent)}
-.tbl tbody tr.t-w:nth-child(even) td{background:color-mix(in srgb,var(--tier-w) 11%,transparent)}
-.tbl tbody tr:hover td{background:color-mix(in srgb,var(--seg,var(--brand)) 16%,transparent)}
+.tbl tbody tr.t-sb td{background:color-mix(in srgb,var(--tier-sb) 24%,var(--panel))}
+.tbl tbody tr.t-sb:nth-child(even) td{background:color-mix(in srgb,var(--tier-sb) 32%,var(--panel))}
+.tbl tbody tr.t-b td{background:color-mix(in srgb,var(--tier-b) 22%,var(--panel))}
+.tbl tbody tr.t-b:nth-child(even) td{background:color-mix(in srgb,var(--tier-b) 30%,var(--panel))}
+.tbl tbody tr.t-w td{background:color-mix(in srgb,var(--tier-w) 22%,var(--panel))}
+.tbl tbody tr.t-w:nth-child(even) td{background:color-mix(in srgb,var(--tier-w) 30%,var(--panel))}
+.tbl tbody tr:hover td{background:color-mix(in srgb,var(--seg,var(--brand)) 42%,var(--panel))}
+
+/* Secondary text is set against the page, not against a coloured row.
+   On a tinted row it drops to about 1.8:1, so it gets lifted toward
+   the body colour instead of staying grey. */
+.tbl tbody tr.t-sb .dim,
+.tbl tbody tr.t-b  .dim,
+.tbl tbody tr.t-w  .dim{color:color-mix(in srgb,var(--text) 74%,transparent)}
 
 /* The first cell keeps a sliver of the tier colour, so the grouping
    holds even where the wash is faint. */
-.tbl tbody tr.t-sb td:first-child{box-shadow:inset 3px 0 0 var(--tier-sb)}
-.tbl tbody tr.t-b  td:first-child{box-shadow:inset 3px 0 0 var(--tier-b)}
-.tbl tbody tr.t-w  td:first-child{box-shadow:inset 3px 0 0 var(--tier-w)}
+.tbl tbody tr.t-sb td:first-child{box-shadow:inset 5px 0 0 var(--tier-sb)}
+.tbl tbody tr.t-b  td:first-child{box-shadow:inset 5px 0 0 var(--tier-b)}
+.tbl tbody tr.t-w  td:first-child{box-shadow:inset 5px 0 0 var(--tier-w)}
 
 /* Price is the other number people scan for. */
 .tbl td.px{font-family:var(--mono);font-size:13.5px;font-weight:600;letter-spacing:-.015em}
@@ -663,12 +671,12 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   flex-wrap:wrap;gap:16px;padding:22px 26px;
   border:1px solid color-mix(in srgb,var(--hue) 36%,transparent);
   border-bottom:none;border-radius:14px 14px 0 0;
-  background:
-    linear-gradient(112deg,
-      color-mix(in srgb,var(--hue) 30%,var(--panel)) 0%,
-      color-mix(in srgb,var(--hue) 12%,var(--panel)) 48%,
-      var(--panel) 100%);
+  background:linear-gradient(108deg,var(--hue) 0%,color-mix(in srgb,var(--hue) 72%,var(--panel)) 100%);
+  color:var(--on-fill);
 }
+.scr-top .scr-title{color:var(--on-fill)}
+.scr-top .scr-sub{color:var(--on-fill);opacity:.72}
+.scr-top .sig{color:var(--on-fill);opacity:.9}
 .scr-top + .scr-table{
   margin-top:0;border-radius:0 0 14px 14px;
   border-top:none;
