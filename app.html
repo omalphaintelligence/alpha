@@ -341,9 +341,9 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 
 /* Each segment stamps its own colour on the table it opens. */
 .scr-table .tbl th{
-  background:color-mix(in srgb,var(--seg,var(--panel-2)) 88%,var(--panel));
-  color:var(--on-fill);
-  border-bottom:none;
+  background:var(--panel-2);
+  color:var(--muted);
+  border-bottom:2px solid var(--seg,var(--line));
 }
 .scr-table .tbl tbody tr:hover td{
   background:color-mix(in srgb,var(--seg,var(--brand)) 8%,transparent);
@@ -384,26 +384,17 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
    tint is meant to group rows at a glance, not to be read. Zebra
    sits underneath for anything untiered. */
 .tbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--muted) 4%,transparent)}
-.tbl tbody tr.t-sb td{background:color-mix(in srgb,var(--tier-sb) 24%,var(--panel))}
-.tbl tbody tr.t-sb:nth-child(even) td{background:color-mix(in srgb,var(--tier-sb) 32%,var(--panel))}
-.tbl tbody tr.t-b td{background:color-mix(in srgb,var(--tier-b) 22%,var(--panel))}
-.tbl tbody tr.t-b:nth-child(even) td{background:color-mix(in srgb,var(--tier-b) 30%,var(--panel))}
-.tbl tbody tr.t-w td{background:color-mix(in srgb,var(--tier-w) 22%,var(--panel))}
-.tbl tbody tr.t-w:nth-child(even) td{background:color-mix(in srgb,var(--tier-w) 30%,var(--panel))}
-.tbl tbody tr:hover td{background:color-mix(in srgb,var(--seg,var(--brand)) 42%,var(--panel))}
-
-/* Secondary text is set against the page, not against a coloured row.
-   On a tinted row it drops to about 1.8:1, so it gets lifted toward
-   the body colour instead of staying grey. */
-.tbl tbody tr.t-sb .dim,
-.tbl tbody tr.t-b  .dim,
-.tbl tbody tr.t-w  .dim{color:color-mix(in srgb,var(--text) 74%,transparent)}
+/* Rows stay on the page colour. Flooding them washed out every bit
+   of text sitting on top, and a table is for reading first. The tier
+   shows in the edge marker and the badges instead, where full colour
+   costs nothing. */
+.tbl tbody tr:hover td{background:color-mix(in srgb,var(--seg,var(--brand)) 12%,transparent)}
 
 /* The first cell keeps a sliver of the tier colour, so the grouping
    holds even where the wash is faint. */
-.tbl tbody tr.t-sb td:first-child{box-shadow:inset 5px 0 0 var(--tier-sb)}
-.tbl tbody tr.t-b  td:first-child{box-shadow:inset 5px 0 0 var(--tier-b)}
-.tbl tbody tr.t-w  td:first-child{box-shadow:inset 5px 0 0 var(--tier-w)}
+.tbl tbody tr.t-sb td:first-child{box-shadow:inset 4px 0 0 var(--tier-sb)}
+.tbl tbody tr.t-b  td:first-child{box-shadow:inset 4px 0 0 var(--tier-b)}
+.tbl tbody tr.t-w  td:first-child{box-shadow:inset 4px 0 0 var(--tier-w)}
 
 /* Price is the other number people scan for. */
 .tbl td.px{font-family:var(--mono);font-size:13.5px;font-weight:600;letter-spacing:-.015em}
@@ -671,12 +662,11 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   flex-wrap:wrap;gap:16px;padding:22px 26px;
   border:1px solid color-mix(in srgb,var(--hue) 36%,transparent);
   border-bottom:none;border-radius:14px 14px 0 0;
-  background:linear-gradient(108deg,var(--hue) 0%,color-mix(in srgb,var(--hue) 72%,var(--panel)) 100%);
-  color:var(--on-fill);
+  background:var(--panel);
+  border-left:5px solid var(--hue);
 }
-.scr-top .scr-title{color:var(--on-fill)}
-.scr-top .scr-sub{color:var(--on-fill);opacity:.72}
-.scr-top .sig{color:var(--on-fill);opacity:.9}
+.scr-top .scr-title{color:var(--text)}
+.scr-top .scr-sub{color:var(--muted)}
 .scr-top + .scr-table{
   margin-top:0;border-radius:0 0 14px 14px;
   border-top:none;
