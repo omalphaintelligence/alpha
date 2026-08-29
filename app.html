@@ -311,6 +311,9 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 .sig-sb{color:var(--r99)}
 .sig-b{color:var(--r85)}
 .sig-w{color:var(--muted)}
+.sig-ready{color:var(--green)}
+.sig-queued{color:var(--r99)}
+.sig-long{color:var(--r70)}
 
 /* rank: the number, with its own magnitude behind it */
 .rankcell{display:flex;align-items:center;gap:10px;justify-content:flex-end}
@@ -597,12 +600,15 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 }
 .chart-btn:hover{background:color-mix(in srgb,var(--brand) 14%,transparent)}
 /* A symbol is a chart you have not opened yet. */
+/* A dashed underline under every symbol turned the table into a
+   dotted mess. The affordance shows on hover instead. */
 .as-link{
   background:none;border:none;padding:0;font:inherit;color:inherit;
   cursor:pointer;text-align:left;
-  border-bottom:1px dashed color-mix(in srgb,var(--muted) 50%,transparent);
+  border-bottom:1px solid transparent;
+  transition:color .15s linear,border-color .15s linear;
 }
-.as-link:hover{color:var(--brand);border-bottom-color:var(--brand)}
+.as-link:hover{color:var(--brand);border-bottom-color:currentColor}
 .row-locked .tkr,.row-locked td:nth-child(4){filter:blur(4.5px);user-select:none}
 .scr-foot{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -2209,7 +2215,7 @@ function choosePlan(key){
 
    Every payment carries a reference tied to the account, which is how
    a transfer gets matched back to a person. */
-var UPI_ID   = '6387757212@upi';        /* <- your UPI ID */
+var UPI_ID   = 'yourvpa@upi';        /* <- your UPI ID */
 var UPI_NAME = 'Alpha Intel';
 var CHECKOUT = null;
 
@@ -2597,25 +2603,29 @@ function paintReady(){
 
   var tableRows = rows.map(function(r, i){
     var ready = String(r.state).toUpperCase() === 'READY';
+    var q = Number(r.quality) || 0;
+    var qhue = q >= 90 ? 'var(--r99)' : q >= 75 ? 'var(--r90)' : q >= 60 ? 'var(--r85)' : 'var(--muted)';
     return '<tr>' +
-      '<td class="num">' + (i + 1) + '</td>' +
-      '<td><button class="sym as-link" onclick="openChart(\'' + r.symbol + '\')">' +
-        r.symbol + '</button></td>' +
-      '<td><span class="tag ' + (ready ? 'tag-sb' : 'tag-b') + '">' + r.state + '</span></td>' +
-      '<td class="num">' + r.quality + '</td>' +
-      '<td class="price">' + pfMoney(r.price) + '</td>' +
-      '<td class="num">' + fmtPct(r.distFromPivot) + '</td>' +
-      '<td class="price">' + pfMoney(r.entry) + '</td>' +
-      '<td class="price">' + pfMoney(r.target) + '</td>' +
-      '<td class="price">' + pfMoney(r.stopLoss) + '</td>' +
+      '<td class="num dim">' + (i + 1) + '</td>' +
+      '<td><button class="tkr as-link" onclick="openChart(\'' + r.symbol + '\')">' + r.symbol + '</button></td>' +
+      '<td><span class="sig ' + (ready ? 'sig-ready' : 'sig-queued') + '">' +
+        (ready ? 'Ready' : 'Queued') + '</span></td>' +
+      '<td class="r"><span class="num" style="color:' + qhue + ';font-weight:700">' + q + '</span></td>' +
+      '<td class="num r">' + pfMoney(r.price) + '</td>' +
+      '<td class="num r dim">' + fmtPct(r.distFromPivot) + '</td>' +
+      '<td class="num r">' + pfMoney(r.entry) + '</td>' +
+      '<td class="num r" style="color:var(--green)">' + pfMoney(r.target) + '</td>' +
+      '<td class="num r" style="color:var(--red)">' + pfMoney(r.stopLoss) + '</td>' +
     '</tr>';
   }).join('');
 
   body.innerHTML = strip + viewToggle() +
     (VIEW_MODE === 'table'
-      ? '<div class="tw" style="margin-top:14px"><table><thead><tr>' +
-        '<th>#</th><th>Symbol</th><th>State</th><th>Quality</th><th>Price</th>' +
-        '<th>From pivot</th><th>Entry</th><th>Target</th><th>Stop</th>' +
+      ? '<div class="scr-table"><table class="tbl"><thead><tr>' +
+        '<th style="width:52px">#</th><th>Symbol</th><th>State</th>' +
+        '<th class="r" style="width:90px">Quality</th><th class="r">Price</th>' +
+        '<th class="r">From pivot</th><th class="r">Entry</th>' +
+        '<th class="r">Target</th><th class="r">Stop</th>' +
         '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
       : '<div class="call-grid" style="margin-top:14px">' + cards + '</div>');
 }
@@ -2707,21 +2717,26 @@ function paintCalls(){
 
   var tableRows = rows.map(function(c){
     var hz = (c.horizon || '').toLowerCase();
-    var hue = hz === 'short' ? 'var(--r99)' : hz === 'medium' ? 'var(--r85)' : 'var(--r70)';
-    return '<tr><td><button class="sym as-link" onclick="openChart(\'' + (c.symbol || '') + '\')">' +
-      (c.symbol || '') + '</button></td>' +
-      '<td><span class="tag" style="background:color-mix(in srgb,' + hue + ' 16%,transparent);color:' + hue + '">' +
-        (c.horizon || '') + '</span></td>' +
-      '<td class="price">' + fmtLevel(c.entry) + '</td>' +
-      '<td class="price">' + fmtLevel(c.target) + '</td>' +
-      '<td class="price">' + fmtLevel(c.stop) + '</td>' +
-      '<td style="color:var(--muted);font-size:12.5px;max-width:340px">' + (c.rationale || '') + '</td>' +
-      '<td class="dt">' + (c.date ? fmtDate(c.date) : '') + '</td></tr>';
+    var cls = hz === 'short' ? 'sig-sb' : hz === 'medium' ? 'sig-b' : 'sig-long';
+    return '<tr>' +
+      '<td><button class="tkr as-link" onclick="openChart(\'' + (c.symbol || '') + '\')">' +
+        (c.symbol || '') + '</button></td>' +
+      '<td><span class="sig ' + cls + '">' + (c.horizon || '') + '</span></td>' +
+      '<td class="num r">' + fmtLevel(c.entry) + '</td>' +
+      '<td class="num r" style="color:var(--green)">' + fmtLevel(c.target) + '</td>' +
+      '<td class="num r" style="color:var(--red)">' + fmtLevel(c.stop) + '</td>' +
+      '<td class="dim" style="white-space:normal;max-width:380px">' + (c.rationale || '') + '</td>' +
+      '<td class="num dim r">' + (c.date ? fmtDate(c.date) : '') + '</td>' +
+    '</tr>';
   }).join('');
 
   body.innerHTML = viewToggle() +
     (VIEW_MODE === 'table'
-      ? '<div class="tw" style="margin-top:14px"><table><thead><tr><th>Symbol</th><th>Horizon</th><th>Entry</th><th>Target</th><th>Stop</th><th>Rationale</th><th>Date</th></tr></thead><tbody>' + tableRows + '</tbody></table></div>'
+      ? '<div class="scr-table"><table class="tbl"><thead><tr>' +
+        '<th>Symbol</th><th>Horizon</th><th class="r">Entry</th>' +
+        '<th class="r">Target</th><th class="r">Stop</th>' +
+        '<th>Rationale</th><th class="r">Date</th>' +
+        '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
       : '<div class="call-grid" style="margin-top:14px">' + cards + '</div>');
 }
 
@@ -2946,6 +2961,9 @@ function paintScreenerSegment(){
     var sym = hidden ? '\u2022'.repeat(Math.max(4, Math.min(9, r.symbol.length))) : r.symbol;
     var rank = Math.round(r.rank);
     var pct = Math.max(4, Math.min(100, (rank - 60) / 40 * 100));
+    /* rank carries its own band colour, so the column reads at a glance */
+    var rhue = rank >= 90 ? 'var(--r99)' : rank >= 80 ? 'var(--r90)'
+             : rank >= 70 ? 'var(--r85)' : 'var(--muted)';
 
     return '<tr' + (hidden ? ' class="row-locked"' : '') + '>' +
       '<td class="num dim">' + (i + 1) + '</td>' +
@@ -2956,8 +2974,8 @@ function paintScreenerSegment(){
       '<td>' + sigMark(r.signal) + '</td>' +
       '<td class="dim">' + (hidden ? '\u2022\u2022\u2022\u2022\u2022\u2022' : (r.sector || '')) + '</td>' +
       '<td class="r"><div class="rankcell">' +
-        '<span class="num">' + rank + '</span>' +
-        '<span class="rankbar"><i style="width:' + pct + '%"></i></span>' +
+        '<span class="num" style="color:' + rhue + ';font-weight:700">' + rank + '</span>' +
+        '<span class="rankbar"><i style="width:' + pct + '%;background:' + rhue + '"></i></span>' +
       '</div></td>' +
       '<td class="num r">' + (r.price != null
         ? Number(r.price).toLocaleString('en-IN', {maximumFractionDigits:2}) : '\u2014') + '</td>' +
@@ -5763,34 +5781,38 @@ function renderMpTables(){
 
   var LIMIT = 250;
   var jRows = events.slice(0, LIMIT).map(function(j){
-    var ac = j.action === 'ENTRY' ? '<span class="bb" style="font-size:11px">ENTRY</span>'
-           : j.action === 'TARGET HIT' ? '<span class="st-hit" style="font-size:11px">HIT</span>'
-           : j.action === 'STOPPED OUT' ? '<span class="st-stop" style="font-size:11px">STOP</span>'
-           : '<span class="bw" style="font-size:11px">EXIT</span>';
+    var ac = j.action === 'ENTRY' ? '<span class="sig sig-b">Entry</span>'
+           : j.action === 'TARGET HIT' ? '<span class="sig sig-ready">Hit</span>'
+           : j.action === 'STOPPED OUT' ? '<span class="sig" style="color:var(--red)">Stopped</span>'
+           : '<span class="sig sig-w">Exit</span>';
     var pnl = j.action === 'ENTRY'
-      ? '<span style="color:var(--muted)">\u2014</span>'
-      : '<span class="' + ((j.pnlPct >= 0) ? 'pos' : 'neg') + '">' + j.pnlPct.toFixed(1) + '%</span>';
-    return '<tr><td class="sym">' + j.symbol + '</td><td>' + ac + '</td>' +
-      '<td class="price">' + cur + j.price.toFixed(2) + '</td>' +
-      '<td>' + pnl + '</td>' +
-      '<td style="color:var(--muted);font-size:12px">' + j.notes + '</td>' +
-      '<td class="dt">' + fmtDate(j.date) + '</td></tr>';
+      ? '<span class="dim">\u2014</span>'
+      : '<span style="color:' + (j.pnlPct >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' +
+        (j.pnlPct >= 0 ? '+' : '') + j.pnlPct.toFixed(1) + '%</span>';
+    return '<tr>' +
+      '<td><button class="tkr as-link" onclick="openChart(\'' + j.symbol + '\')">' + j.symbol + '</button></td>' +
+      '<td>' + ac + '</td>' +
+      '<td class="num r">' + cur + j.price.toFixed(2) + '</td>' +
+      '<td class="num r">' + pnl + '</td>' +
+      '<td class="dim" style="white-space:normal">' + j.notes + '</td>' +
+      '<td class="num r dim">' + fmtDate(j.date) + '</td></tr>';
   }).join('');
 
   var posRows = pos.map(function(p){
     var pnl = +p.pnlPct || 0;
-    var st = p.status === 'TARGET HIT' ? '<span class="st-hit">HIT</span>'
-           : p.status === 'STOPPED OUT' ? '<span class="st-stop">STOP</span>'
-           : '<span class="st-open">OPEN</span>';
-    return '<tr><td><button class="sym as-link" onclick="openChart(\'' + p.symbol + '\')">' +
-      p.symbol + '</button></td>' +
+    var st = p.status === 'TARGET HIT' ? '<span class="sig sig-ready">Hit</span>'
+           : p.status === 'STOPPED OUT' ? '<span class="sig" style="color:var(--red)">Stopped</span>'
+           : '<span class="sig sig-b">Open</span>';
+    return '<tr>' +
+      '<td><button class="tkr as-link" onclick="openChart(\'' + p.symbol + '\')">' + p.symbol + '</button></td>' +
       '<td>' + st + '</td>' +
-      '<td><span class="' + (pnl >= 0 ? 'pos' : 'neg') + '">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</span></td>' +
-      '<td class="price">' + money(p.currPrice) + '</td>' +
-      '<td class="price">' + money(p.entryPrice) + '</td>' +
-      '<td class="price">' + money(p.target) + '</td>' +
-      '<td class="price">' + money(p.stopLoss) + '</td>' +
-      '<td class="dt">' + (p.daysHeld || 0) + 'd</td></tr>';
+      '<td class="num r" style="color:' + (pnl >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' +
+        (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</td>' +
+      '<td class="num r">' + money(p.currPrice) + '</td>' +
+      '<td class="num r dim">' + money(p.entryPrice) + '</td>' +
+      '<td class="num r" style="color:var(--green)">' + money(p.target) + '</td>' +
+      '<td class="num r" style="color:var(--red)">' + money(p.stopLoss) + '</td>' +
+      '<td class="num r dim">' + (p.daysHeld || 0) + 'd</td></tr>';
   }).join('');
 
   var posBody = !pos.length
@@ -5804,7 +5826,9 @@ function renderMpTables(){
     posBody +
     '</div>' +
     '<div class="mp-sec"><div class="mp-sec-t">Trade journal</div>' +
-      '<div class="tw"><table><thead><tr><th>Symbol</th><th>Action</th><th>Price</th><th>P&L%</th><th>Notes</th><th>Date</th></tr></thead><tbody>' + jRows + '</tbody></table></div>' +
+      '<div class="scr-table"><table class="tbl"><thead><tr><th>Symbol</th><th>Action</th>' +
+        '<th class="r">Price</th><th class="r">P&L</th><th>Notes</th><th class="r">Date</th>' +
+        '</tr></thead><tbody>' + jRows + '</tbody></table></div>' +
       (events.length > LIMIT
         ? '<div class="mp-note">Showing the ' + LIMIT + ' most recent of ' + events.length.toLocaleString() + ' events.</div>'
         : '') +
