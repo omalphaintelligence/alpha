@@ -709,6 +709,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 /* fundamental calls */
 .horizon-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
 .call-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:22px}
+.hold-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:20px}
 
 /* Colour sits on one hairline and one number, not the whole surface.
    Tinting every card made a wall of green and red with nothing to
@@ -766,6 +767,77 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .scr-gate .lock-ico{font-size:24px;margin-bottom:10px}
 
 @media(max-width:900px){ .plans-row{grid-template-columns:1fr} }
+
+/* holding card — a position, not a label */
+.hold{
+  position:relative;padding:24px 26px 22px;border-radius:16px;
+  border:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel) 80%,transparent);
+  backdrop-filter:blur(10px);
+  transition:border-color .2s var(--ease),transform .2s var(--ease);
+}
+.hold::before{
+  content:'';position:absolute;left:0;top:20px;bottom:20px;width:3px;
+  border-radius:0 2px 2px 0;background:var(--hue);
+}
+.hold:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--hue) 40%,transparent)}
+
+.hold-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.hold-sym{
+  font-family:var(--disp);font-size:20px;font-weight:800;letter-spacing:-.03em;
+  background:none;border:none;padding:0;cursor:pointer;color:var(--text);
+}
+.hold-sym:hover{color:var(--brand)}
+.hold-sec{margin-top:3px;font-size:12px;color:var(--muted)}
+.hold-st{
+  flex-shrink:0;font-size:12px;font-weight:600;color:var(--hue);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.hold-st::before{content:'';width:3px;height:12px;border-radius:1px;background:currentColor}
+
+.hold-main{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:18px 0 16px}
+.hold-pnl{
+  font-family:var(--mono);font-size:34px;font-weight:700;
+  letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;
+}
+.hold-cmp{
+  font-family:var(--mono);font-size:15px;font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.hold-cmp span{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--muted);margin-left:9px;white-space:nowrap}
+
+/* where the trade sits between its stop and its target */
+.hold-track{margin-bottom:18px}
+.ht-bar{
+  position:relative;height:7px;border-radius:4px;overflow:hidden;
+  background:color-mix(in srgb,var(--muted) 16%,transparent);
+}
+.ht-fill{display:block;height:100%;border-radius:4px}
+.ht-entry{
+  position:absolute;top:-2px;width:2px;height:11px;border-radius:1px;
+  background:var(--text);opacity:.55;
+}
+.ht-ends{
+  display:flex;justify-content:space-between;margin-top:7px;
+  font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.ht-ends b{
+  display:block;font-family:var(--sans);font-size:10.5px;
+  font-weight:500;opacity:.75;margin-top:1px;
+}
+.ht-ends .r{text-align:right}
+
+.hold-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px;
+  padding-top:16px;border-top:1px solid var(--line-soft);
+}
+.hold-stats div{display:flex;flex-direction:column;gap:4px}
+.hold-stats span{font-size:11px;color:var(--muted);font-weight:500}
+.hold-stats b{
+  font-family:var(--mono);font-size:14.5px;font-weight:600;
+  letter-spacing:-.015em;font-variant-numeric:tabular-nums;
+}
 
 /* ready to move: slot counter + queue */
 .slot-strip{
@@ -5783,30 +5855,133 @@ function renderMpTables(){
     return isFinite(n) && n ? cur + n.toLocaleString('en-IN', {maximumFractionDigits:2}) : '\u2014';
   }
 
+  /* The screener already knows each symbol's rank, sector and trailing
+     returns. Joining it here turns a bare position into something
+     worth reading, without inventing a single number. */
+  var meta = {};
+  ((SCR_DATA && SCR_DATA.tabs && SCR_DATA.tabs.ALL) || []).forEach(function(x){
+    if(x && x.symbol) meta[String(x.symbol).toUpperCase()] = x;
+  });
+
+  function pct(v){
+    var n = parseFloat(v);
+    return isFinite(n) ? (n >= 0 ? '+' : '') + n.toFixed(1) + '%' : '\u2014';
+  }
+  function pctHue(v){
+    var n = parseFloat(v);
+    if(!isFinite(n)) return 'var(--muted)';
+    return n > 0 ? 'var(--tier-sb)' : n < 0 ? 'var(--red)' : 'var(--muted)';
+  }
+
   var posCards = pos.map(function(p){
-    var pnl = +p.pnlPct || 0;
-    var hue = pnl > 0.01 ? 'var(--tier-sb)' : pnl < -0.01 ? 'var(--red)' : 'var(--brand)';
-    var st  = p.status === 'TARGET HIT' ? 'HIT'
-            : p.status === 'STOPPED OUT' ? 'STOP'
-            : 'OPEN';
-    return '<div class="call" style="--hue:' + hue + '">' +
-      '<div class="call-top">' +
-        '<button class="call-sym as-link" onclick="openChart(\'' + p.symbol + '\',\'held ' +
-          (p.daysHeld || 0) + ' days\')">' + p.symbol + '</button>' +
-        '<span class="call-hz">' + st + '</span>' +
+    var m    = meta[String(p.symbol).toUpperCase()] || {};
+    var pnl  = +p.pnlPct || 0;
+    var hue  = pnl > 0.01 ? 'var(--tier-sb)' : pnl < -0.01 ? 'var(--red)' : 'var(--brand)';
+    var st   = p.status === 'TARGET HIT' ? 'Target hit'
+             : p.status === 'STOPPED OUT' ? 'Stopped out' : 'Open';
+
+    var entry = +p.entryPrice || 0;
+    var cur   = +p.currPrice || 0;
+    var stop  = +p.stopLoss || 0;
+    var tgt   = +p.target || 0;
+
+    /* Where the trade sits between its stop and its target. This is
+       the thing a holder actually wants to see. */
+    var span = (tgt > stop) ? (tgt - stop) : 0;
+    var here = span ? Math.max(0, Math.min(100, (cur - stop) / span * 100)) : 50;
+    var entryAt = span ? Math.max(0, Math.min(100, (entry - stop) / span * 100)) : 50;
+
+    /* How far it still has to run, and how much room it has to fall. */
+    var toTarget = (cur && tgt) ? (tgt - cur) / cur * 100 : null;
+    var toStop   = (cur && stop) ? (cur - stop) / cur * 100 : null;
+
+    var rank = m.rank != null ? Math.round(m.rank) : null;
+    var rhue = rank == null ? 'var(--muted)'
+             : rank >= 90 ? 'var(--tier-sb)' : rank >= 80 ? 'var(--tier-b)' : 'var(--tier-w)';
+
+    return '<div class="hold" style="--hue:' + hue + '">' +
+
+      '<div class="hold-top">' +
+        '<div>' +
+          '<button class="hold-sym as-link" onclick="openChart(\'' + p.symbol + '\')">' +
+            p.symbol + '</button>' +
+          '<div class="hold-sec">' +
+            (m.sector && m.sector !== 'Other' ? m.sector : 'NSE') +
+            (m.cat ? ' \u00b7 ' + ({LC:'Large cap',MC:'Mid cap',SC:'Small cap',ET:'ETF'}[m.cat] || m.cat) : '') +
+          '</div>' +
+        '</div>' +
+        '<span class="hold-st">' + st + '</span>' +
       '</div>' +
-      '<div class="pos-pnl" style="color:' + hue + '">' +
-        (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%' +
-        '<span>' + money(p.currPrice) + ' now \u00b7 held ' + (p.daysHeld || 0) + ' days</span>' +
+
+      '<div class="hold-main">' +
+        '<div class="hold-pnl" style="color:' + hue + '">' + pct(pnl) + '</div>' +
+        '<div class="hold-cmp">' + money(cur) +
+          '<span>from ' + money(entry) + '</span></div>' +
       '</div>' +
-      '<div class="call-nums">' +
-        '<div><span>Entry</span><b>' + money(p.entryPrice) + '</b></div>' +
-        '<div><span>Target</span><b>' + money(p.target) + '</b></div>' +
-        '<div><span>Stop</span><b>' + money(p.stopLoss) + '</b></div>' +
+
+      '<div class="hold-track">' +
+        '<div class="ht-bar">' +
+          '<i class="ht-fill" style="width:' + here + '%;background:' + hue + '"></i>' +
+          '<i class="ht-entry" style="left:' + entryAt + '%"></i>' +
+        '</div>' +
+        '<div class="ht-ends">' +
+          '<span>' + money(stop) + '<b>stop</b></span>' +
+          '<span class="r">' + money(tgt) + '<b>target</b></span>' +
+        '</div>' +
       '</div>' +
+
+      '<div class="hold-stats">' +
+        '<div><span>RS rank</span><b style="color:' + rhue + '">' + (rank != null ? rank : '\u2014') + '</b></div>' +
+        '<div><span>3M</span><b style="color:' + pctHue(m.ret3m) + '">' + pct(m.ret3m) + '</b></div>' +
+        '<div><span>12M</span><b style="color:' + pctHue(m.ret12m) + '">' + pct(m.ret12m) + '</b></div>' +
+        '<div><span>' + (toTarget != null && toTarget < 0 ? 'Past target' : 'To target') + '</span>' +
+          '<b style="color:' + (toTarget != null && toTarget < 0 ? 'var(--tier-sb)' : 'var(--text)') + '">' +
+          (toTarget != null ? pct(Math.abs(toTarget)) : '\u2014') + '</b></div>' +
+        '<div><span>Risk left</span><b>' + (toStop != null ? pct(-Math.abs(toStop)) : '\u2014') + '</b></div>' +
+        '<div><span>Held</span><b>' + (p.daysHeld || 0) + 'd</b></div>' +
+      '</div>' +
+
     '</div>';
   }).join('');
 
+  var posRows = pos.map(function(p){
+    var m2 = meta[String(p.symbol).toUpperCase()] || {};
+    var rank2 = m2.rank != null ? Math.round(m2.rank) : null;
+    var rhue2 = rank2 == null ? 'var(--muted)'
+              : rank2 >= 90 ? 'var(--tier-sb)' : rank2 >= 80 ? 'var(--tier-b)' : 'var(--tier-w)';
+    var pnl = +p.pnlPct || 0;
+    var st = p.status === 'TARGET HIT' ? '<span class="sig sig-sb">Hit</span>'
+           : p.status === 'STOPPED OUT' ? '<span class="sig" style="color:var(--red)">Stopped</span>'
+           : '<span class="sig sig-b">Open</span>';
+    /* A holding's ticker carries how it is doing, not just its name. */
+    var thue = pnl > 0.01 ? 'var(--tier-sb)' : pnl < -0.01 ? 'var(--red)' : 'var(--text)';
+    return '<tr>' +
+      '<td><button class="tkr as-link" style="color:' + thue + '" onclick="openChart(\'' +
+        p.symbol + '\')">' + p.symbol + '</button></td>' +
+      '<td>' + st + '</td>' +
+      '<td class="num r" style="color:' + (pnl >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' +
+        (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</td>' +
+      '<td class="num r">' + money(p.currPrice) + '</td>' +
+      '<td class="num r dim">' + money(p.entryPrice) + '</td>' +
+      '<td class="num r" style="color:var(--green)">' + money(p.target) + '</td>' +
+      '<td class="num r" style="color:var(--red)">' + money(p.stopLoss) + '</td>' +
+      '<td class="num r"><span style="color:' + rhue2 + ';font-weight:700">' +
+        (rank2 != null ? rank2 : '\u2014') + '</span></td>' +
+      '<td class="num r" style="color:' + pctHue(m2.ret3m) + '">' + pct(m2.ret3m) + '</td>' +
+      '<td class="num r dim">' + (p.daysHeld || 0) + 'd</td></tr>';
+  }).join('');
+
+  var posBody = !pos.length
+    ? '<div class="empty" style="padding:2rem">No open positions right now.</div>'
+    : (VIEW_MODE === 'table'
+        ? '<div class="scr-table" style="--seg:var(--tier-sb)"><table class="tbl"><thead><tr>' +
+          '<th>Symbol</th><th>Status</th><th class="r">P&L</th><th class="r">Price</th>' +
+          '<th class="r">Entry</th><th class="r">Target</th><th class="r">Stop</th>' +
+          '<th class="r">RS</th><th class="r">3M</th><th class="r">Held</th>' +
+          '</tr></thead><tbody>' + posRows + '</tbody></table></div>'
+        : '<div class="hold-grid">' + posCards + '</div>');
+
+  /* Live journal plus the historical log, newest first. */
   var events = jrnl.map(function(j){
     return { symbol:j.symbol, action:j.action, price:+j.price||0,
              pnlPct:+j.pnlPct||0, notes:j.notes||'', date:j.date };
@@ -5828,45 +6003,19 @@ function renderMpTables(){
            : '<span class="sig sig-w">Exit</span>';
     var jhue = j.action === 'ENTRY' ? 'var(--text)'
              : j.pnlPct > 0 ? 'var(--tier-sb)' : j.pnlPct < 0 ? 'var(--red)' : 'var(--muted)';
-    var pnl = j.action === 'ENTRY'
+    var jp = j.action === 'ENTRY'
       ? '<span class="dim">\u2014</span>'
-      : '<span style="color:' + (j.pnlPct >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' +
+      : '<span style="color:' + jhue + ';font-weight:700">' +
         (j.pnlPct >= 0 ? '+' : '') + j.pnlPct.toFixed(1) + '%</span>';
     return '<tr>' +
       '<td><button class="tkr as-link" style="color:' + jhue + '" onclick="openChart(\'' +
         j.symbol + '\')">' + j.symbol + '</button></td>' +
       '<td>' + ac + '</td>' +
       '<td class="num r">' + cur + j.price.toFixed(2) + '</td>' +
-      '<td class="num r">' + pnl + '</td>' +
+      '<td class="num r">' + jp + '</td>' +
       '<td class="dim" style="white-space:normal">' + j.notes + '</td>' +
       '<td class="num r dim">' + fmtDate(j.date) + '</td></tr>';
   }).join('');
-
-  var posRows = pos.map(function(p){
-    var pnl = +p.pnlPct || 0;
-    var st = p.status === 'TARGET HIT' ? '<span class="sig sig-sb">Hit</span>'
-           : p.status === 'STOPPED OUT' ? '<span class="sig" style="color:var(--red)">Stopped</span>'
-           : '<span class="sig sig-b">Open</span>';
-    /* A holding's ticker carries how it is doing, not just its name. */
-    var thue = pnl > 0.01 ? 'var(--tier-sb)' : pnl < -0.01 ? 'var(--red)' : 'var(--text)';
-    return '<tr>' +
-      '<td><button class="tkr as-link" style="color:' + thue + '" onclick="openChart(\'' +
-        p.symbol + '\')">' + p.symbol + '</button></td>' +
-      '<td>' + st + '</td>' +
-      '<td class="num r" style="color:' + (pnl >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' +
-        (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</td>' +
-      '<td class="num r">' + money(p.currPrice) + '</td>' +
-      '<td class="num r dim">' + money(p.entryPrice) + '</td>' +
-      '<td class="num r" style="color:var(--green)">' + money(p.target) + '</td>' +
-      '<td class="num r" style="color:var(--red)">' + money(p.stopLoss) + '</td>' +
-      '<td class="num r dim">' + (p.daysHeld || 0) + 'd</td></tr>';
-  }).join('');
-
-  var posBody = !pos.length
-    ? '<div class="empty" style="padding:2rem">No open positions right now.</div>'
-    : (VIEW_MODE === 'table'
-        ? '<div class="tw"><table><thead><tr><th>Symbol</th><th>Status</th><th>P&L</th><th>Price</th><th>Entry</th><th>Target</th><th>Stop</th><th>Held</th></tr></thead><tbody>' + posRows + '</tbody></table></div>'
-        : '<div class="call-grid">' + posCards + '</div>');
 
   return '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings</div>' + viewToggle() + '</div>' +
