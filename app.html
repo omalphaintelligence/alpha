@@ -338,10 +338,10 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 .tkr.as-link:hover{color:var(--brand)}
 
 /* Each segment stamps its own colour on the table it opens. */
-.scr-table{border-top:2px solid var(--seg,var(--line))}
 .scr-table .tbl th{
-  background:color-mix(in srgb,var(--seg,var(--panel-2)) 12%,var(--panel-2));
-  color:color-mix(in srgb,var(--seg,var(--muted)) 55%,var(--muted));
+  background:color-mix(in srgb,var(--seg,var(--panel-2)) 20%,var(--panel-2));
+  color:color-mix(in srgb,var(--seg,var(--muted)) 70%,var(--text));
+  border-bottom:2px solid color-mix(in srgb,var(--seg,var(--line)) 45%,transparent);
 }
 .scr-table .tbl tbody tr:hover td{
   background:color-mix(in srgb,var(--seg,var(--brand)) 8%,transparent);
@@ -379,9 +379,23 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 }
 .rankbar i{display:block;height:100%;border-radius:3px}
 
-/* Alternating rows give the eye a rail to follow across a wide table. */
+/* Rows carry a wash of their own conviction tier. Kept light — the
+   tint is meant to group rows at a glance, not to be read. Zebra
+   sits underneath for anything untiered. */
 .tbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--muted) 4%,transparent)}
-.tbl tbody tr:hover td{background:color-mix(in srgb,var(--seg,var(--brand)) 10%,transparent)}
+.tbl tbody tr.t-sb td{background:color-mix(in srgb,var(--tier-sb) 9%,transparent)}
+.tbl tbody tr.t-sb:nth-child(even) td{background:color-mix(in srgb,var(--tier-sb) 13%,transparent)}
+.tbl tbody tr.t-b td{background:color-mix(in srgb,var(--tier-b) 8%,transparent)}
+.tbl tbody tr.t-b:nth-child(even) td{background:color-mix(in srgb,var(--tier-b) 12%,transparent)}
+.tbl tbody tr.t-w td{background:color-mix(in srgb,var(--tier-w) 7%,transparent)}
+.tbl tbody tr.t-w:nth-child(even) td{background:color-mix(in srgb,var(--tier-w) 11%,transparent)}
+.tbl tbody tr:hover td{background:color-mix(in srgb,var(--seg,var(--brand)) 16%,transparent)}
+
+/* The first cell keeps a sliver of the tier colour, so the grouping
+   holds even where the wash is faint. */
+.tbl tbody tr.t-sb td:first-child{box-shadow:inset 3px 0 0 var(--tier-sb)}
+.tbl tbody tr.t-b  td:first-child{box-shadow:inset 3px 0 0 var(--tier-b)}
+.tbl tbody tr.t-w  td:first-child{box-shadow:inset 3px 0 0 var(--tier-w)}
 
 /* Price is the other number people scan for. */
 .tbl td.px{font-family:var(--mono);font-size:13.5px;font-weight:600;letter-spacing:-.015em}
@@ -642,19 +656,33 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   border:1px solid var(--line-soft);border-radius:16px;
   background:color-mix(in srgb,var(--panel) 60%,transparent);
 }
+/* The banner is the one place the segment's colour can run at full
+   strength without touching legibility. */
 .scr-top{
   display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:14px;padding:18px 22px;
-  border:1px solid var(--line-soft);border-bottom:none;
-  border-radius:16px 16px 0 0;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--hue) 16%,var(--panel)),var(--panel));
+  flex-wrap:wrap;gap:16px;padding:22px 26px;
+  border:1px solid color-mix(in srgb,var(--hue) 36%,transparent);
+  border-bottom:none;border-radius:14px 14px 0 0;
+  background:
+    linear-gradient(112deg,
+      color-mix(in srgb,var(--hue) 30%,var(--panel)) 0%,
+      color-mix(in srgb,var(--hue) 12%,var(--panel)) 48%,
+      var(--panel) 100%);
+}
+.scr-top + .scr-table{
+  margin-top:0;border-radius:0 0 14px 14px;
+  border-top:none;
+  border-color:color-mix(in srgb,var(--seg,var(--line-soft)) 26%,var(--line-soft));
 }
 .scr-title{font-family:var(--disp);font-size:21px;font-weight:600;letter-spacing:-.015em}
 .scr-sub{margin-top:3px;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
 .scr-tiers{display:flex;gap:7px;flex-wrap:wrap}
 .scr-table{
-  border:1px solid var(--line-soft);border-radius:0 0 16px 16px;
-  overflow:auto;max-height:640px;
+  border:1px solid var(--line-soft);
+  border-top:2px solid var(--seg,var(--line));
+  border-radius:0 0 14px 14px;
+  overflow:auto;max-height:66vh;
+  background:color-mix(in srgb,var(--panel) 66%,transparent);
 }
 .scr-table .tbl th{position:sticky;top:0;z-index:2}
 .scr-table .tbl td{padding:12px 20px}
@@ -3223,7 +3251,8 @@ function paintScreenerSegment(){
     var rhue = rank >= 90 ? 'var(--r99)' : rank >= 80 ? 'var(--r90)'
              : rank >= 70 ? 'var(--r85)' : 'var(--muted)';
 
-    return '<tr' + (hidden ? ' class="row-locked"' : '') + '>' +
+    var tier = tierOf(r.signal);
+    return '<tr class="t-' + tier + (hidden ? ' row-locked' : '') + '">' +
       '<td class="num dim">' + (i + 1) + '</td>' +
       '<td>' + (hidden
         ? '<span class="tkr tkr-' + tierOf(r.signal) + '">' + sym + '</span>'
