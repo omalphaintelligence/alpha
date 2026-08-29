@@ -347,6 +347,30 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
   background:color-mix(in srgb,var(--seg,var(--brand)) 8%,transparent);
 }
 
+/* Sector and cap read as coloured chips. The colour is the point —
+   scanning a long list, the eye groups by industry before it reads a
+   single word. */
+.chip{
+  display:inline-flex;align-items:center;
+  padding:3px 9px;border-radius:6px;
+  font-size:11.5px;font-weight:600;letter-spacing:-.005em;
+  color:var(--c);
+  background:color-mix(in srgb,var(--c) 15%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent);
+  white-space:nowrap;
+}
+.chip-sm{padding:2px 7px;font-size:10.5px;opacity:.85}
+
+.rankpill{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:34px;padding:3px 7px;border-radius:6px;
+  font-family:var(--mono);font-size:12.5px;font-weight:700;
+  font-variant-numeric:tabular-nums;
+  color:var(--c);
+  background:color-mix(in srgb,var(--c) 16%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent);
+}
+
 /* rank: the number, with its own magnitude behind it */
 .rankcell{display:flex;align-items:center;gap:10px;justify-content:flex-end}
 .rankbar{
@@ -789,9 +813,15 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   transition:border-color .2s var(--ease),transform .2s var(--ease);
 }
 .hold::before{
-  content:'';position:absolute;left:0;top:20px;bottom:20px;width:3px;
+  content:'';position:absolute;left:0;top:18px;bottom:18px;width:3px;
   border-radius:0 2px 2px 0;background:var(--hue);
 }
+/* a thin band of the sector's colour along the top edge */
+.hold::after{
+  content:'';position:absolute;left:22px;right:22px;top:0;height:2px;
+  border-radius:0 0 2px 2px;background:var(--sec,var(--hue));opacity:.9;
+}
+.hold-sec{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .hold:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--hue) 40%,transparent)}
 
 .hold-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
@@ -800,7 +830,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   background:none;border:none;padding:0;cursor:pointer;color:var(--text);
 }
 .hold-sym:hover{color:var(--brand)}
-.hold-sec{margin-top:3px;font-size:12px;color:var(--muted)}
+.hold-sec{margin-top:6px;font-size:12px;color:var(--muted)}
 .hold-st{
   flex-shrink:0;font-size:12px;font-weight:600;color:var(--hue);
   display:inline-flex;align-items:center;gap:7px;
@@ -2730,7 +2760,7 @@ function paintReady(){
         r.symbol + '\')">' + r.symbol + '</button></td>' +
       '<td><span class="sig ' + (ready ? 'sig-ready' : 'sig-queued') + '">' +
         (ready ? 'Ready' : 'Queued') + '</span></td>' +
-      '<td class="r"><span class="num" style="color:' + qhue + ';font-weight:700">' + q + '</span></td>' +
+      '<td class="r"><span class="rankpill" style="--c:' + qhue + '">' + q + '</span></td>' +
       '<td class="num r">' + pfMoney(r.price) + '</td>' +
       '<td class="num r dim">' + fmtPct(r.distFromPivot) + '</td>' +
       '<td class="num r">' + pfMoney(r.entry) + '</td>' +
@@ -2951,6 +2981,54 @@ function goPricing(){
   setLandingTab('pricing', document.querySelectorAll('#ltabs .ltab-btn')[idx]);
 }
 
+/* Sector colours. Named sectors get a fixed hue so the same industry
+   is the same colour on every screen; anything unrecognised is hashed
+   into the same palette, which keeps new sectors from all landing on
+   grey. */
+var SECTOR_HUES = [
+  '#F2B441', '#4ED8A0', '#3EC9D6', '#A97CF0', '#FF8A5B',
+  '#6E8BFF', '#E36FA8', '#8FD14F', '#F4707B', '#40C4C4',
+  '#C9A227', '#9B8CFF'
+];
+
+var SECTOR_FIXED = {
+  'financials':'#6E8BFF', 'banking':'#6E8BFF', 'finance':'#6E8BFF',
+  'capital goods':'#F2B441', 'engineering':'#F2B441',
+  'pharma':'#4ED8A0', 'healthcare':'#4ED8A0',
+  'technology':'#3EC9D6', 'it':'#3EC9D6', 'software':'#3EC9D6',
+  'auto':'#FF8A5B', 'automobile':'#FF8A5B',
+  'metals':'#A97CF0', 'mining':'#A97CF0',
+  'chemicals':'#8FD14F',
+  'infrastructure':'#E36FA8', 'construction':'#E36FA8',
+  'energy':'#F4707B', 'power':'#F4707B', 'oil & gas':'#F4707B',
+  'fmcg':'#40C4C4', 'consumer':'#40C4C4',
+  'realty':'#C9A227', 'real estate':'#C9A227',
+  'textiles':'#9B8CFF', 'media':'#9B8CFF'
+};
+
+function sectorHue(name){
+  if(!name) return 'var(--muted)';
+  var k = String(name).trim().toLowerCase();
+  if(SECTOR_FIXED[k]) return SECTOR_FIXED[k];
+  var h = 0;
+  for(var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return SECTOR_HUES[h % SECTOR_HUES.length];
+}
+
+function sectorChip(name){
+  if(!name || name === 'Other') return '<span class="dim">\u2014</span>';
+  var hue = sectorHue(name);
+  return '<span class="chip" style="--c:' + hue + '">' + name + '</span>';
+}
+
+var CAP_LABEL = { LC:'Large', MC:'Mid', SC:'Small', ET:'ETF', FO:'F&O' };
+var CAP_HUE   = { LC:'#6E8BFF', MC:'#4ED8A0', SC:'#A97CF0', ET:'#40C4C4', FO:'#FF8A5B' };
+
+function capChip(cat){
+  if(!cat || !CAP_LABEL[cat]) return '';
+  return '<span class="chip chip-sm" style="--c:' + CAP_HUE[cat] + '">' + CAP_LABEL[cat] + '</span>';
+}
+
 /* --- Screeners tab ---
    Same page, same segments, whatever the access level. Logged out,
    each segment shows a short teased sample; subscribed, the same
@@ -3096,10 +3174,10 @@ function paintScreenerSegment(){
         : '<button class="tkr tkr-' + tierOf(r.signal) + ' as-link" onclick="openChart(\'' +
           r.symbol + '\',\'' + (r.sector || '').replace(/'/g, '') + '\')">' + sym + '</button>') + '</td>' +
       '<td>' + sigMark(r.signal) + '</td>' +
-      '<td class="dim">' + (hidden ? '\u2022\u2022\u2022\u2022\u2022\u2022'
-        : (!r.sector || r.sector === 'Other' ? '\u2014' : r.sector)) + '</td>' +
+      '<td>' + (hidden ? '<span class="dim">\u2022\u2022\u2022\u2022\u2022\u2022</span>'
+        : sectorChip(r.sector) + ' ' + capChip(r.cat)) + '</td>' +
       '<td class="r"><div class="rankcell">' +
-        '<span class="num" style="color:' + rhue + ';font-weight:700">' + rank + '</span>' +
+        '<span class="rankpill" style="--c:' + rhue + '">' + rank + '</span>' +
         '<span class="rankbar"><i style="width:' + pct + '%;background:' + rhue + '"></i></span>' +
       '</div></td>' +
       '<td class="px r">' + (r.price != null
@@ -5911,16 +5989,14 @@ function renderMpTables(){
     var rhue = rank == null ? 'var(--muted)'
              : rank >= 90 ? 'var(--tier-sb)' : rank >= 80 ? 'var(--tier-b)' : 'var(--tier-w)';
 
-    return '<div class="hold" style="--hue:' + hue + '">' +
+    var shue = sectorHue(m.sector);
+    return '<div class="hold" style="--hue:' + hue + ';--sec:' + shue + '">' +
 
       '<div class="hold-top">' +
         '<div>' +
           '<button class="hold-sym as-link" onclick="openChart(\'' + p.symbol + '\')">' +
             p.symbol + '</button>' +
-          '<div class="hold-sec">' +
-            (m.sector && m.sector !== 'Other' ? m.sector : 'NSE') +
-            (m.cat ? ' \u00b7 ' + ({LC:'Large cap',MC:'Mid cap',SC:'Small cap',ET:'ETF'}[m.cat] || m.cat) : '') +
-          '</div>' +
+          '<div class="hold-sec">' + sectorChip(m.sector) + ' ' + capChip(m.cat) + '</div>' +
         '</div>' +
         '<span class="hold-st">' + st + '</span>' +
       '</div>' +
@@ -5980,6 +6056,7 @@ function renderMpTables(){
       '<td class="num r"><span style="color:' + rhue2 + ';font-weight:700">' +
         (rank2 != null ? rank2 : '\u2014') + '</span></td>' +
       '<td class="num r" style="color:' + pctHue(m2.ret3m) + '">' + pct(m2.ret3m) + '</td>' +
+      '<td>' + sectorChip(m2.sector) + '</td>' +
       '<td class="num r dim">' + (p.daysHeld || 0) + 'd</td></tr>';
   }).join('');
 
@@ -5989,7 +6066,7 @@ function renderMpTables(){
         ? '<div class="scr-table" style="--seg:var(--tier-sb)"><table class="tbl"><thead><tr>' +
           '<th>Symbol</th><th>Status</th><th class="r">P&L</th><th class="r">Price</th>' +
           '<th class="r">Entry</th><th class="r">Target</th><th class="r">Stop</th>' +
-          '<th class="r">RS</th><th class="r">3M</th><th class="r">Held</th>' +
+          '<th class="r">RS</th><th class="r">3M</th><th>Sector</th><th class="r">Held</th>' +
           '</tr></thead><tbody>' + posRows + '</tbody></table></div>'
         : '<div class="hold-grid">' + posCards + '</div>');
 
