@@ -784,6 +784,12 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .call-nums b{font-family:var(--mono);font-size:16px;font-weight:500;letter-spacing:0}
 .call-nums b.up,.call-nums b.dn{color:var(--text)}
 
+.call-name{margin-top:4px;font-size:12px;color:var(--muted);line-height:1.35}
+.call-cmp{
+  font-family:var(--mono);font-size:24px;font-weight:700;letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums;margin-bottom:14px;
+}
+.call-cmp span{font-family:var(--sans);font-size:11.5px;font-weight:500;color:var(--muted);margin-left:8px}
 .call-why{margin-top:14px;font-size:13.5px;color:var(--muted);line-height:1.55}
 
 .pos-pnl{
@@ -1843,7 +1849,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
         <div class="sec-head">
           <div class="sec-tag">Fundamental Calls</div>
           <h2>Conviction ideas, with a horizon attached.</h2>
-          <p id="callsLede">Every call carries the horizon it is meant for, the level it was taken at, and where it gets cut.</p>
+          <p id="callsLede">Names we are backing on fundamentals, held open until the reason to own them changes.</p>
         </div>
         <div class="horizon-bar" id="horizonBar"></div>
         <div id="callsBody"></div>
@@ -2785,6 +2791,27 @@ function fmtPct(v){
   return isFinite(n) ? n.toFixed(1) + '%' : '\u2014';
 }
 
+/* Fundamental calls, held in the file rather than the sheet.
+   Fill horizon / entry / target / stop / rationale / date as each
+   call is framed; anything left blank simply renders as pending
+   instead of pretending to be a level. */
+var PF_CALLS = [
+  { symbol:'NETWEB',     name:'Netweb Technologies India',    price:5322.90,
+    horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' },
+  { symbol:'CARTRADE',   name:'CarTrade Tech',                price:3014.60,
+    horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' },
+  { symbol:'VIJAYA',     name:'Vijaya Diagnostic Centre',     price:1452.50,
+    horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' },
+  { symbol:'PRIVISCL',   name:'Privi Speciality Chemicals',   price:3458.00,
+    horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' },
+  { symbol:'KARURVYSYA', name:'Karur Vysya Bank',             price:346.00,
+    horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' },
+  { symbol:'CHOLAFIN',   name:'Cholamandalam Inv. & Finance', price:1862.90,
+    horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' },
+  { symbol:'GROWW',      name:'Billionbrains Garage Ventures', price:191.46,
+    horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' }
+];
+
 /* --- Fundamental calls ---
    Reads a `calls` array off the same feed:
    { symbol, horizon: short|medium|long, action, entry, target, stop,
@@ -2799,12 +2826,17 @@ var HORIZONS = [
 
 function buildCallsTab(){
   var bar = document.getElementById('horizonBar');
+  var tagged = PF_CALLS.some(function(c){
+    return ['short','medium','long'].indexOf(String(c.horizon).toLowerCase()) !== -1;
+  });
   if(bar){
-    bar.innerHTML = HORIZONS.map(function(h){
+    bar.style.display = tagged ? '' : 'none';
+    bar.innerHTML = !tagged ? '' : HORIZONS.map(function(h){
       return '<button class="seg-btn' + (h[0] === CALL_HORIZON ? ' on' : '') +
              '" style="--hue:var(--brand)" onclick="setCallHorizon(\'' + h[0] + '\')">' + h[1] + '</button>';
     }).join('');
   }
+  if(!tagged) CALL_HORIZON = 'all';
 
   var body = document.getElementById('callsBody');
   if(!body) return;
@@ -2835,7 +2867,7 @@ function paintCalls(){
   var body = document.getElementById('callsBody');
   if(!body) return;
 
-  var all = (SCR_DATA && SCR_DATA.calls) || [];
+  var all = PF_CALLS;
   var rows = CALL_HORIZON === 'all'
     ? all
     : all.filter(function(c){ return (c.horizon || '').toLowerCase() === CALL_HORIZON; });
@@ -2846,47 +2878,71 @@ function paintCalls(){
     return;
   }
 
+  function hzMeta(hz){
+    var k = String(hz || '').toLowerCase();
+    if(k === 'short')  return { label:'Short term',  hue:'var(--tier-sb)' };
+    if(k === 'medium') return { label:'Medium term', hue:'var(--tier-b)' };
+    if(k === 'long')   return { label:'Long term',   hue:'var(--r70)' };
+    return { label:'Open', hue:'var(--tier-sb)' };
+  }
+
   var cards = rows.map(function(c){
-    var hz = (c.horizon || '').toLowerCase();
-    var hue = hz === 'short' ? 'var(--tier-sb)' : hz === 'medium' ? 'var(--tier-b)' : 'var(--r70)';
-    return '<div class="call" style="--hue:' + hue + '">' +
+    var h = hzMeta(c.horizon);
+    var priced = c.entry != null || c.target != null || c.stop != null;
+    return '<div class="call" style="--hue:' + h.hue + '">' +
       '<div class="call-top">' +
-        '<button class="call-sym as-link" onclick="openChart(\'' + (c.symbol || '') +
-          '\',\'' + (c.horizon || '') + ' term\')">' + (c.symbol || '') + '</button>' +
-        '<span class="call-hz">' + (c.horizon || '') + '</span>' +
+        '<div>' +
+          '<button class="call-sym as-link" onclick="openChart(\'' + c.symbol + '\')">' +
+            c.symbol + '</button>' +
+          (c.name ? '<div class="call-name">' + c.name + '</div>' : '') +
+        '</div>' +
+        '<span class="call-hz">' + h.label + '</span>' +
       '</div>' +
-      '<div class="call-nums" style="border-top:none;padding-top:0">' +
-        '<div><span>Entry</span><b>' + fmtLevel(c.entry) + '</b></div>' +
-        '<div><span>Target</span><b>' + fmtLevel(c.target) + '</b></div>' +
-        '<div><span>Stop</span><b>' + fmtLevel(c.stop) + '</b></div>' +
-      '</div>' +
+      (c.price != null
+        ? '<div class="call-cmp">' + fmtLevel(c.price) + '<span>current</span></div>' : '') +
+      (priced
+        ? '<div class="call-nums">' +
+            '<div><span>Entry</span><b>' + fmtLevel(c.entry) + '</b></div>' +
+            '<div><span>Target</span><b style="color:var(--tier-sb)">' + fmtLevel(c.target) + '</b></div>' +
+            '<div><span>Stop</span><b style="color:var(--red)">' + fmtLevel(c.stop) + '</b></div>' +
+          '</div>'
+        : '') +
       (c.rationale ? '<p class="call-why">' + c.rationale + '</p>' : '') +
       (c.date ? '<div class="call-date">' + fmtDate(c.date) + '</div>' : '') +
     '</div>';
   }).join('');
 
+  /* Columns nobody has filled are just dashes taking up room. */
+  var anyLevels = rows.some(function(c){ return c.entry != null || c.target != null || c.stop != null; });
+  var anyWhy    = rows.some(function(c){ return !!c.rationale; });
+  var anyDate   = rows.some(function(c){ return !!c.date; });
+
   var tableRows = rows.map(function(c){
-    var hz = (c.horizon || '').toLowerCase();
-    var cls = hz === 'short' ? 'sig-sb' : hz === 'medium' ? 'sig-b' : 'sig-long';
-    var chue = hz === 'short' ? 'var(--tier-sb)' : hz === 'medium' ? 'var(--tier-b)' : 'var(--r70)';
+    var h = hzMeta(c.horizon);
     return '<tr>' +
-      '<td><button class="tkr as-link" style="color:' + chue + '" onclick="openChart(\'' +
-        (c.symbol || '') + '\')">' + (c.symbol || '') + '</button></td>' +
-      '<td><span class="sig ' + cls + '">' + (c.horizon || '') + '</span></td>' +
-      '<td class="num r">' + fmtLevel(c.entry) + '</td>' +
-      '<td class="num r" style="color:var(--green)">' + fmtLevel(c.target) + '</td>' +
-      '<td class="num r" style="color:var(--red)">' + fmtLevel(c.stop) + '</td>' +
-      '<td class="dim" style="white-space:normal;max-width:380px">' + (c.rationale || '') + '</td>' +
-      '<td class="num dim r">' + (c.date ? fmtDate(c.date) : '') + '</td>' +
+      '<td><button class="tkr as-link" style="color:' + h.hue + '" onclick="openChart(\'' +
+        c.symbol + '\')">' + c.symbol + '</button>' +
+        (c.name ? '<div class="dim" style="font-size:11.5px;margin-top:3px;white-space:normal">' + c.name + '</div>' : '') +
+      '</td>' +
+      '<td><span class="chip" style="--c:' + h.hue + '">' + h.label + '</span></td>' +
+      '<td class="px r">' + fmtLevel(c.price) + '</td>' +
+      (anyLevels
+        ? '<td class="num r">' + fmtLevel(c.entry) + '</td>' +
+          '<td class="num r" style="color:var(--tier-sb)">' + fmtLevel(c.target) + '</td>' +
+          '<td class="num r" style="color:var(--red)">' + fmtLevel(c.stop) + '</td>'
+        : '') +
+      (anyWhy ? '<td class="dim" style="white-space:normal;max-width:380px">' + (c.rationale || '') + '</td>' : '') +
+      (anyDate ? '<td class="num dim r">' + (c.date ? fmtDate(c.date) : '') + '</td>' : '') +
     '</tr>';
   }).join('');
 
   body.innerHTML = viewToggle() +
     (VIEW_MODE === 'table'
       ? '<div class="scr-table" style="--seg:var(--brand)"><table class="tbl"><thead><tr>' +
-        '<th>Symbol</th><th>Horizon</th><th class="r">Entry</th>' +
-        '<th class="r">Target</th><th class="r">Stop</th>' +
-        '<th>Rationale</th><th class="r">Date</th>' +
+        '<th>Symbol</th><th>Status</th><th class="r">Current</th>' +
+        (anyLevels ? '<th class="r">Entry</th><th class="r">Target</th><th class="r">Stop</th>' : '') +
+        (anyWhy ? '<th>Rationale</th>' : '') +
+        (anyDate ? '<th class="r">Date</th>' : '') +
         '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
       : '<div class="call-grid" style="margin-top:14px">' + cards + '</div>');
 }
