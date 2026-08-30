@@ -2246,7 +2246,10 @@ setAppTheme(currentTheme(), false);
    are visible to anyone before signing up. Set it to false to keep
    the real ranks, sectors and movement but mask the names.
    ============================================================ */
-const FEED_URL = 'https://script.google.com/macros/s/AKfycbwnA5QHrJ1AAxhz9XZNQeAVg0o42SY-cZt6-gupSkaqLhit_KnCo6TpuzuGh_M6deYQ/exec';
+/* Data now comes from Supabase, where row-level security decides what
+   each account may read. There is no public URL to paste into a
+   browser any more — an unsubscribed request returns zero rows
+   rather than a hidden table. */
 const LANDING_SHOW_TICKERS = true;
 
 function maskSymbol(sym){
@@ -3197,7 +3200,8 @@ var HORIZONS = [
 
 function buildCallsTab(){
   var bar = document.getElementById('horizonBar');
-  var tagged = PF_CALLS.some(function(c){
+  var source = (SCR_DATA && SCR_DATA.calls && SCR_DATA.calls.length) ? SCR_DATA.calls : PF_CALLS;
+  var tagged = source.some(function(c){
     return ['short','medium','long'].indexOf(String(c.horizon).toLowerCase()) !== -1;
   });
   if(bar){
@@ -3238,7 +3242,7 @@ function paintCalls(){
   var body = document.getElementById('callsBody');
   if(!body) return;
 
-  var all = PF_CALLS;
+  var all = (SCR_DATA && SCR_DATA.calls && SCR_DATA.calls.length) ? SCR_DATA.calls : PF_CALLS;
   var rows = CALL_HORIZON === 'all'
     ? all
     : all.filter(function(c){ return (c.horizon || '').toLowerCase() === CALL_HORIZON; });
@@ -3615,34 +3619,88 @@ function ensureFeed(){
   if(SCR_DATA) return Promise.resolve(SCR_DATA);
   if(feedPending) return feedPending;
 
-  feedPending = fetch(FEED_URL, { redirect: 'follow' })
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(!data.tabs) data.tabs = {};
-      if(!data.modelPortfolio) data.modelPortfolio = { positions: [], journal: [] };
-      SCR_DATA = data;
-      D = data;
-      feedPending = null;
-      return data;
-    })
-    .catch(function(e){ feedPending = null; throw e; });
+  /* Five reads, run together. Each one is filtered by the database
+     against this account's plan, so what comes back IS what they are
+     entitled to — the UI is not deciding. */
+  feedPending = Promise.all([
+    db.from('screener_today').select('segment, symbol, rank, signal, sector, cat, price, ret3m, ret6m, ret12m, vol, is_new, fno'),
+    db.from('screener_teaser').select('segment, position, symbol, rank, signal, sector, total_rows').order('position'),
+    db.from('positions_today').select('symbol, status, entry_date, entry_price, curr_price, stop_loss, target, pnl_pct, days_held'),
+    db.from('mp_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(400),
+    db.from('waitlist_today').select('position, symbol, state, quality, price, pivot, dist_pivot, entry, stop_loss, target, capacity, held, free_slots').order('position'),
+    db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
+  ]).then(function(res){
+    var scr = res[0].data || [];
+    var tea = res[1].data || [];
+    var pos = res[2].data || [];
+    var jnl = res[3].data || [];
+    var wl  = res[4].data || [];
+    var cl  = res[5].data || [];
+
+    /* A logged-out visitor gets nothing from screener_today and the
+       teaser instead, so both are folded into the same shape the
+       rest of the app already expects. */
+    var tabs = {};
+    (scr.length ? scr : tea).forEach(function(r){
+      var seg = r.segment;
+      if(!tabs[seg]) tabs[seg] = [];
+      tabs[seg].push({
+        symbol: r.symbol, rank: r.rank, signal: r.signal,
+        sector: r.sector, cat: r.cat, price: r.price,
+        ret3m: r.ret3m, ret6m: r.ret6m, ret12m: r.ret12m,
+        vol: r.vol, isNew: r.is_new, fno: r.fno,
+        locked: !r.symbol
+      });
+    });
+
+    var teased = !scr.length;
+    var totals = {};
+    tea.forEach(function(r){ totals[r.segment] = r.total_rows; });
+
+    SCR_DATA = {
+      updated: new Date().toISOString(),
+      teased: teased,
+      totals: totals,
+      tabs: tabs,
+      modelPortfolio: {
+        positions: pos.map(function(p){
+          return { symbol:p.symbol, status:p.status, entryDate:p.entry_date,
+                   entryPrice:p.entry_price, currPrice:p.curr_price,
+                   stopLoss:p.stop_loss, target:p.target,
+                   pnlPct:p.pnl_pct, daysHeld:p.days_held };
+        }),
+        journal: jnl.map(function(j){
+          return { date:j.trade_date, symbol:j.symbol, action:j.action,
+                   price:j.price, pnlPct:j.pnl_pct, notes:j.notes };
+        })
+      },
+      waitlist: {
+        capacity: wl.length ? wl[0].capacity : 0,
+        held:     wl.length ? wl[0].held : 0,
+        freeSlots:wl.length ? wl[0].free_slots : 0,
+        rows: wl.map(function(r){
+          return { pos:r.position, symbol:r.symbol, state:r.state,
+                   quality:r.quality, price:r.price, pivot:r.pivot,
+                   distFromPivot:r.dist_pivot, entry:r.entry,
+                   stopLoss:r.stop_loss, target:r.target };
+        })
+      },
+      calls: cl.map(function(c){
+        return { symbol:c.symbol, name:c.name, horizon:c.horizon,
+                 price:c.price, entry:c.entry, target:c.target,
+                 stop:c.stop, rationale:c.rationale, date:c.call_date };
+      })
+    };
+
+    D = SCR_DATA;
+    feedPending = null;
+    return SCR_DATA;
+  }).catch(function(e){
+    feedPending = null;
+    throw e;
+  });
 
   return feedPending;
-}
-
-var SEG_LIST = [
-  ['ALL', 'Full universe',  '#F2B441'],
-  ['LC',  'Large cap',      '#4ED8A0'],
-  ['MC',  'Mid cap',        '#3EC9D6'],
-  ['SC',  'Small cap',      '#A97CF0'],
-  ['FO',  'F&O',            '#FF8A5B'],
-  ['ET',  'ETFs',           '#6E8BFF'],
-  ['LM',  'Large + mid',    '#E36FA8'],
-  ['MS',  'Mid + small',    '#8FD14F']
-];
-
-function segMeta(key){
-  return SEG_LIST.filter(function(x){ return x[0] === key; })[0] || SEG_LIST[0];
 }
 
 function buildScreenerTab(){
@@ -3851,14 +3909,15 @@ function buildPublicModel(force){
     el.innerHTML = rows.length >= 4 ? html + html : html;
   }
 
+  /* Index quotes came from the Apps Script endpoint, which is being
+     retired. Until they are pushed into Supabase like everything
+     else, the strip simply stays out of the way rather than showing
+     a stale number. */
   function load(){
-    fetch(FEED_URL + '?action=indices', { redirect: 'follow' })
-      .then(r => r.json())
-      .then(render)
-      .catch(() => msg('Index data unavailable'));
+    var strip = document.querySelector('.pulse-strip');
+    if(strip) strip.style.display = 'none';
   }
 
-  msg('Loading index data\u2026');
   load();
   if(!REDUCED) setInterval(load, 60000);
 })();
@@ -3929,8 +3988,7 @@ var redrawHeroChart = function(){};
   }
 
   function load(){
-    fetch(FEED_URL, { redirect: 'follow' })
-      .then(r => r.json())
+    ensureFeed()
       .then(data => {
         const all = (data && data.tabs && data.tabs.ALL) || [];
         const top = all
@@ -4103,9 +4161,15 @@ async function route(){
       .select('subscription_status, plan, expires_at')
       .eq('id', session.user.id)
       .single();
-    AUTH_STATE = (profile && profile.subscription_status === 'active') ? 'active' : 'inactive';
-    /* Anything unrecognised falls back to the widest plan rather than
-       locking a paying member out of what they bought. */
+    /* expires_at was being read and then ignored, so a row left at
+       'active' with a date in the past still opened everything. */
+    var live = !!profile && profile.subscription_status === 'active';
+    if(live && profile.expires_at){
+      var until = new Date(profile.expires_at);
+      if(!isNaN(until.getTime()) && until.getTime() < Date.now()) live = false;
+    }
+
+    AUTH_STATE = live ? 'active' : 'inactive';
     ACCOUNT_PLAN = (profile && profile.plan) ? String(profile.plan).toLowerCase() : '';
     if(AUTH_STATE === 'active' && !planDef(ACCOUNT_PLAN)) ACCOUNT_PLAN = 'full';
   }
@@ -4114,6 +4178,29 @@ async function route(){
   /* Same page either way — only what sits inside the tabs changes. */
   rebuildTabs();
 }
+
+/* Access was only checked on load. A tab left open all day kept
+   whatever it was granted at breakfast, so revoking a subscription
+   did nothing until the member happened to reload. Re-check when the
+   tab comes back into view, and on a slow timer while it is open. */
+var lastAccessCheck = Date.now();
+
+async function recheckAccess(){
+  var was = AUTH_STATE + '/' + ACCOUNT_PLAN;
+  lastAccessCheck = Date.now();
+  await route();
+  if(AUTH_STATE + '/' + ACCOUNT_PLAN !== was) rebuildTabs();
+}
+
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState !== 'visible') return;
+  if(Date.now() - lastAccessCheck < 60000) return;   /* not on every glance */
+  recheckAccess();
+});
+
+setInterval(function(){
+  if(document.visibilityState === 'visible') recheckAccess();
+}, 10 * 60 * 1000);
 
 async function refreshStatus(){ await route(); }
 
@@ -4161,8 +4248,11 @@ db.auth.onAuthStateChange(async (event) => {
      replaces it.
      ============================================================ -->
 <script>
-var NSE_URL="https://script.google.com/macros/s/AKfycbwnA5QHrJ1AAxhz9XZNQeAVg0o42SY-cZt6-gupSkaqLhit_KnCo6TpuzuGh_M6deYQ/exec";
-var US_URL="https://script.google.com/macros/s/AKfycbwO5ZwuvnWXZjsBLHR_AgTLod7HL5fyXXx6RyfOCQg0FkB2tILw_rxQepVmiHlUpHyPmA/exec";
+/* The Apps Script URLs are gone. Anything in the page source is
+   public, and these served the entire ranked list to anyone who
+   pasted them into a browser. */
+var NSE_URL="";
+var US_URL="";
 var D={tabs:{},portfolio:[],modelPortfolio:{positions:[],journal:[]},history:[],watchlist:[],journal:[],log:""};
 var dataNSE=null, dataUS=null;
 var priceTimer=null;
@@ -6983,7 +7073,9 @@ var PRIOR_PERFORMANCE = {
   US:  { period: "Last 1 Year (broker order book, verified)", gainAmount: 3000, gainPct: 40 }
 };
 
-var FINNHUB_API_KEY = "d9646b1r01qik59mdhq0d9646b1r01qik59mdhqg";
+/* An API key shipped to the browser is a key you have given away.
+   Leave this empty; the widget that used it degrades quietly. */
+var FINNHUB_API_KEY = "";
 
 var TICKER_INDICES = [
   {label:"S&P 500",    sym:"SPY"},
