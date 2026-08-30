@@ -3176,6 +3176,11 @@ function fmtPct(v){
    Fill horizon / entry / target / stop / rationale / date as each
    call is framed; anything left blank simply renders as pending
    instead of pretending to be a level. */
+/* Calls are read from this list rather than the database while the
+   CALLS sheet is still short. Flip to true once the sheet holds the
+   full set and the push job has run. */
+var CALLS_FROM_DB = false;
+
 var PF_CALLS = [
   { symbol:'NETWEB',     name:'Netweb Technologies India',    price:5322.90,
     horizon:'open', entry:null, target:null, stop:null, rationale:'', date:'' },
@@ -3205,10 +3210,16 @@ var HORIZONS = [
   ['long',   'Long term']
 ];
 
+function callsSource(){
+  if(CALLS_FROM_DB && SCR_DATA && SCR_DATA.calls && SCR_DATA.calls.length){
+    return SCR_DATA.calls;
+  }
+  return PF_CALLS;
+}
+
 function buildCallsTab(){
   var bar = document.getElementById('horizonBar');
-  var source = (SCR_DATA && SCR_DATA.calls && SCR_DATA.calls.length) ? SCR_DATA.calls : PF_CALLS;
-  var tagged = source.some(function(c){
+  var tagged = callsSource().some(function(c){
     return ['short','medium','long'].indexOf(String(c.horizon).toLowerCase()) !== -1;
   });
   if(bar){
@@ -3249,7 +3260,7 @@ function paintCalls(){
   var body = document.getElementById('callsBody');
   if(!body) return;
 
-  var all = (SCR_DATA && SCR_DATA.calls && SCR_DATA.calls.length) ? SCR_DATA.calls : PF_CALLS;
+  var all = callsSource();
   var rows = CALL_HORIZON === 'all'
     ? all
     : all.filter(function(c){ return (c.horizon || '').toLowerCase() === CALL_HORIZON; });
