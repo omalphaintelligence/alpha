@@ -3087,7 +3087,14 @@ function paintReady(){
   var rows = w.rows || [];
 
   if(!rows.length){
-    body.innerHTML = '<div class="scr-load">Nothing clears the entry bar today.</div>';
+    /* The server returns nothing both when the queue is genuinely
+       empty and when this account is not entitled to it. Those are
+       different situations and used to read the same. */
+    body.innerHTML = canSeeModel()
+      ? '<div class="scr-load">Nothing clears the entry bar today.</div>'
+      : lockPanel('The waiting list',
+          'Every name that already clears the entry bar, ranked, with the levels each one would be taken at.',
+          'model');
     return;
   }
 
@@ -3248,8 +3255,12 @@ function paintCalls(){
     : all.filter(function(c){ return (c.horizon || '').toLowerCase() === CALL_HORIZON; });
 
   if(!rows.length){
-    body.innerHTML = '<div class="scr-load">No calls published' +
-      (CALL_HORIZON === 'all' ? ' yet.' : ' for this horizon.') + '</div>';
+    body.innerHTML = canSeeCalls()
+      ? '<div class="scr-load">No calls published' +
+        (CALL_HORIZON === 'all' ? ' yet.' : ' for this horizon.') + '</div>'
+      : lockPanel('Fundamental calls',
+          'Short, medium and long term ideas with entry, target and stop on each one.',
+          'full');
     return;
   }
 
@@ -3703,6 +3714,23 @@ function ensureFeed(){
   return feedPending;
 }
 
+/* The eight segments, each with its own colour so a table announces
+   which one it belongs to before a word is read. */
+var SEG_LIST = [
+  ['ALL', 'Full universe',  '#F2B441'],
+  ['LC',  'Large cap',      '#4ED8A0'],
+  ['MC',  'Mid cap',        '#3EC9D6'],
+  ['SC',  'Small cap',      '#A97CF0'],
+  ['FO',  'F&O',            '#FF8A5B'],
+  ['ET',  'ETFs',           '#6E8BFF'],
+  ['LM',  'Large + mid',    '#E36FA8'],
+  ['MS',  'Mid + small',    '#8FD14F']
+];
+
+function segMeta(key){
+  return SEG_LIST.filter(function(x){ return x[0] === key; })[0] || SEG_LIST[0];
+}
+
 function buildScreenerTab(){
   var body = document.getElementById('scrBody');
   var bar  = document.getElementById('segBar');
@@ -3750,7 +3778,12 @@ function paintScreenerSegment(){
     .sort(function(a, b){ return b.rank - a.rank; });
 
   if(!rows.length){
-    body.innerHTML = '<div class="scr-load">Nothing ranked in this segment today.</div>';
+    var need = (SCR_SEG === 'LC' || SCR_SEG === 'MC' || SCR_SEG === 'LM') ? 'core' : 'full';
+    body.innerHTML = canSeeSegment(SCR_SEG)
+      ? '<div class="scr-load">Nothing ranked in this segment today.</div>'
+      : lockPanel(meta[1],
+          'The full table, filters and CSV export come with ' + (planDef(need) || {}).name + '.',
+          need);
     return;
   }
 
