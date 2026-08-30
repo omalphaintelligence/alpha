@@ -572,6 +572,79 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 .pane-actions{display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap}
 
+/* ---------- front page showcase ----------
+   Full-bleed colour is right here: these are posters for four
+   products, and nothing on them has to be read as data. */
+.show-wrap{position:relative;margin-top:30px}
+.show-lbl{
+  font-size:12.5px;font-weight:600;color:var(--muted);
+  margin-bottom:12px;display:flex;align-items:center;gap:10px;
+}
+.show-lbl::after{content:'';flex:1;height:1px;background:var(--line-soft)}
+.show-deck{position:relative;height:288px;perspective:1600px}
+.show-card{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  padding:26px 28px;border-radius:20px;cursor:pointer;
+  background:linear-gradient(132deg,var(--a) 0%,var(--b) 100%);
+  color:#fff;
+  box-shadow:0 28px 60px -34px color-mix(in srgb,var(--a) 80%,transparent);
+  transition:transform .6s var(--ease),opacity .6s var(--ease),box-shadow .6s var(--ease);
+  will-change:transform;
+  overflow:hidden;
+}
+.show-card::after{
+  content:'';position:absolute;right:-90px;top:-90px;
+  width:320px;height:320px;border-radius:50%;
+  background:rgba(255,255,255,.10);pointer-events:none;
+}
+.show-card.p0{transform:translateY(0) scale(1);opacity:1;z-index:4}
+.show-card.p1{transform:translateY(18px) scale(.955);opacity:.6;z-index:3}
+.show-card.p2{transform:translateY(34px) scale(.912);opacity:.3;z-index:2}
+.show-card.px{transform:translateY(48px) scale(.88);opacity:0;z-index:1;pointer-events:none}
+
+.sc-tag{
+  font-size:12px;font-weight:700;letter-spacing:.02em;
+  opacity:.85;margin-bottom:14px;
+}
+.sc-title{
+  font-family:var(--disp);font-size:clamp(23px,2.4vw,29px);
+  font-weight:800;letter-spacing:-.035em;line-height:1.05;margin:0;
+}
+.sc-line{
+  margin-top:10px;max-width:40ch;
+  font-size:14.5px;line-height:1.55;opacity:.9;
+}
+.sc-stat{display:flex;align-items:baseline;gap:11px;margin-top:auto;padding-top:20px}
+.sc-stat b{
+  font-family:var(--mono);font-size:32px;font-weight:700;
+  letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1;
+}
+.sc-stat span{font-size:13px;opacity:.85}
+.sc-go{
+  position:absolute;right:28px;bottom:26px;
+  font-size:13.5px;font-weight:700;opacity:.9;
+}
+
+.show-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.show-chip{
+  padding:7px 13px;border-radius:999px;
+  border:1px solid var(--line);background:transparent;
+  font-size:13px;font-weight:600;color:var(--muted);
+  transition:color .2s var(--ease),background .2s var(--ease),border-color .2s var(--ease);
+}
+.show-chip{font-size:12.5px}
+.show-chip:hover{color:var(--text);border-color:var(--a)}
+.show-chip.on{color:#fff;background:var(--a);border-color:var(--a)}
+
+@media(max-width:720px){
+  .show-deck{height:370px}
+  .show-card{padding:26px 24px;border-radius:18px}
+  .sc-go{right:24px;bottom:26px}
+  .sc-stat b{font-size:32px}
+}
+@media(prefers-reduced-motion:reduce){ .show-card{transition:none} }
+
 /* ---------- landing tabs ---------- */
 .zone-sw{
   display:flex;gap:2px;flex-shrink:0;
@@ -1681,6 +1754,12 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
             <div class="q-text" id="q-text"></div>
             <div class="q-by" id="q-by"></div>
           </div>
+
+          <div class="show-wrap">
+            <div class="show-lbl">What a subscription opens</div>
+            <div class="show-deck" id="showDeck"></div>
+            <div class="show-chips" id="showChips"></div>
+          </div>
         </div>
 
         <div class="ladder rv">
@@ -2342,6 +2421,8 @@ function setLandingTab(tab, btn){
   if(tab === 'calls') buildCallsTab();
   if(tab === 'ready') buildReadyTab();
   if(tab === 'account') buildAccount();
+  if(tab === 'overview') buildShowcase();
+  else showStop();
 }
 
 /* Cards read well for a handful of items; a table wins when you are
@@ -3111,6 +3192,134 @@ function capChip(cat){
   return '<span class="chip chip-sm" style="--c:' + CAP_HUE[cat] + '">' + CAP_LABEL[cat] + '</span>';
 }
 
+/* --- Front page showcase ---
+   Four products, one shuffling deck. These are marketing cards, not
+   tables, so the colour runs at full strength — nothing here has to
+   be scanned for a number.
+
+   Figures come from the same feed the paid pages use, so the deck is
+   never advertising something the product does not do. --- */
+var SHOWCASE = [
+  { key:'screener', tab:'screener',
+    tag:'Screeners',        title:'The whole exchange, ranked',
+    line:'Every listed name scored and sorted after each close, across eight segments.',
+    hue:'#1E9E5A', hue2:'#0B5C39' },
+  { key:'model',    tab:'model',
+    tag:'Model Portfolio',  title:'The book we actually run',
+    line:'Twenty positions with entry, stop and target, and the record behind every one.',
+    hue:'#4A7DFF', hue2:'#1B3FA8' },
+  { key:'ready',    tab:'ready',
+    tag:'Ready to Move',    title:'What goes in next',
+    line:'Names that already clear every entry condition, waiting for a slot to open.',
+    hue:'#C97A0E', hue2:'#7A4405' },
+  { key:'calls',    tab:'calls',
+    tag:'Fundamental Calls', title:'Conviction, held open',
+    line:'Businesses we are backing on fundamentals, not on a chart pattern.',
+    hue:'#A45CF0', hue2:'#5B2596' }
+];
+
+var showIdx = 0;
+var showTimer = null;
+
+/* Live numbers where we have them; nothing invented if we do not. */
+function showcaseStat(key){
+  if(key === 'screener'){
+    var n = ((SCR_DATA && SCR_DATA.tabs && SCR_DATA.tabs.ALL) || []).length;
+    return n ? [n.toLocaleString('en-IN'), 'names ranked today'] : ['8', 'segments'];
+  }
+  if(key === 'model'){
+    if(typeof PF_WEEKLY !== 'undefined' && PF_WEEKLY.length > 1){
+      var mult = PF_WEEKLY[PF_WEEKLY.length-1] / PF_WEEKLY[0];
+      return ['+' + Math.round((mult - 1) * 100).toLocaleString('en-IN') + '%', 'since inception'];
+    }
+    return ['20', 'positions'];
+  }
+  if(key === 'ready'){
+    var w = (SCR_DATA && SCR_DATA.waitlist) || {};
+    var n = (w.rows || []).length;
+    return n ? [String(n), 'in the queue now'] : ['\u2014', 'in the queue'];
+  }
+  return [String(PF_CALLS.length), 'calls open'];
+}
+
+function buildShowcase(){
+  var deck = document.getElementById('showDeck');
+  var chips = document.getElementById('showChips');
+  if(!deck) return;
+
+  deck.innerHTML = SHOWCASE.map(function(c, i){
+    var st = showcaseStat(c.key);
+    return '<article class="show-card" style="--a:' + c.hue + ';--b:' + c.hue2 + '" ' +
+      'onclick="showGo(' + i + ')">' +
+      '<div class="sc-tag">' + c.tag + '</div>' +
+      '<h3 class="sc-title">' + c.title + '</h3>' +
+      '<p class="sc-line">' + c.line + '</p>' +
+      '<div class="sc-stat"><b>' + st[0] + '</b><span>' + st[1] + '</span></div>' +
+      '<div class="sc-go">Open ' + c.tag + ' \u2192</div>' +
+    '</article>';
+  }).join('');
+
+  if(chips){
+    chips.innerHTML = SHOWCASE.map(function(c, i){
+      return '<button class="show-chip" style="--a:' + c.hue + '" onclick="showTo(' + i + ')">' +
+        c.tag + '</button>';
+    }).join('');
+  }
+
+  deck.addEventListener('mouseenter', showStop);
+  deck.addEventListener('mouseleave', showStart);
+
+  paintShowcase();
+  showStart();
+
+  /* Fill in the live figures once the feed lands. */
+  ensureFeed().then(function(){
+    if(document.getElementById('showDeck')) refreshShowcaseStats();
+  }).catch(function(){});
+}
+
+function refreshShowcaseStats(){
+  document.querySelectorAll('#showDeck .show-card').forEach(function(el, i){
+    var st = showcaseStat(SHOWCASE[i].key);
+    var b = el.querySelector('.sc-stat b'), sp = el.querySelector('.sc-stat span');
+    if(b) b.textContent = st[0];
+    if(sp) sp.textContent = st[1];
+  });
+}
+
+function paintShowcase(){
+  var n = SHOWCASE.length;
+  document.querySelectorAll('#showDeck .show-card').forEach(function(el, i){
+    var off = (i - showIdx + n) % n;
+    el.className = 'show-card ' + (off < 3 ? 'p' + off : 'px');
+  });
+  document.querySelectorAll('#showChips .show-chip').forEach(function(el, i){
+    el.classList.toggle('on', i === showIdx);
+  });
+}
+
+function showTo(i){ showIdx = i; paintShowcase(); showStart(); }
+
+/* Clicking the front card takes you into that product. */
+function showGo(i){
+  if(i !== showIdx){ showTo(i); return; }
+  var tab = SHOWCASE[i].tab;
+  var order = ZONE_TABS[ZONE].map(function(t){ return t[0]; });
+  var at = order.indexOf(tab);
+  if(at === -1){ goPricing(); return; }
+  setLandingTab(tab, document.querySelectorAll('#ltabs .ltab-btn')[at]);
+}
+
+function showStart(){
+  showStop();
+  if(REDUCED) return;
+  showTimer = setInterval(function(){
+    showIdx = (showIdx + 1) % SHOWCASE.length;
+    paintShowcase();
+  }, 4200);
+}
+function showStop(){ if(showTimer){ clearInterval(showTimer); showTimer = null; } }
+
 /* --- Screeners tab ---
    Same page, same segments, whatever the access level. Logged out,
    each segment shows a short teased sample; subscribed, the same
@@ -3634,6 +3843,7 @@ async function refreshStatus(){ await route(); }
 
 (async function(){
   paintZoneTabs();
+  buildShowcase();
   try { await route(); }
   catch(e){ console.error(e); show('view-landing'); }
   finally { document.getElementById('boot').style.display = 'none'; }
