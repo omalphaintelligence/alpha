@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ============================================================
      PART 1 — SHELL STYLES (landing page, auth modal, gate views)
@@ -29,6 +29,10 @@
      that nothing is monospaced. */
   --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --disp:'Fraunces',Georgia,'Times New Roman',serif;
+  /* Names are set in Garamond — an old-style face with real letter
+     shapes, so a ticker reads as a company rather than a database
+     key. Figures stay in Fraunces, which has the sturdier numerals. */
+  --name:'EB Garamond',Garamond,Georgia,'Times New Roman',serif;
   --fig:'Fraunces',Georgia,'Times New Roman',serif;
   /* kept as an alias so older rules still resolve */
   --mono:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -302,8 +306,8 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
 
 /* the ticker itself carries the weight; everything else recedes */
 .tkr{
-  font-family:var(--disp);font-size:14px;font-weight:700;
-  letter-spacing:-.015em;
+  font-family:var(--name);font-size:16px;font-weight:600;
+  letter-spacing:0;
 }
 .num{
   font-size:13.5px;font-weight:500;
@@ -871,12 +875,20 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 /* A symbol is a chart you have not opened yet. */
 /* A dashed underline under every symbol turned the table into a
    dotted mess. The affordance shows on hover instead. */
+/* font:inherit is a shorthand — it resets family, size and weight,
+   which quietly undid the Garamond on every clickable symbol. Set
+   only what a button actually needs to shed. */
 .as-link{
-  background:none;border:none;padding:0;font:inherit;color:inherit;
+  background:none;border:none;padding:0;color:inherit;
+  font:inherit;
   cursor:pointer;text-align:left;
   border-bottom:1px solid transparent;
   transition:color .15s linear,border-color .15s linear;
 }
+.tkr.as-link,.hold-sym.as-link,.call-sym.as-link{
+  font-family:var(--name);
+}
+.tkr.as-link{font-size:16px;font-weight:600}
 .as-link:hover{color:var(--brand);border-bottom-color:currentColor}
 .row-locked .tkr,.row-locked td:nth-child(4){filter:blur(4.5px);user-select:none}
 .scr-foot{
@@ -967,7 +979,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .call:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--hue) 40%,transparent)}
 
 .call-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
-.call-sym{font-size:17px;font-weight:600;letter-spacing:0;font-variant-numeric:tabular-nums lining}
+.call-sym{font-family:var(--name);font-size:22px;font-weight:600;letter-spacing:-.005em}
 .call-hz{
   flex-shrink:0;display:inline-flex;align-items:center;gap:7px;
   font-size:12px;font-weight:600;color:var(--hue);
@@ -985,7 +997,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .call-nums b{font-size:16px;font-weight:500;letter-spacing:0;font-variant-numeric:tabular-nums lining}
 .call-nums b.up,.call-nums b.dn{color:var(--text)}
 
-.call-name{margin-top:4px;font-size:12px;color:var(--muted);line-height:1.35}
+.call-name{margin-top:5px;font-family:var(--name);font-size:14.5px;color:var(--muted);line-height:1.35}
 .call-cmp{
   font-family:var(--fig);font-size:25px;font-weight:600;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;margin-bottom:14px;
@@ -1034,7 +1046,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .hold-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .hold-top > div:first-child{min-width:0}
 .hold-sym{
-  font-family:var(--disp);font-size:27px;font-weight:600;letter-spacing:-.02em;
+  font-family:var(--name);font-size:30px;font-weight:600;letter-spacing:-.005em;
   line-height:1.1;background:none;border:none;padding:0;cursor:pointer;
   color:var(--text);text-align:left;
 }
@@ -1469,7 +1481,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .dash-scope th:hover{color:var(--text)}
 .dash-scope td{padding:12px 16px;border-bottom:1px solid color-mix(in srgb,var(--b1) 55%,transparent);white-space:nowrap;vertical-align:middle}
 .dash-scope td.price,.dash-scope td.num{text-align:right;font-weight:450;font-variant-numeric:tabular-nums lining}
-.dash-scope .sym{font-size:13.5px;font-weight:600;letter-spacing:0;color:var(--text);font-variant-numeric:tabular-nums lining}
+.dash-scope .sym{font-family:var(--name);font-size:16px;font-weight:600;letter-spacing:0;color:var(--text)}
 .dash-scope tr:last-child td{border-bottom:none}
 .dash-scope tr:hover td{background:color-mix(in srgb, var(--tab-accent) 8%, var(--s2))}
 .dash-scope .bsb{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--r99)}
@@ -1490,7 +1502,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .dash-scope .cmc{background:rgba(16,185,129,.12);color:#10b981}
 .dash-scope .csc{background:rgba(139,92,246,.12);color:#a78bfa}
 .dash-scope .cet{background:rgba(245,158,11,.12);color:#f59e0b}
-.dash-scope .sym{font-family:var(--disp);font-size:14px;font-weight:700;letter-spacing:-.015em;color:var(--text)}
+.dash-scope .sym{font-family:var(--name);font-size:16px;font-weight:600;letter-spacing:0;color:var(--text)}
 .dash-scope .new-t{font-size:9px;background:rgba(139,92,246,.2);color:#a78bfa;padding:1px 3px;border-radius:9px;margin-left:2px;font-weight:700}
 .dash-scope .own-t{font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;padding:1px 3px;border-radius:9px;margin-left:2px;font-weight:700}
 .dash-scope .fno-t{font-size:9px;color:var(--cyan);font-weight:700;margin-left:2px}
