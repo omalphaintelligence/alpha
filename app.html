@@ -14,25 +14,24 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ============================================================
      PART 1 — SHELL STYLES (landing page, auth modal, gate views)
      ============================================================ -->
 <style>
 :root{
-  /* One family, three voices. IBM Plex was drawn for technical
-     documentation, so the serif carries authority without decoration
-     and the mono was designed to sit beside it — which is what a
-     research product actually needs. */
-  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --disp:'IBM Plex Serif',Georgia,'Times New Roman',serif;
-  /* Figures used to be set in a monospaced face, which reads as a
-     terminal rather than a research note. The sans carries tabular
-     figures, so columns still line up digit for digit without the
-     code-editor look. */
-  --mono:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --fig:'IBM Plex Serif',Georgia,'Times New Roman',serif;
+  /* Fraunces for anything that carries weight — headings and the one
+     figure a card is built around. It is a soft-serif with real
+     character, so a page of numbers stops looking machine-set.
+     Inter does the working text: it was drawn for screens and has
+     proper tabular figures, which is what keeps columns aligned now
+     that nothing is monospaced. */
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --disp:'Fraunces',Georgia,'Times New Roman',serif;
+  --fig:'Fraunces',Georgia,'Times New Roman',serif;
+  /* kept as an alias so older rules still resolve */
+  --mono:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --ease:cubic-bezier(.22,.9,.28,1);
 }
 
@@ -1034,7 +1033,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 
 .hold-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .hold-sym{
-  font-family:var(--disp);font-size:18px;font-weight:800;letter-spacing:-.03em;
+  font-family:var(--disp);font-size:19px;font-weight:600;letter-spacing:-.01em;
   background:none;border:none;padding:0;cursor:pointer;color:var(--text);
 }
 .hold-sym:hover{color:var(--brand)}
@@ -1045,14 +1044,15 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 }
 .hold-st::before{content:'';width:3px;height:12px;border-radius:1px;background:currentColor}
 
-.hold-main{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:14px 0 13px}
+.hold-main{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;margin:16px 0 15px}
 .hold-pnl{
-  font-family:var(--fig);font-size:31px;font-weight:600;
+  font-family:var(--fig);font-size:38px;font-weight:400;
+  font-feature-settings:'lnum' 1;
   letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;
 }
 .hold-cmp{font-size:14px;font-weight:600;
   font-variant-numeric:tabular-nums}
-.hold-cmp span{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--muted);margin-left:9px;white-space:nowrap}
+.hold-cmp span{font-family:var(--sans);font-size:12.5px;font-weight:400;color:var(--muted);margin-left:10px;white-space:nowrap}
 
 /* where the trade sits between its stop and its target */
 .hold-track{margin-bottom:14px}
@@ -1079,7 +1079,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   padding-top:13px;border-top:1px solid var(--line-soft);
 }
 .hold-stats div{display:flex;flex-direction:column;gap:4px}
-.hold-stats span{font-size:11px;color:var(--muted);font-weight:500}
+.hold-stats span{font-size:11.5px;color:var(--muted);font-weight:400;letter-spacing:.01em}
 .hold-stats b{font-size:13.5px;font-weight:600;
   letter-spacing:-.015em;font-variant-numeric:tabular-nums}
 
@@ -6108,7 +6108,7 @@ function drawPerf(){
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.scale(dpr, dpr);
-    ctx.font = '11px "IBM Plex Sans", sans-serif';
+    ctx.font = '11px Inter, sans-serif';
 
     /* horizontal grid + y labels */
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
@@ -6693,7 +6693,12 @@ function renderMpTables(){
         '<div>' +
           '<button class="hold-sym as-link" onclick="openChart(\'' + p.symbol + '\')">' +
             p.symbol + '</button>' +
-          '<div class="hold-sec">' + sectorChip(m.sector) + ' ' + capChip(m.cat) + '</div>' +
+          (m.sector || m.cat
+            ? '<div class="hold-sec">' +
+                (m.sector && m.sector !== 'Other' ? sectorChip(m.sector) : '') +
+                capChip(m.cat) +
+              '</div>'
+            : '') +
         '</div>' +
         '<span class="hold-st">' + st + '</span>' +
       '</div>' +
@@ -6715,14 +6720,23 @@ function renderMpTables(){
         '</div>' +
       '</div>' +
 
+      /* Only the figures we actually have. A position that has since
+         dropped out of the screener has no rank or trailing returns,
+         and printing a row of em-dashes for it made every second card
+         look broken. */
       '<div class="hold-stats">' +
-        '<div><span>RS rank</span><b style="color:' + rhue + '">' + (rank != null ? rank : '\u2014') + '</b></div>' +
-        '<div><span>3M</span><b style="color:' + pctHue(m.ret3m) + '">' + pct(m.ret3m) + '</b></div>' +
-        '<div><span>12M</span><b style="color:' + pctHue(m.ret12m) + '">' + pct(m.ret12m) + '</b></div>' +
-        '<div><span>' + (toTarget != null && toTarget < 0 ? 'Past target' : 'To target') + '</span>' +
-          '<b style="color:' + (toTarget != null && toTarget < 0 ? 'var(--tier-sb)' : 'var(--text)') + '">' +
-          (toTarget != null ? pct(Math.abs(toTarget)) : '\u2014') + '</b></div>' +
-        '<div><span>Risk left</span><b>' + (toStop != null ? pct(-Math.abs(toStop)) : '\u2014') + '</b></div>' +
+        (rank != null
+          ? '<div><span>RS rank</span><b style="color:' + rhue + '">' + rank + '</b></div>' : '') +
+        (m.ret3m != null
+          ? '<div><span>3M</span><b style="color:' + pctHue(m.ret3m) + '">' + pct(m.ret3m) + '</b></div>' : '') +
+        (m.ret12m != null
+          ? '<div><span>12M</span><b style="color:' + pctHue(m.ret12m) + '">' + pct(m.ret12m) + '</b></div>' : '') +
+        (toTarget != null
+          ? '<div><span>' + (toTarget < 0 ? 'Past target' : 'To target') + '</span>' +
+            '<b style="color:' + (toTarget < 0 ? 'var(--tier-sb)' : 'var(--text)') + '">' +
+            pct(Math.abs(toTarget)) + '</b></div>' : '') +
+        (toStop != null
+          ? '<div><span>Risk left</span><b>' + pct(-Math.abs(toStop)) + '</b></div>' : '') +
         '<div><span>Held</span><b>' + (p.daysHeld || 0) + 'd</b></div>' +
       '</div>' +
 
@@ -7346,7 +7360,7 @@ function drawEquityCurve(curve){
     ctx.clearRect(0,0,cv.width,cv.height);
     ctx.scale(dpr,dpr);
 
-    ctx.font = '11px "IBM Plex Sans", sans-serif';
+    ctx.font = '11px Inter, sans-serif';
     ctx.textBaseline = "middle";
     [max, 0, min].forEach(function(v){
       if(v===0 && (max===0||min===0)) return;
