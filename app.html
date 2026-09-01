@@ -296,6 +296,16 @@ h2{font-family:var(--disp);margin-top:12px;font-size:clamp(27px,3.5vw,38px);font
   border-bottom:1px solid var(--line);
 }
 .tbl th.r,.tbl td.r{text-align:right}
+
+/* sortable headers */
+.tbl th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+.tbl th.sortable:hover{color:var(--text)}
+.tbl th.sortable .sort-mark{
+  display:inline-block;width:11px;margin-left:5px;
+  font-style:normal;font-size:11px;opacity:.9;
+}
+.tbl th.sorted{color:var(--text);font-weight:700}
+.tbl th.sorted .sort-mark{color:var(--seg,var(--brand))}
 .tbl td{
   padding:0 16px;height:44px;
   font-size:13.5px;color:var(--text);
@@ -6752,6 +6762,63 @@ function renderPeriodPicker(){
 
 /* Positions and journal, pulled out of renderModel so the Model
    Portfolio tab can show them on their own once someone subscribes. */
+/* --- Sorting the holdings table ---
+   A book of twenty positions gets read differently depending on the
+   question: what is running, what is new, what is strongest. So the
+   column headers sort, and the choice is remembered. --- */
+var MP_SORT = { key: 'pnl', dir: -1 };
+try {
+  var saved = JSON.parse(localStorage.getItem('ai_mp_sort') || 'null');
+  if(saved && saved.key) MP_SORT = saved;
+} catch(e){}
+
+function setMpSort(key){
+  /* Same column twice reverses it; a new column starts in the
+     direction that column is usually read. */
+  if(MP_SORT.key === key){
+    MP_SORT.dir = -MP_SORT.dir;
+  } else {
+    MP_SORT.key = key;
+    MP_SORT.dir = (key === 'symbol' || key === 'sector') ? 1 : -1;
+  }
+  try { localStorage.setItem('ai_mp_sort', JSON.stringify(MP_SORT)); } catch(e){}
+
+  var host = document.getElementById('mpGated');
+  if(host) host.innerHTML = renderMpTables();
+}
+
+function sortPositions(pos, meta){
+  var k = MP_SORT.key, dir = MP_SORT.dir;
+
+  function val(p){
+    var m = meta[String(p.symbol).toUpperCase()] || {};
+    switch(k){
+      case 'symbol': return String(p.symbol || '');
+      case 'sector': return String(m.sector || '\uffff');   /* blanks last */
+      case 'pnl':    return +p.pnlPct || 0;
+      case 'held':   return +p.daysHeld || 0;
+      case 'rank':   return m.rank != null ? +m.rank : -1;
+      case 'ret3m':  return m.ret3m != null ? +m.ret3m : -9999;
+      case 'price':  return +p.currPrice || 0;
+      default:       return 0;
+    }
+  }
+
+  return pos.slice().sort(function(a, b){
+    var x = val(a), y = val(b);
+    if(typeof x === 'string') return dir * x.localeCompare(y);
+    return dir * (x - y);
+  });
+}
+
+function mpHead(key, label, align){
+  var on = MP_SORT.key === key;
+  return '<th class="sortable' + (align ? ' ' + align : '') + (on ? ' sorted' : '') +
+    '" onclick="setMpSort(\'' + key + '\')">' + label +
+    '<i class="sort-mark">' + (on ? (MP_SORT.dir === 1 ? '\u2191' : '\u2193') : '') + '</i>' +
+  '</th>';
+}
+
 function renderMpTables(){
   if(MARKET === 'NSE') extendFromJournal();
 
@@ -6883,7 +6950,7 @@ function renderMpTables(){
     '</div>';
   }).join('');
 
-  var posRows = pos.map(function(p){
+  var posRows = sortPositions(pos, meta).map(function(p){
     var m2 = meta[String(p.symbol).toUpperCase()] || {};
     var rank2 = m2.rank != null ? Math.round(m2.rank) : null;
     var rhue2 = rank2 == null ? 'var(--muted)'
@@ -6917,9 +6984,15 @@ function renderMpTables(){
     ? '<div class="empty" style="padding:2rem">No open positions right now.</div>'
     : (VIEW_MODE === 'table'
         ? '<div class="scr-table" style="--seg:var(--tier-sb)"><table class="tbl"><thead><tr>' +
-          '<th>Symbol</th><th>Status</th><th class="r">P&L</th><th class="r">Price</th>' +
+          mpHead('symbol', 'Symbol') +
+          '<th>Status</th>' +
+          mpHead('pnl',   'P&L',    'r') +
+          mpHead('price', 'Price',  'r') +
           '<th class="r">Entry</th><th class="r">Target</th><th class="r">Stop</th>' +
-          '<th class="r">RS</th><th class="r">3M</th><th>Sector</th><th class="r">Held</th>' +
+          mpHead('rank',  'RS',     'r') +
+          mpHead('ret3m', '3M',     'r') +
+          mpHead('sector','Sector') +
+          mpHead('held',  'Held',   'r') +
           '</tr></thead><tbody>' + posRows + '</tbody></table></div>'
         : '<div class="hold-grid">' + posCards + '</div>');
 
