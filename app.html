@@ -220,7 +220,7 @@ h1 em{font-style:italic;font-weight:400}
 h1 em{font-style:normal;color:var(--brand)}
 .hero p.lede{margin-top:20px;max-width:54ch;font-size:17.5px;color:var(--muted);line-height:1.62;font-weight:500}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
-.note{margin-top:16px;font-size:13px;color:var(--muted);opacity:.85}
+.feed-item{margin-top:16px;font-size:13px;color:var(--muted);opacity:.85}
 
 /* stats */
 .stats{
@@ -3737,6 +3737,7 @@ function ensureFeed(){
     /* The retained days of the queue, so a name that turned up today
        can be told apart from one that has been waiting a fortnight. */
     db.from('waitlist_rows').select('symbol, as_of').order('as_of', { ascending:true }).limit(2000),
+    db.from('mp_history').select('as_of, symbol, status, entry_price, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
   ]).then(function(res){
     var scr = res[0].data || [];
@@ -3745,7 +3746,11 @@ function ensureFeed(){
     var jnl = res[3].data || [];
     var wl   = res[4].data || [];
     var hist = res[5].data || [];
-    var cl   = res[6].data || [];
+    /* Index order has to match the query order above exactly; these
+       two were the wrong way round, so the notes read the calls list
+       and found no snapshots. */
+    var hist2 = res[6].data || [];
+    var cl    = res[7].data || [];
 
     /* The first date each symbol appeared in the queue. */
     var firstSeen = {};
@@ -3812,6 +3817,7 @@ function ensureFeed(){
                    since: firstSeen[String(r.symbol).toUpperCase()] || null };
         })
       },
+      history: hist2,
       calls: cl.map(function(c){
         return { symbol:c.symbol, name:c.name, horizon:c.horizon,
                  price:c.price, entry:c.entry, target:c.target,
@@ -6819,6 +6825,236 @@ function mpHead(key, label, align){
   '</th>';
 }
 
+/* ============================================================
+   PORTFOLIO SCORECARD
+   Twelve months of closed trades plus whatever is running now.
+   Realised comes from the journal, unrealised from open positions —
+   they are different things and are never added together silently.
+   ============================================================ */
+function mpScorecard(pos, events){
+  var cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  var since = cutoff.toISOString().slice(0, 10);
+
+  var hits = 0, stops = 0, realised = 0, closed = 0;
+  (events || []).forEach(function(e){
+    if(!e.date || String(e.date).slice(0, 10) < since) return;
+    if(e.action === 'ENTRY') return;
+    closed++;
+    realised += (+e.pnlPct || 0);
+    if(e.action === 'TARGET HIT' || (+e.pnlPct || 0) > 0) hits++;
+    else stops++;
+  });
+
+  var open = (pos || []).filter(function(p){ return p.status === 'OPEN'; });
+  var unrealised = open.reduce(function(a, p){ return a + (+p.pnlPct || 0); }, 0);
+  var winners = open.filter(function(p){ return (+p.pnlPct || 0) > 0; }).length;
+
+  return {
+    since: since,
+    hits: hits, stops: stops, closed: closed,
+    winRate: closed ? (hits / closed * 100) : null,
+    realised: realised,
+    running: open.length,
+    winnersOpen: winners,
+    unrealised: unrealised,
+    avgOpen: open.length ? unrealised / open.length : 0
+  };
+}
+
+function renderScorecard(sc){
+  function cell(label, value, sub, hue){
+    return '<div class="sc-cell">' +
+      '<div class="sc-l">' + label + '</div>' +
+      '<div class="sc-v"' + (hue ? ' style="color:' + hue + '"' : '') + '>' + value + '</div>' +
+      (sub ? '<div class="sc-s">' + sub + '</div>' : '') +
+    '</div>';
+  }
+  function pc(v){ return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
+  var g = 'var(--tier-sb)', r = 'var(--red)';
+
+  return '<div class="scorecard">' +
+    cell('Targets hit', sc.hits,
+         sc.winRate != null ? sc.winRate.toFixed(0) + '% of closed trades' : 'no closed trades', g) +
+    cell('Stopped out', sc.stops,
+         sc.closed ? (100 - sc.winRate).toFixed(0) + '% of closed trades' : '', r) +
+    cell('Running now', sc.running,
+         sc.running ? sc.winnersOpen + ' of them in profit' : 'nothing open') +
+    cell('Realised', pc(sc.realised),
+         'summed across ' + sc.closed + ' closed trades',
+         sc.realised >= 0 ? g : r) +
+    cell('Unrealised', pc(sc.unrealised),
+         sc.running ? pc(sc.avgOpen) + ' average per position' : '',
+         sc.unrealised >= 0 ? g : r) +
+  '</div>' +
+  '<p class="sc-note">Last twelve months of closed trades, plus every position open today. ' +
+  'Realised and unrealised are kept apart — one is banked, the other is not.</p>';
+}
+
+
+/* ============================================================
+   COMMENTARY
+   A running note of what the book did and why it changed. Every
+   line is derived from the data, not written by hand: the daily
+   move from consecutive snapshots, entries and exits from the
+   journal, and queue movement from the waitlist history.
+   ============================================================ */
+function buildNotes(){
+  var d = SCR_DATA || {};
+  var hist = d.history || [];
+  var events = ((d.modelPortfolio || {}).journal) || [];
+  var notes = [];
+
+  /* --- group the snapshots by day --- */
+  var byDay = {};
+  hist.forEach(function(r){
+    if(!r || !r.as_of) return;
+    var k = String(r.as_of).slice(0, 10);
+    (byDay[k] = byDay[k] || []).push(r);
+  });
+  var days = Object.keys(byDay).sort().reverse();
+
+  /* --- what the book did each day --- */
+  for(var i = 0; i < days.length - 1 && i < 30; i++){
+    var today = byDay[days[i]], prev = byDay[days[i + 1]];
+    var prevBy = {};
+    prev.forEach(function(r){ prevBy[r.symbol] = r; });
+
+    var moves = [];
+    today.forEach(function(r){
+      var was = prevBy[r.symbol];
+      if(!was || !was.curr_price || !r.curr_price) return;
+      var chg = (r.curr_price - was.curr_price) / was.curr_price * 100;
+      if(Math.abs(chg) < 0.01) return;
+      moves.push({ symbol: r.symbol, chg: chg });
+    });
+    if(!moves.length) continue;
+
+    var net = moves.reduce(function(a, m){ return a + m.chg; }, 0) / moves.length;
+    moves.sort(function(a, b){ return b.chg - a.chg; });
+    var up = moves.filter(function(m){ return m.chg > 0; });
+    var dn = moves.filter(function(m){ return m.chg < 0; });
+
+    notes.push({
+      date: days[i],
+      kind: 'day',
+      hue: net >= 0 ? 'var(--tier-sb)' : 'var(--red)',
+      title: 'The book ' + (net >= 0 ? 'gained' : 'gave back') + ' ' +
+             Math.abs(net).toFixed(2) + '% today',
+      summary: up.length + ' up, ' + dn.length + ' down',
+      detail: renderDayDetail(up, dn, net)
+    });
+  }
+
+  /* --- entries and exits --- */
+  events.slice(0, 60).forEach(function(e){
+    if(!e.date) return;
+    var when = String(e.date).slice(0, 10);
+
+    if(e.action === 'ENTRY'){
+      notes.push({
+        date: when, kind: 'in', hue: 'var(--tier-b)',
+        title: e.symbol + ' added to the book',
+        summary: 'taken at ' + pfMoney(e.price),
+        detail: entryDetail(e)
+      });
+    } else {
+      var pnl = +e.pnlPct || 0;
+      notes.push({
+        date: when, kind: 'out',
+        hue: pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)',
+        title: e.symbol + ' closed ' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%',
+        summary: e.action === 'TARGET HIT' ? 'target reached'
+               : e.action === 'STOPPED OUT' ? 'stop taken out' : 'position exited',
+        detail: exitDetail(e)
+      });
+    }
+  });
+
+  notes.sort(function(a, b){ return b.date.localeCompare(a.date); });
+  return notes.slice(0, 40);
+}
+
+function renderDayDetail(up, dn, net){
+  function row(m){
+    return '<div class="nd-row">' +
+      '<button class="tkr as-link" onclick="openChart(\'' + m.symbol + '\')">' + m.symbol + '</button>' +
+      '<span class="num" style="color:' + (m.chg >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+        (m.chg >= 0 ? '+' : '') + m.chg.toFixed(2) + '%</span>' +
+    '</div>';
+  }
+  return '<div class="nd-cols">' +
+    '<div><div class="nd-h">Up</div>' +
+      (up.length ? up.slice(0, 10).map(row).join('') : '<div class="nd-none">nothing</div>') + '</div>' +
+    '<div><div class="nd-h">Down</div>' +
+      (dn.length ? dn.slice(0, 10).map(row).join('') : '<div class="nd-none">nothing</div>') + '</div>' +
+  '</div>' +
+  '<div class="nd-net">Average across the book: <b style="color:' +
+    (net >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+    (net >= 0 ? '+' : '') + net.toFixed(2) + '%</b></div>';
+}
+
+function entryDetail(e){
+  var m = ((SCR_DATA && SCR_DATA.tabs && SCR_DATA.tabs.ALL) || [])
+    .filter(function(x){ return x.symbol === e.symbol; })[0] || {};
+  return '<p class="nd-p">A slot opened and ' + e.symbol +
+    ' was the strongest name clearing every entry condition, so it took the place.</p>' +
+    '<div class="nd-facts">' +
+      '<div><span>Taken at</span><b>' + pfMoney(e.price) + '</b></div>' +
+      (m.rank != null ? '<div><span>RS rank</span><b>' + Math.round(m.rank) + '</b></div>' : '') +
+      (m.sector ? '<div><span>Sector</span><b>' + m.sector + '</b></div>' : '') +
+    '</div>';
+}
+
+function exitDetail(e){
+  var pnl = +e.pnlPct || 0;
+  var why = e.action === 'TARGET HIT'
+    ? 'The target was reached, so the position was closed and the slot handed back to the queue.'
+    : e.action === 'STOPPED OUT'
+      ? 'Price fell through the stop. The position was cut at the level set on the day it was taken.'
+      : 'The position was closed.';
+  return '<p class="nd-p">' + why + '</p>' +
+    '<div class="nd-facts">' +
+      '<div><span>Closed at</span><b>' + pfMoney(e.price) + '</b></div>' +
+      '<div><span>Result</span><b style="color:' +
+        (pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+        (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</b></div>' +
+    '</div>' +
+    '<p class="nd-p nd-dim">A freed slot is filled from Ready to Move, top of the queue first.</p>';
+}
+
+var NOTES_OPEN = {};
+function toggleNote(i){
+  NOTES_OPEN[i] = !NOTES_OPEN[i];
+  var el = document.getElementById('note-' + i);
+  if(el) el.classList.toggle('open', NOTES_OPEN[i]);
+}
+
+function renderNotes(){
+  var notes = buildNotes();
+  if(!notes.length) return '';
+
+  return '<div class="mp-sec">' +
+    '<div class="mp-sec-head"><div class="mp-sec-t">What changed</div></div>' +
+    '<div class="feed">' + notes.map(function(n, i){
+      var when = new Date(n.date).toLocaleDateString('en-IN',
+        { day:'numeric', month:'short' });
+      return '<div class="feed-item' + (NOTES_OPEN[i] ? ' open' : '') + '" id="note-' + i +
+        '" style="--n:' + n.hue + '" onclick="toggleNote(' + i + ')">' +
+        '<div class="feed-head">' +
+          '<div class="feed-when">' + when + '</div>' +
+          '<div class="feed-body">' +
+            '<div class="feed-title">' + n.title + '</div>' +
+            '<div class="feed-sum">' + n.summary + '</div>' +
+          '</div>' +
+          '<div class="feed-chev">\u203A</div>' +
+        '</div>' +
+        '<div class="feed-detail">' + n.detail + '</div>' +
+      '</div>';
+    }).join('') + '</div>' +
+  '</div>';
+}
+
 function renderMpTables(){
   if(MARKET === 'NSE') extendFromJournal();
 
@@ -7032,7 +7268,9 @@ function renderMpTables(){
       '<td class="num r dim">' + fmtDate(j.date) + '</td></tr>';
   }).join('');
 
-  return '<div class="mp-sec">' +
+  return renderScorecard(mpScorecard(pos, events)) +
+    renderNotes() +
+    '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings</div>' + viewToggle() + '</div>' +
     posBody +
     '</div>' +
