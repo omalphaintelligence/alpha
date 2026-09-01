@@ -220,7 +220,7 @@ h1 em{font-style:italic;font-weight:400}
 h1 em{font-style:normal;color:var(--brand)}
 .hero p.lede{margin-top:20px;max-width:54ch;font-size:17.5px;color:var(--muted);line-height:1.62;font-weight:500}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
-.feed-item{margin-top:16px;font-size:13px;color:var(--muted);opacity:.85}
+
 
 /* stats */
 .stats{
@@ -1117,6 +1117,100 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   font-family:var(--fig);font-size:16px;font-weight:400;
   letter-spacing:0;font-variant-numeric:tabular-nums lining;
 }
+
+/* scorecard */
+.scorecard{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);
+  border-radius:14px;overflow:hidden;
+}
+.sc-cell{padding:18px 20px;background:var(--panel)}
+.sc-l{font-size:12px;color:var(--muted);margin-bottom:7px}
+.sc-v{
+  font-family:var(--fig);font-size:27px;font-weight:600;
+  letter-spacing:-.01em;line-height:1;
+  font-variant-numeric:tabular-nums lining;
+}
+.sc-s{margin-top:7px;font-size:11.5px;color:var(--muted);line-height:1.4}
+.sc-note{margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+@media(max-width:1000px){ .scorecard{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:560px){ .scorecard{grid-template-columns:1fr} }
+
+/* commentary */
+.cm-sub{display:flex;border-bottom:1px solid var(--line-soft);margin-bottom:24px}
+.cm-sub button{
+  padding:12px 2px;margin-right:26px;
+  font-size:15.5px;font-weight:600;color:var(--muted);
+  border-bottom:2px solid transparent;
+  transition:color .18s var(--ease),border-color .18s var(--ease);
+}
+.cm-sub button:hover{color:var(--text)}
+.cm-sub button.on{color:var(--text);border-bottom-color:var(--brand)}
+
+.cm-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.cm-filter{
+  padding:7px 15px;border-radius:999px;
+  border:1px solid var(--line-soft);background:transparent;
+  font-size:13px;font-weight:600;color:var(--muted);
+  transition:color .18s var(--ease),background .18s var(--ease),border-color .18s var(--ease);
+}
+.cm-filter:hover{color:var(--text)}
+.cm-filter.on{
+  color:var(--text);border-color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 14%,transparent);
+}
+
+.feed{display:flex;flex-direction:column;gap:10px}
+.feed-item{
+  border:1px solid var(--line-soft);border-left:3px solid var(--n);
+  border-radius:12px;cursor:pointer;overflow:hidden;
+  background:color-mix(in srgb,var(--panel) 76%,transparent);
+  transition:border-color .18s var(--ease);
+}
+.feed-item:hover{border-color:color-mix(in srgb,var(--n) 45%,transparent);border-left-color:var(--n)}
+.feed-head{display:flex;align-items:flex-start;gap:18px;padding:18px 20px}
+.feed-body{flex:1;min-width:0}
+.feed-title{font-size:16.5px;font-weight:600;line-height:1.35}
+.feed-sum{
+  margin-top:5px;font-size:13.5px;color:var(--muted);line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
+}
+.feed-when{
+  flex-shrink:0;font-size:12.5px;color:var(--muted);
+  padding-top:3px;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.feed-chev{
+  flex-shrink:0;font-size:20px;color:var(--muted);line-height:1;padding-top:1px;
+  transition:transform .2s var(--ease);
+}
+.feed-item.open .feed-chev{transform:rotate(90deg)}
+.feed-item.open .feed-sum{-webkit-line-clamp:unset}
+
+/* Collapsed unless opened. Without this every note prints its whole
+   detail and the page becomes the wall of text it was. */
+.feed-detail{display:none;padding:0 20px 20px}
+.feed-item.open .feed-detail{display:block;border-top:1px solid var(--line-soft);padding-top:18px}
+
+.nd-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.nd-h{font-size:12px;color:var(--muted);margin-bottom:9px;font-weight:600}
+.nd-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:6px 0;border-bottom:1px solid var(--line-soft);
+}
+.nd-row:last-child{border-bottom:none}
+.nd-none{font-size:13px;color:var(--muted);opacity:.7}
+.nd-net{
+  margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--line-soft);font-size:13.5px;color:var(--muted);
+}
+.nd-p{font-size:14.5px;line-height:1.65;color:var(--muted);margin:0 0 16px}
+.nd-dim{opacity:.8;font-size:13px;margin:14px 0 0}
+.nd-facts{display:flex;gap:30px;flex-wrap:wrap}
+.nd-facts div{display:flex;flex-direction:column;gap:5px}
+.nd-facts span{font-size:12px;color:var(--muted)}
+.nd-facts b{font-family:var(--fig);font-size:17px;font-weight:400;font-variant-numeric:tabular-nums lining}
+@media(max-width:640px){ .nd-cols{grid-template-columns:1fr;gap:18px} }
+
 
 /* newest arrivals — three colours, brightest first */
 .new-tag{
@@ -7023,6 +7117,21 @@ function exitDetail(e){
     '<p class="nd-p nd-dim">A freed slot is filled from Ready to Move, top of the queue first.</p>';
 }
 
+var MP_VIEW = 'portfolio';
+var CM_FILTER = 'all';
+
+function setMpView(v){
+  MP_VIEW = v;
+  var host = document.getElementById('mpGated');
+  if(host) host.innerHTML = renderMpTables();
+}
+
+function setCmFilter(f){
+  CM_FILTER = f;
+  var host = document.getElementById('mpGated');
+  if(host) host.innerHTML = renderMpTables();
+}
+
 var NOTES_OPEN = {};
 function toggleNote(i){
   NOTES_OPEN[i] = !NOTES_OPEN[i];
@@ -7030,12 +7139,36 @@ function toggleNote(i){
   if(el) el.classList.toggle('open', NOTES_OPEN[i]);
 }
 
-function renderNotes(){
-  var notes = buildNotes();
-  if(!notes.length) return '';
+var CM_TABS = [
+  ['all',      'All'],
+  ['in',       'Additions'],
+  ['out',      'Removals'],
+  ['day',      'Daily reports']
+];
 
-  return '<div class="mp-sec">' +
-    '<div class="mp-sec-head"><div class="mp-sec-t">What changed</div></div>' +
+function renderNotes(){
+  var all = buildNotes();
+
+  var counts = { all: all.length, in: 0, out: 0, day: 0 };
+  all.forEach(function(n){ counts[n.kind] = (counts[n.kind] || 0) + 1; });
+
+  var notes = CM_FILTER === 'all'
+    ? all
+    : all.filter(function(n){ return n.kind === CM_FILTER; });
+
+  var filters = '<div class="cm-filters">' + CM_TABS.map(function(t){
+    return '<button class="cm-filter' + (CM_FILTER === t[0] ? ' on' : '') +
+      '" onclick="setCmFilter(\'' + t[0] + '\')">' + t[1] +
+      (counts[t[0]] ? ' <span class="dim">' + counts[t[0]] + '</span>' : '') +
+    '</button>';
+  }).join('') + '</div>';
+
+  if(!notes.length){
+    return filters + '<div class="scr-load">Nothing filed under this yet. ' +
+      'Daily reports start once there are two days of history to compare.</div>';
+  }
+
+  return filters +
     '<div class="feed">' + notes.map(function(n, i){
       var when = new Date(n.date).toLocaleDateString('en-IN',
         { day:'numeric', month:'short' });
@@ -7051,8 +7184,7 @@ function renderNotes(){
         '</div>' +
         '<div class="feed-detail">' + n.detail + '</div>' +
       '</div>';
-    }).join('') + '</div>' +
-  '</div>';
+    }).join('') + '</div>';
 }
 
 function renderMpTables(){
@@ -7268,8 +7400,12 @@ function renderMpTables(){
       '<td class="num r dim">' + fmtDate(j.date) + '</td></tr>';
   }).join('');
 
-  return renderScorecard(mpScorecard(pos, events)) +
-    renderNotes() +
+  /* Two views of the same book: the positions themselves, and the
+     running account of what changed. Mixing them put a wall of
+     commentary above the holdings, which is not what anyone opens
+     this tab for. */
+  var portfolioView =
+    renderScorecard(mpScorecard(pos, events)) +
     '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings</div>' + viewToggle() + '</div>' +
     posBody +
@@ -7282,6 +7418,14 @@ function renderMpTables(){
         ? '<div class="mp-note">Showing the ' + LIMIT + ' most recent of ' + events.length.toLocaleString() + ' events.</div>'
         : '') +
     '</div>';
+
+  return '<div class="cm-sub">' +
+      '<button class="' + (MP_VIEW === 'portfolio' ? 'on' : '') +
+        '" onclick="setMpView(\'portfolio\')">Model Portfolio</button>' +
+      '<button class="' + (MP_VIEW === 'commentary' ? 'on' : '') +
+        '" onclick="setMpView(\'commentary\')">Commentary</button>' +
+    '</div>' +
+    (MP_VIEW === 'commentary' ? renderNotes() : portfolioView);
 }
 
 function renderModel(){
