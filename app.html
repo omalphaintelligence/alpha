@@ -3651,9 +3651,9 @@ function ensureFeed(){
      against this account's plan, so what comes back IS what they are
      entitled to — the UI is not deciding. */
   feedPending = Promise.all([
-    db.from('screener_today').select('segment, symbol, rank, signal, sector, cat, price, ret3m, ret6m, ret12m, vol, is_new, fno'),
+    db.from('screener_today').select('as_of, segment, symbol, rank, signal, sector, cat, price, ret3m, ret6m, ret12m, vol, is_new, fno'),
     db.from('screener_teaser').select('segment, position, symbol, rank, signal, sector, total_rows').order('position'),
-    db.from('positions_today').select('symbol, status, entry_date, entry_price, curr_price, stop_loss, target, pnl_pct, days_held'),
+    db.from('positions_today').select('as_of, symbol, status, entry_date, entry_price, curr_price, stop_loss, target, pnl_pct, days_held'),
     db.from('mp_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(400),
     db.from('waitlist_today').select('position, symbol, state, quality, price, pivot, dist_pivot, entry, stop_loss, target, capacity, held, free_slots').order('position'),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
@@ -3685,8 +3685,16 @@ function ensureFeed(){
     var totals = {};
     tea.forEach(function(r){ totals[r.segment] = r.total_rows; });
 
+    /* The newest as_of we received, so the page can say how old the
+       prices are instead of presenting a stale number as live. */
+    var stamp = null;
+    (scr.concat(pos)).forEach(function(r){
+      if(r && r.as_of && (!stamp || r.as_of > stamp)) stamp = r.as_of;
+    });
+
     SCR_DATA = {
       updated: new Date().toISOString(),
+      asOf: stamp,
       teased: teased,
       totals: totals,
       tabs: tabs,
@@ -3783,6 +3791,17 @@ function setScrSeg(key){
     b.classList.toggle('on', SEG_LIST[i][0] === key);
   });
   paintScreenerSegment();
+}
+
+/* Prices are pushed on a timer, not streamed. Saying when they were
+   last written is the difference between a number that looks wrong
+   and one the reader can judge for themselves. */
+function priceAge(){
+  var d = SCR_DATA && SCR_DATA.asOf;
+  if(!d) return '';
+  var today = new Date().toISOString().slice(0, 10);
+  return d === today ? '' : ' \u00b7 prices as of ' +
+    new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
 }
 
 function paintScreenerSegment(){
