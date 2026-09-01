@@ -1108,6 +1108,29 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   letter-spacing:0;font-variant-numeric:tabular-nums lining;
 }
 
+/* newest arrivals — three colours, brightest first */
+.new-tag{
+  display:inline-flex;align-items:center;
+  padding:3px 9px;border-radius:6px;
+  font-size:11px;font-weight:700;white-space:nowrap;
+  color:#08111C;background:var(--n);
+}
+body.s-light .new-tag{color:#fff}
+
+.hold-flags{display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+/* On a card the colour runs down the edge as well as sitting in the
+   badge, so a new holding is visible before anything is read. */
+.hold.is-new::before,.call.is-new::before{background:var(--n)}
+.hold.is-new,.call.is-new{
+  border-color:color-mix(in srgb,var(--n) 45%,transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--n) 22%,transparent);
+}
+.call.is-new::after{background:var(--n)}
+
+/* In a table the same colour marks the row's leading edge. */
+.tbl tbody tr.row-new td:first-child{box-shadow:inset 4px 0 0 var(--n)}
+
 /* ready to move: slot counter + queue */
 .slot-strip{
   display:flex;align-items:center;gap:20px;flex-wrap:wrap;
@@ -3063,6 +3086,43 @@ async function saveProfile(){
   btn.disabled = false; btn.textContent = 'Save changes';
 }
 
+/* --- Newest arrivals ---
+   The three most recent additions carry a colour each, brightest
+   first. Anything older is left plain: if everything is highlighted
+   nothing is. --- */
+var NEW_HUES = ['#2FBF71', '#3EC9D6', '#A97CF0'];
+
+/* Ranks a list by recency and hands back a lookup of symbol → 0,1,2.
+   `key` is the function that pulls the date to sort on. */
+function newestThree(rows, key){
+  var dated = rows
+    .map(function(r){ return { sym: String(r.symbol).toUpperCase(), on: key(r) }; })
+    .filter(function(r){ return !!r.on; })
+    .sort(function(a, b){ return String(b.on).localeCompare(String(a.on)); });
+
+  var rank = {}, seen = 0, lastDate = null;
+  for(var i = 0; i < dated.length && seen < 3; i++){
+    /* Several names added on the same day share a rank rather than
+       arbitrarily splitting them. */
+    if(dated[i].on !== lastDate){ lastDate = dated[i].on; seen++; }
+    if(seen <= 3) rank[dated[i].sym] = seen - 1;
+  }
+  return rank;
+}
+
+function newBadge(rankIdx, on){
+  if(rankIdx == null) return '';
+  var hue = NEW_HUES[rankIdx];
+  var label = 'New';
+  if(on){
+    var days = Math.round((Date.now() - new Date(on).getTime()) / 86400000);
+    label = days <= 0 ? 'Added today'
+          : days === 1 ? 'Added yesterday'
+          : 'Added ' + days + 'd ago';
+  }
+  return '<span class="new-tag" style="--n:' + hue + '">' + label + '</span>';
+}
+
 /* --- Ready to move ---
    The queue the Model Portfolio draws from. READY means a slot is
    open today; QUEUED means the name qualifies but the book is full.
@@ -3120,14 +3180,19 @@ function paintReady(){
       '</div>' +
     '</div>';
 
+  var freshQ = newestThree(rows, function(r){ return r.since; });
+
   var cards = rows.map(function(r){
     var ready = String(r.state).toUpperCase() === 'READY';
     var hue = ready ? 'var(--tier-sb)' : 'var(--tier-w)';
-    return '<div class="call" style="--hue:' + hue + '">' +
+    var fresh = freshQ[String(r.symbol).toUpperCase()];
+    return '<div class="call' + (fresh != null ? ' is-new' : '') + '"' +
+      ' style="--hue:' + hue + (fresh != null ? ';--n:' + NEW_HUES[fresh] : '') + '">' +
       '<div class="call-top">' +
         '<button class="call-sym as-link" onclick="openChart(\'' + r.symbol +
           '\',\'quality ' + r.quality + '\')">' + r.symbol + '</button>' +
-        '<span class="call-hz">' + r.state + '</span>' +
+        '<div class="hold-flags">' + newBadge(fresh, r.since) +
+          '<span class="call-hz">' + r.state + '</span></div>' +
       '</div>' +
       '<div class="rdy-line">' +
         '<span class="rdy-q">Quality ' + r.quality + '</span>' +
@@ -3147,12 +3212,15 @@ function paintReady(){
     var q = Number(r.quality) || 0;
     var qhue = q >= 90 ? 'var(--tier-sb)' : q >= 75 ? 'var(--tier-b)'
              : q >= 60 ? 'var(--tier-w)' : 'var(--muted)';
-    return '<tr>' +
+    var fresh = freshQ[String(r.symbol).toUpperCase()];
+    return '<tr' + (fresh != null ? ' class="row-new" style="--n:' + NEW_HUES[fresh] + '"' : '') + '>' +
       '<td class="num dim">' + (i + 1) + '</td>' +
       '<td><button class="tkr as-link" style="color:' + qhue + '" onclick="openChart(\'' +
-        r.symbol + '\')">' + r.symbol + '</button></td>' +
+        r.symbol + '\')">' + r.symbol + '</button>' +
+        '' + '</td>' +
       '<td><span class="sig ' + (ready ? 'sig-ready' : 'sig-queued') + '">' +
-        (ready ? 'Ready' : 'Queued') + '</span></td>' +
+        (ready ? 'Ready' : 'Queued') + '</span>' +
+        (fresh != null ? ' ' + newBadge(fresh, r.since) : '') + '</td>' +
       '<td class="r"><span class="rankpill" style="--c:' + qhue + '">' + q + '</span></td>' +
       '<td class="num r">' + pfMoney(r.price) + '</td>' +
       '<td class="num r dim">' + fmtPct(r.distFromPivot) + '</td>' +
@@ -3656,14 +3724,26 @@ function ensureFeed(){
     db.from('positions_today').select('as_of, symbol, status, entry_date, entry_price, curr_price, stop_loss, target, pnl_pct, days_held'),
     db.from('mp_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(400),
     db.from('waitlist_today').select('position, symbol, state, quality, price, pivot, dist_pivot, entry, stop_loss, target, capacity, held, free_slots').order('position'),
+    /* The retained days of the queue, so a name that turned up today
+       can be told apart from one that has been waiting a fortnight. */
+    db.from('waitlist_rows').select('symbol, as_of').order('as_of', { ascending:true }).limit(2000),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
   ]).then(function(res){
     var scr = res[0].data || [];
     var tea = res[1].data || [];
     var pos = res[2].data || [];
     var jnl = res[3].data || [];
-    var wl  = res[4].data || [];
-    var cl  = res[5].data || [];
+    var wl   = res[4].data || [];
+    var hist = res[5].data || [];
+    var cl   = res[6].data || [];
+
+    /* The first date each symbol appeared in the queue. */
+    var firstSeen = {};
+    hist.forEach(function(r){
+      if(!r || !r.symbol) return;
+      var k = String(r.symbol).toUpperCase();
+      if(!firstSeen[k] || r.as_of < firstSeen[k]) firstSeen[k] = r.as_of;
+    });
 
     /* A logged-out visitor gets nothing from screener_today and the
        teaser instead, so both are folded into the same shape the
@@ -3718,7 +3798,8 @@ function ensureFeed(){
           return { pos:r.position, symbol:r.symbol, state:r.state,
                    quality:r.quality, price:r.price, pivot:r.pivot,
                    distFromPivot:r.dist_pivot, entry:r.entry,
-                   stopLoss:r.stop_loss, target:r.target };
+                   stopLoss:r.stop_loss, target:r.target,
+                   since: firstSeen[String(r.symbol).toUpperCase()] || null };
         })
       },
       calls: cl.map(function(c){
@@ -6704,6 +6785,15 @@ function renderMpTables(){
     return n > 0 ? 'var(--tier-sb)' : n < 0 ? 'var(--red)' : 'var(--muted)';
   }
 
+  var freshPos = newestThree(pos, function(p){
+    if(p.entryDate) return String(p.entryDate).slice(0, 10);
+    /* No entry date stored — derive one from how long it has been held. */
+    var d = new Date(Date.now() - (+p.daysHeld || 0) * 86400000);
+    return d.toISOString().slice(0, 10);
+  });
+
+  /* Newest three by entry date; falls back to days held when the
+     date has not come through. */
   var posCards = pos.map(function(p){
     var m    = meta[String(p.symbol).toUpperCase()] || {};
     var pnl  = +p.pnlPct || 0;
@@ -6731,7 +6821,10 @@ function renderMpTables(){
              : rank >= 90 ? 'var(--tier-sb)' : rank >= 80 ? 'var(--tier-b)' : 'var(--tier-w)';
 
     var shue = sectorHue(m.sector);
-    return '<div class="hold" style="--hue:' + hue + ';--sec:' + shue + '">' +
+    var fresh = freshPos[String(p.symbol).toUpperCase()];
+    return '<div class="hold' + (fresh != null ? ' is-new' : '') + '"' +
+      ' style="--hue:' + hue + ';--sec:' + shue +
+      (fresh != null ? ';--n:' + NEW_HUES[fresh] : '') + '">' +
 
       '<div class="hold-top">' +
         '<div>' +
@@ -6744,7 +6837,10 @@ function renderMpTables(){
               '</div>'
             : '') +
         '</div>' +
-        '<span class="hold-st">' + st + '</span>' +
+        '<div class="hold-flags">' +
+          newBadge(fresh, p.entryDate) +
+          '<span class="hold-st">' + st + '</span>' +
+        '</div>' +
       '</div>' +
 
       '<div class="hold-main">' +
@@ -6793,15 +6889,17 @@ function renderMpTables(){
     var rhue2 = rank2 == null ? 'var(--muted)'
               : rank2 >= 90 ? 'var(--tier-sb)' : rank2 >= 80 ? 'var(--tier-b)' : 'var(--tier-w)';
     var pnl = +p.pnlPct || 0;
+    var fresh2 = freshPos[String(p.symbol).toUpperCase()];
     var st = p.status === 'TARGET HIT' ? '<span class="sig sig-sb">Hit</span>'
            : p.status === 'STOPPED OUT' ? '<span class="sig" style="color:var(--red)">Stopped</span>'
            : '<span class="sig sig-b">Open</span>';
     /* A holding's ticker carries how it is doing, not just its name. */
     var thue = pnl > 0.01 ? 'var(--tier-sb)' : pnl < -0.01 ? 'var(--red)' : 'var(--text)';
-    return '<tr>' +
+    return '<tr' + (fresh2 != null ? ' class="row-new" style="--n:' + NEW_HUES[fresh2] + '"' : '') + '>' +
       '<td><button class="tkr as-link" style="color:' + thue + '" onclick="openChart(\'' +
-        p.symbol + '\')">' + p.symbol + '</button></td>' +
-      '<td>' + st + '</td>' +
+        p.symbol + '\')">' + p.symbol + '</button>' +
+        '' + '</td>' +
+      '<td>' + st + (fresh2 != null ? ' ' + newBadge(fresh2, p.entryDate) : '') + '</td>' +
       '<td class="num r" style="color:' + (pnl >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' +
         (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</td>' +
       '<td class="num r">' + money(p.currPrice) + '</td>' +
