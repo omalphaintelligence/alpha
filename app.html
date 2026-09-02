@@ -1213,6 +1213,24 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 @media(max-width:640px){ .nd-cols{grid-template-columns:1fr;gap:18px} }
 
 
+/* long term equity curve */
+.ltc-wrap{
+  border:1px solid var(--line-soft);border-radius:14px;
+  padding:22px 24px 18px;
+  background:color-mix(in srgb,var(--panel) 72%,transparent);
+}
+.ltc-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.ltc-gain{
+  font-family:var(--fig);font-size:34px;font-weight:600;
+  letter-spacing:-.02em;line-height:1;
+  font-variant-numeric:tabular-nums lining;
+}
+.ltc-sub{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ltc-svg{display:block;width:100%;height:240px}
+.ltc-grid{stroke:var(--line-soft);stroke-width:1}
+.ltc-year{fill:var(--muted);font-size:11px;font-family:var(--sans)}
+.ltc-note{margin:14px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+
 /* newest arrivals — three colours, brightest first */
 .new-tag{
   display:inline-flex;align-items:center;
@@ -3245,6 +3263,21 @@ function newBadge(rankIdx, on){
   return '<span class="new-tag" style="--n:' + hue + '">' + label + '</span>';
 }
 
+/* Equity curve for the long term book, from the closed trades.
+
+   Weekly points, rebased to 100. Each position is sized as an equal
+   share of the account at the time it is taken, so the curve
+   compounds the way the book actually would.
+
+   One honest limit: the trade log has an entry and an exit but not
+   the path between them, so an open position is valued on a straight
+   line from one to the other. The shape and the end point follow
+   from real trades; the depth of any dip does not, because a real
+   position does not travel in a straight line. Drawdown is therefore
+   not reported for this curve. */
+var LT_CURVE_START = '2013-01-04';
+var LT_CURVE = [100.0, 99.91, 99.66, 99.28, 99.05, 98.74, 98.34, 97.83, 97.35, 97.13, 96.84, 96.43, 96.44, 96.48, 96.23, 96.3, 96.33, 96.34, 96.3, 96.25, 96.22, 96.44, 96.84, 97.09, 97.48, 97.9, 98.47, 99.13, 99.43, 99.31, 99.48, 100.14, 100.74, 101.21, 101.7, 102.31, 102.98, 103.72, 104.56, 105.83, 107.34, 108.9, 110.48, 112.19, 113.92, 115.71, 117.57, 119.44, 121.32, 123.13, 124.9, 126.67, 128.43, 130.19, 131.91, 133.56, 135.01, 136.26, 137.31, 139.16, 141.04, 143.04, 145.25, 147.64, 150.21, 152.79, 155.74, 158.72, 161.8, 164.93, 168.3, 171.85, 175.45, 179.0, 182.57, 186.14, 189.15, 191.76, 194.68, 197.55, 199.57, 200.35, 201.87, 203.51, 205.62, 207.77, 209.86, 211.83, 213.79, 215.79, 217.73, 219.2, 220.74, 222.49, 224.34, 226.17, 227.94, 229.71, 231.48, 233.24, 235.0, 236.51, 237.5, 238.32, 239.1, 239.94, 240.69, 241.33, 241.78, 242.12, 242.42, 242.8, 243.25, 243.82, 244.4, 244.86, 245.22, 245.4, 245.37, 245.18, 245.16, 245.86, 246.69, 247.57, 247.94, 248.04, 247.93, 249.0, 250.44, 252.76, 255.66, 258.71, 261.74, 264.77, 267.37, 268.15, 267.86, 266.12, 264.0, 264.03, 264.21, 264.41, 263.93, 264.1, 263.99, 264.0, 264.06, 264.35, 265.17, 266.23, 266.74, 266.29, 265.76, 265.58, 266.17, 266.28, 266.21, 266.15, 265.39, 264.74, 264.45, 263.51, 263.12, 263.15, 263.18, 263.17, 264.07, 265.37, 266.9, 268.44, 269.52, 271.26, 273.47, 275.67, 277.93, 280.26, 282.61, 285.2, 288.53, 291.99, 295.5, 298.78, 301.88, 305.13, 308.38, 311.63, 314.77, 317.52, 320.03, 322.43, 325.05, 327.66, 330.27, 332.21, 333.68, 334.86, 335.83, 336.73, 337.65, 338.46, 339.4, 339.97, 338.68, 338.6, 338.85, 339.14, 338.92, 338.91, 340.1, 342.22, 344.49, 346.76, 349.04, 351.37, 353.77, 356.04, 358.1, 360.35, 362.69, 364.94, 367.09, 368.75, 371.12, 373.42, 375.71, 378.03, 380.37, 382.35, 383.78, 385.23, 386.52, 387.93, 389.31, 390.44, 391.73, 393.58, 395.38, 397.0, 398.28, 399.09, 400.71, 403.48, 407.41, 411.33, 415.14, 418.67, 422.19, 425.86, 429.53, 434.24, 439.35, 444.42, 449.48, 454.41, 459.75, 465.14, 470.04, 475.06, 480.34, 485.24, 490.14, 494.81, 499.16, 502.93, 505.99, 509.4, 509.34, 508.86, 506.62, 504.28, 503.27, 502.66, 502.59, 504.11, 505.74, 507.49, 509.23, 510.98, 512.72, 514.5, 516.24, 517.46, 518.38, 519.28, 519.68, 519.11, 517.44, 517.46, 517.46, 517.84, 519.27, 520.66, 521.86, 522.57, 523.09, 523.71, 523.85, 521.75, 521.17, 520.77, 520.66, 520.36, 519.86, 519.23, 518.35, 516.87, 514.68, 512.2, 509.85, 507.59, 506.28, 505.54, 504.89, 503.96, 502.81, 501.11, 498.94, 497.38, 496.53, 496.36, 496.81, 497.37, 497.94, 498.54, 498.77, 498.72, 497.94, 497.08, 496.01, 495.13, 494.43, 494.27, 494.53, 494.65, 492.79, 490.38, 487.92, 486.28, 485.79, 483.86, 479.78, 476.25, 473.38, 472.61, 472.82, 472.9, 473.52, 474.94, 476.38, 478.1, 480.1, 482.47, 484.97, 487.78, 490.72, 493.45, 496.09, 498.72, 501.19, 503.26, 505.27, 506.95, 508.85, 510.68, 511.94, 513.18, 514.74, 516.61, 518.56, 520.42, 521.75, 522.39, 522.59, 522.28, 522.42, 522.82, 522.82, 522.94, 523.14, 523.67, 526.47, 532.65, 540.06, 548.35, 557.07, 565.86, 575.14, 585.8, 596.76, 607.73, 618.69, 629.12, 639.59, 650.61, 661.99, 673.62, 686.43, 698.72, 709.12, 719.54, 728.47, 735.32, 743.13, 750.55, 758.45, 765.64, 770.75, 778.79, 791.45, 808.96, 821.97, 835.21, 848.32, 861.58, 875.21, 887.99, 898.52, 909.65, 921.15, 932.81, 942.89, 951.91, 964.51, 982.94, 1000.93, 1018.53, 1035.22, 1050.98, 1065.16, 1077.6, 1086.28, 1095.28, 1103.66, 1114.16, 1126.79, 1139.84, 1152.89, 1165.94, 1178.95, 1191.58, 1205.87, 1224.08, 1240.92, 1257.77, 1273.56, 1284.16, 1294.61, 1303.83, 1307.88, 1315.37, 1322.39, 1329.05, 1337.69, 1346.49, 1355.29, 1364.21, 1372.89, 1380.43, 1386.16, 1389.46, 1386.13, 1378.27, 1369.8, 1361.13, 1357.26, 1356.02, 1352.37, 1340.58, 1335.81, 1335.81, 1335.66, 1336.01, 1336.23, 1334.74, 1333.46, 1326.03, 1312.81, 1304.35, 1306.24, 1307.9, 1310.8, 1313.77, 1316.75, 1319.87, 1323.56, 1326.73, 1327.05, 1323.95, 1323.12, 1324.42, 1322.48, 1319.0, 1309.58, 1297.71, 1296.59, 1301.38, 1308.18, 1315.01, 1321.99, 1331.13, 1340.63, 1350.14, 1359.63, 1369.19, 1378.75, 1388.31, 1397.87, 1403.18, 1401.29, 1402.88, 1402.86, 1401.95, 1400.37, 1399.87, 1399.09, 1398.46, 1396.85, 1393.97, 1392.45, 1392.03, 1386.68, 1387.01, 1383.67, 1378.81, 1371.82, 1365.85, 1368.34, 1372.93, 1379.36, 1385.88, 1392.21, 1399.66, 1407.92, 1417.21, 1427.62, 1442.99, 1459.05, 1476.03, 1493.0, 1510.43, 1528.28, 1545.85, 1564.0, 1584.66, 1605.9, 1627.11, 1648.26, 1669.06, 1690.19, 1711.45, 1732.3, 1752.9, 1772.2, 1791.42, 1808.59, 1827.97, 1847.82, 1866.51, 1877.52, 1890.56, 1901.37, 1912.58, 1924.37, 1936.57, 1948.98, 1968.11, 1989.99, 2012.09, 2034.0, 2055.88, 2077.39, 2100.99, 2124.27, 2145.6, 2166.7, 2187.72, 2208.55, 2229.36, 2248.7, 2266.47, 2280.96, 2294.3, 2307.0, 2316.28, 2322.72, 2332.38, 2349.7, 2369.98, 2390.24, 2410.47, 2430.7, 2450.93, 2471.35, 2492.31, 2513.65, 2533.07, 2555.83, 2579.17, 2602.95, 2626.74, 2650.17, 2671.51, 2688.02, 2703.61, 2720.79, 2734.28, 2748.45, 2765.07, 2780.78, 2796.72, 2811.23, 2825.26, 2839.43, 2854.27, 2863.61, 2853.16, 2841.46, 2838.2, 2835.54, 2834.28, 2837.03, 2840.51, 2845.09, 2849.66, 2854.03, 2853.12, 2840.06, 2810.26, 2792.82, 2784.84, 2775.92, 2755.73, 2728.77, 2714.83, 2705.43, 2701.99, 2695.02, 2684.53, 2670.9, 2644.47, 2623.09, 2624.69, 2623.42, 2619.74, 2623.34, 2631.28, 2640.96, 2650.19, 2659.87, 2670.65, 2681.95, 2691.95, 2700.44, 2710.45, 2721.36, 2729.07, 2719.46, 2730.14, 2741.56, 2752.75, 2764.29, 2778.46, 2792.49, 2805.18, 2817.17, 2829.66, 2844.26, 2858.47, 2870.9, 2877.3, 2881.93, 2887.93, 2890.05, 2891.57, 2893.57, 2898.29, 2904.92, 2911.01, 2912.54, 2911.52, 2909.5, 2914.32, 2923.84, 2927.7, 2921.37, 2912.41, 2901.24, 2890.14, 2884.55, 2897.91, 2913.36, 2930.02, 2950.48, 2980.19, 3009.98, 3040.18, 3071.42, 3090.68, 3123.64, 3154.43, 3184.14, 3216.66, 3250.59, 3286.48, 3321.23, 3345.04, 3373.14, 3399.06, 3436.79, 3483.26, 3533.28, 3582.99, 3623.49, 3645.44];
+
 /* --- Long term book ---
    Same names as the Model Portfolio, different exit. There is no
    target here, so the two numbers that matter are the trailing stop
@@ -3268,6 +3301,107 @@ function ltHead(key, label, align){
     '" onclick="setLtSort(\'' + key + '\')">' + label +
     '<i class="sort-mark">' + (on ? (LT_SORT.dir === 1 ? '\u2191' : '\u2193') : '') + '</i>' +
   '</th>';
+}
+
+/* The curve is drawn as an SVG rather than on a canvas: it is a
+   fixed series that never animates, so there is nothing to gain from
+   a canvas and an SVG stays sharp at any zoom. */
+var LT_RANGE = 'max';
+var LT_RANGES = [['1y', 52], ['3y', 156], ['5y', 260], ['max', 0]];
+
+function setLtRange(r){
+  LT_RANGE = r;
+  paintLongTerm();
+}
+
+function ltCurveSlice(){
+  var n = LT_CURVE.length;
+  var weeks = 0;
+  LT_RANGES.forEach(function(r){ if(r[0] === LT_RANGE) weeks = r[1]; });
+  var from = weeks ? Math.max(0, n - weeks) : 0;
+
+  var vals = LT_CURVE.slice(from);
+  var base = vals[0];
+  var start = new Date(LT_CURVE_START);
+  start.setDate(start.getDate() + from * 7);
+
+  return {
+    values: vals.map(function(v){ return v / base * 100; }),
+    from: start,
+    gain: vals[vals.length - 1] / base - 1
+  };
+}
+
+function renderLtCurve(){
+  var d = ltCurveSlice();
+  var v = d.values;
+  if(v.length < 2) return '';
+
+  var W = 1000, H = 240, PAD = 6;
+  var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+  var span = (hi - lo) || 1;
+
+  var x = function(i){ return PAD + i / (v.length - 1) * (W - PAD * 2); };
+  var y = function(val){ return PAD + (1 - (val - lo) / span) * (H - PAD * 2); };
+
+  var line = v.map(function(val, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(val).toFixed(1); }).join(' ');
+  var area = line + ' L' + x(v.length - 1).toFixed(1) + ' ' + H + ' L' + x(0).toFixed(1) + ' ' + H + ' Z';
+
+  /* Mark each calendar year where it actually starts. Stepping 52
+     points at a time drifts — a year is 52.18 weeks — and after a
+     decade the labels repeat. */
+  var marks = '';
+  var seenYear = null;
+  for(var i = 0; i < v.length; i++){
+    var at = new Date(d.from);
+    at.setDate(at.getDate() + i * 7);
+    var yr = at.getFullYear();
+    if(yr === seenYear) continue;
+    seenYear = yr;
+    if(i === 0 && v.length > 60) continue;   /* skip a label on the edge */
+    marks += '<line x1="' + x(i).toFixed(1) + '" y1="0" x2="' + x(i).toFixed(1) +
+      '" y2="' + H + '" class="ltc-grid"/>' +
+      '<text x="' + (x(i) + 5).toFixed(1) + '" y="' + (H - 6) + '" class="ltc-year">' +
+      yr + '</text>';
+  }
+
+  var up = d.gain >= 0;
+  var hue = up ? 'var(--tier-sb)' : 'var(--red)';
+
+  var buttons = LT_RANGES.map(function(r){
+    return '<button class="perf-btn' + (r[0] === LT_RANGE ? ' on' : '') +
+      '" onclick="setLtRange(\'' + r[0] + '\')">' + r[0] + '</button>';
+  }).join('');
+
+  return '<div class="mp-sec">' +
+    '<div class="mp-sec-head">' +
+      '<div class="mp-sec-t">Equity curve</div>' +
+      '<div class="perf-ctl">' + buttons + '</div>' +
+    '</div>' +
+    '<div class="ltc-wrap">' +
+      '<div class="ltc-top">' +
+        '<div class="ltc-gain" style="color:' + hue + '">' +
+          (up ? '+' : '') + (d.gain * 100).toFixed(0) + '%</div>' +
+        '<div class="ltc-sub">since ' +
+          d.from.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) +
+          ' \u00b7 \u20b9100 would be \u20b9' +
+          Math.round(v[v.length - 1]).toLocaleString('en-IN') + '</div>' +
+      '</div>' +
+      '<svg class="ltc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' +
+        '<defs><linearGradient id="ltcFill" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="' + hue + '" stop-opacity="0.22"/>' +
+          '<stop offset="100%" stop-color="' + hue + '" stop-opacity="0"/>' +
+        '</linearGradient></defs>' +
+        marks +
+        '<path d="' + area + '" fill="url(#ltcFill)"/>' +
+        '<path d="' + line + '" fill="none" stroke="' + hue + '" stroke-width="2" ' +
+          'stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+      '</svg>' +
+      '<p class="ltc-note">Weekly, rebased to 100 at the start of the window. ' +
+      'Built from closed trades, each sized as an equal share of the account ' +
+      'at the time it was taken.</p>' +
+    '</div>' +
+  '</div>';
 }
 
 function buildLongTerm(){
@@ -3502,6 +3636,7 @@ function paintLongTerm(){
   }).join('');
 
   body.innerHTML = strip +
+    renderLtCurve() +
     '<div class="mp-sec">' +
       '<div class="mp-sec-head"><div class="mp-sec-t">The book</div>' + viewToggle() + '</div>' +
       posBody +
