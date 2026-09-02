@@ -3249,6 +3249,61 @@ function buildReadyTab(){
     .catch(function(){ body.innerHTML = '<div class="scr-load">Unavailable right now.</div>'; });
 }
 
+/* --- Sorting the queue ---
+   Same idea as the holdings table: the list is ordered by conviction
+   by default, but "what is closest to its pivot" and "what has been
+   waiting longest" are different questions. --- */
+var WL_SORT = { key: 'pos', dir: 1 };
+try {
+  var wsaved = JSON.parse(localStorage.getItem('ai_wl_sort') || 'null');
+  if(wsaved && wsaved.key) WL_SORT = wsaved;
+} catch(e){}
+
+function setWlSort(key){
+  if(WL_SORT.key === key){
+    WL_SORT.dir = -WL_SORT.dir;
+  } else {
+    WL_SORT.key = key;
+    /* Position and symbol read upward; everything else downward. */
+    WL_SORT.dir = (key === 'pos' || key === 'symbol' || key === 'dist') ? 1 : -1;
+  }
+  try { localStorage.setItem('ai_wl_sort', JSON.stringify(WL_SORT)); } catch(e){}
+  paintReady();
+}
+
+function sortWaitlist(rows){
+  var k = WL_SORT.key, dir = WL_SORT.dir;
+
+  function val(r){
+    switch(k){
+      case 'symbol': return String(r.symbol || '');
+      case 'state':  return String(r.state || '');
+      case 'quality':return +r.quality || 0;
+      case 'price':  return +r.price || 0;
+      case 'dist':   return r.distFromPivot != null ? Math.abs(+r.distFromPivot) : 9999;
+      case 'entry':  return +r.entry || 0;
+      case 'target': return +r.target || 0;
+      case 'stop':   return +r.stopLoss || 0;
+      case 'since':  return String(r.since || '9999');   /* undated waits last */
+      default:       return +r.pos || 0;
+    }
+  }
+
+  return rows.slice().sort(function(a, b){
+    var x = val(a), y = val(b);
+    if(typeof x === 'string') return dir * x.localeCompare(y);
+    return dir * (x - y);
+  });
+}
+
+function wlHead(key, label, align){
+  var on = WL_SORT.key === key;
+  return '<th class="sortable' + (align ? ' ' + align : '') + (on ? ' sorted' : '') +
+    '" onclick="setWlSort(\'' + key + '\')">' + label +
+    '<i class="sort-mark">' + (on ? (WL_SORT.dir === 1 ? '\u2191' : '\u2193') : '') + '</i>' +
+  '</th>';
+}
+
 function paintReady(){
   var body = document.getElementById('readyBody');
   if(!body) return;
@@ -3311,14 +3366,17 @@ function paintReady(){
     '</div>';
   }).join('');
 
-  var tableRows = rows.map(function(r, i){
+  var tableRows = sortWaitlist(rows).map(function(r, i){
     var ready = String(r.state).toUpperCase() === 'READY';
     var q = Number(r.quality) || 0;
     var qhue = q >= 90 ? 'var(--tier-sb)' : q >= 75 ? 'var(--tier-b)'
              : q >= 60 ? 'var(--tier-w)' : 'var(--muted)';
     var fresh = freshQ[String(r.symbol).toUpperCase()];
     return '<tr' + (fresh != null ? ' class="row-new" style="--n:' + NEW_HUES[fresh] + '"' : '') + '>' +
-      '<td class="num dim">' + (i + 1) + '</td>' +
+      /* The queue position, not the row number. Sorting by quality or
+         price must not make it look as though the queue itself has
+         been reordered. */
+      '<td class="num dim r">' + (r.pos || (i + 1)) + '</td>' +
       '<td><button class="tkr as-link" style="color:' + qhue + '" onclick="openChart(\'' +
         r.symbol + '\')">' + r.symbol + '</button>' +
         '' + '</td>' +
@@ -3337,10 +3395,15 @@ function paintReady(){
   body.innerHTML = strip + viewToggle() +
     (VIEW_MODE === 'table'
       ? '<div class="scr-table" style="--seg:var(--tier-w)"><table class="tbl"><thead><tr>' +
-        '<th style="width:52px">#</th><th>Symbol</th><th>State</th>' +
-        '<th class="r" style="width:90px">Quality</th><th class="r">Price</th>' +
-        '<th class="r">From pivot</th><th class="r">Entry</th>' +
-        '<th class="r">Target</th><th class="r">Stop</th>' +
+        wlHead('pos',     '#',          'r') +
+        wlHead('symbol',  'Symbol') +
+        wlHead('state',   'State') +
+        wlHead('quality', 'Quality',    'r') +
+        wlHead('price',   'Price',      'r') +
+        wlHead('dist',    'From pivot', 'r') +
+        wlHead('entry',   'Entry',      'r') +
+        wlHead('target',  'Target',     'r') +
+        wlHead('stop',    'Stop',       'r') +
         '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
       : '<div class="call-grid" style="margin-top:14px">' + cards + '</div>');
 }
