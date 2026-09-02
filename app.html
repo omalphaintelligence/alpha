@@ -2146,7 +2146,7 @@ body.s-light .new-tag{color:#fff}
         <div class="sec-head">
           <div class="sec-tag">Long term</div>
           <h2>The same names, held without a target.</h2>
-          <p id="ltLede">A position is closed only when the trailing line breaks. There is no profit target, so a winner is never capped — and whatever the line gives back on the way out is the cost of that.</p>
+          <p id="ltLede">A position is closed only when its trailing stop breaks. There is no profit target, so a winner is never capped — and whatever the stop gives back on the way out is the cost of that.</p>
         </div>
         <div id="ltBody"></div>
       </div>
@@ -3388,8 +3388,8 @@ function paintLongTerm(){
             '<div class="sc-s">what it costs</div></div>' +
         '</div>'
       : '') +
-    '<p class="sc-note">Supertrend 22, average 2 SMA, multiplier 3.5. The stop is ' +
-    'rewritten every evening and only ever moves up.</p>';
+    '<p class="sc-note">The stop is recalculated every evening and only ever ' +
+    'moves up. A position is closed the day price breaks it.</p>';
 
   /* --- positions --- */
   var rows = sortLt(pos);
@@ -3477,6 +3477,15 @@ function paintLongTerm(){
     var act = j.action === 'ENTRY'       ? '<span class="sig sig-b">Entry</span>'
             : j.action === 'TRAIL EXIT'  ? '<span class="sig" style="color:var(--red)">Trail exit</span>'
             : '<span class="sig sig-sb">Stop raised</span>';
+    /* The journal note is written by the engine and names the rule
+       it used. That is ours, not the subscriber's, so it is dropped
+       on the way to the page. */
+    var note = j.action === 'TRAIL EXIT' ? 'Stop taken out'
+             : j.action === 'ENTRY'      ? 'Position opened'
+             : j.action === 'STOP RAISED'
+               ? String(j.notes || '').replace(/^.*?(\d)/, '$1')
+               : '';
+
     var pnl = (j.pnlPct == null || j.action !== 'TRAIL EXIT')
       ? '<span class="dim">\u2014</span>'
       : '<span style="color:' + (j.pnlPct >= 0 ? 'var(--tier-sb)' : 'var(--red)') +
@@ -3487,7 +3496,7 @@ function paintLongTerm(){
       '<td>' + act + '</td>' +
       '<td class="num r">' + pfMoney(j.price) + '</td>' +
       '<td class="num r">' + pnl + '</td>' +
-      '<td class="dim" style="white-space:normal">' + (j.notes || '') + '</td>' +
+      '<td class="dim" style="white-space:normal">' + note + '</td>' +
       '<td class="num r dim">' + fmtDate(j.date) + '</td>' +
     '</tr>';
   }).join('');
@@ -3532,7 +3541,7 @@ function buildReadyTab(){
 
 /* --- Sorting the queue ---
    Same idea as the holdings table: the list is ordered by conviction
-   by default, but "what is closest to its pivot" and "what has been
+   by default, but "what is closest to triggering" and "what has been
    waiting longest" are different questions. --- */
 var WL_SORT = { key: 'pos', dir: 1 };
 try {
@@ -3637,7 +3646,7 @@ function paintReady(){
       '<div class="rdy-line">' +
         '<span class="rdy-q">Quality ' + r.quality + '</span>' +
         '<span class="rdy-p">' + pfMoney(r.price) + ' now \u00b7 ' +
-          fmtPct(r.distFromPivot) + ' from pivot</span>' +
+          fmtPct(r.distFromPivot) + ' from trigger</span>' +
       '</div>' +
       '<div class="call-nums">' +
         '<div><span>Entry</span><b>' + pfMoney(r.entry) + '</b></div>' +
@@ -3681,7 +3690,7 @@ function paintReady(){
         wlHead('state',   'State') +
         wlHead('quality', 'Quality',    'r') +
         wlHead('price',   'Price',      'r') +
-        wlHead('dist',    'From pivot', 'r') +
+        wlHead('dist',    'From trigger', 'r') +
         wlHead('entry',   'Entry',      'r') +
         wlHead('target',  'Target',     'r') +
         wlHead('stop',    'Stop',       'r') +
@@ -4265,7 +4274,7 @@ function ensureFeed(){
       history: hist2,
 
       /* The same names as the model portfolio, held on a trailing
-         Supertrend instead of a fixed target. */
+         stop instead of a fixed target. */
       longTerm: {
         capacity:  ltw.length ? ltw[0].capacity   : 30,
         held:      ltp.length,
@@ -5218,7 +5227,7 @@ function renderStatusBar(){
   if(!el) return;
   var s = D.stepStatus;
   if(!s){ el.innerHTML=""; return; }
-  var steps = [["step1","Prices"],["step2","Signals"],["step3a","VCP Data"],["step3b","Model PF"]];
+  var steps = [["step1","Prices"],["step2","Signals"],["step3a","Setup Data"],["step3b","Model PF"]];
   el.innerHTML = steps.map(function(st){
     var ts = s[st[0]];
     var cls = statusClass(ts, 26, 48);
