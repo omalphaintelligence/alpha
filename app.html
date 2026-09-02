@@ -1131,6 +1131,7 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   letter-spacing:-.01em;line-height:1;
   font-variant-numeric:tabular-nums lining;
 }
+.sc-of{font-size:17px;color:var(--muted);font-weight:400}
 .sc-s{margin-top:7px;font-size:11.5px;color:var(--muted);line-height:1.4}
 .sc-note{margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
 @media(max-width:1000px){ .scorecard{grid-template-columns:repeat(2,1fr)} }
@@ -2138,6 +2139,20 @@ body.s-light .new-tag{color:#fff}
     </div>
   </div>
 
+  <!-- ============ LONG TERM ============ -->
+  <div class="ltab-pane" id="ltab-longterm">
+    <div class="sec" style="padding-top:40px">
+      <div class="wrap-x">
+        <div class="sec-head">
+          <div class="sec-tag">Long term</div>
+          <h2>The same names, held without a target.</h2>
+          <p id="ltLede">A position is closed only when the trailing line breaks. There is no profit target, so a winner is never capped — and whatever the line gives back on the way out is the cost of that.</p>
+        </div>
+        <div id="ltBody"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ READY TO MOVE ============ -->
   <div class="ltab-pane" id="ltab-ready">
     <div class="sec" style="padding-top:40px">
@@ -2571,11 +2586,12 @@ function canSeeCalls(){
 
 var ZONE_TABS = {
   free:   [['overview','Overview'], ['screener','Screeners'],
-           ['model','Model Portfolio'], ['ready','Ready to Move'],
-           ['pricing','Plans']],
+           ['model','Model Portfolio'], ['longterm','Long Term'],
+           ['ready','Ready to Move'], ['pricing','Plans']],
   member: [['screener','Screeners'], ['model','Model Portfolio'],
-           ['ready','Ready to Move'], ['calls','Fundamental Calls'],
-           ['ask','Ask'], ['pricing','Your plan'], ['account','Account']]
+           ['longterm','Long Term'], ['ready','Ready to Move'],
+           ['calls','Fundamental Calls'], ['ask','Ask'],
+           ['pricing','Your plan'], ['account','Account']]
 };
 
 function setZone(z){
@@ -2630,6 +2646,7 @@ function setLandingTab(tab, btn){
   if(tab === 'ready') buildReadyTab();
   if(tab === 'account') buildAccount();
   if(tab === 'ask') buildAsk();
+  if(tab === 'longterm') buildLongTerm();
   if(tab === 'overview'){ buildShowcase(); buildVoices(); }
   if(tab !== 'overview') showStop();
 }
@@ -2648,6 +2665,7 @@ function setViewMode(m){
   if(LANDING_TAB === 'model') buildPublicModel(true);
   if(LANDING_TAB === 'calls') paintCalls();
   if(LANDING_TAB === 'ready') paintReady();
+  if(LANDING_TAB === 'longterm') paintLongTerm();
 }
 
 function viewToggle(){
@@ -3227,6 +3245,234 @@ function newBadge(rankIdx, on){
   return '<span class="new-tag" style="--n:' + hue + '">' + label + '</span>';
 }
 
+/* --- Long term book ---
+   Same names as the Model Portfolio, different exit. There is no
+   target here, so the two numbers that matter are the trailing stop
+   and how much room is left down to it. --- */
+var LT_SORT = { key: 'pnl', dir: -1 };
+try {
+  var ltsaved = JSON.parse(localStorage.getItem('ai_lt_sort') || 'null');
+  if(ltsaved && ltsaved.key) LT_SORT = ltsaved;
+} catch(e){}
+
+function setLtSort(key){
+  if(LT_SORT.key === key){ LT_SORT.dir = -LT_SORT.dir; }
+  else { LT_SORT.key = key; LT_SORT.dir = (key === 'symbol') ? 1 : -1; }
+  try { localStorage.setItem('ai_lt_sort', JSON.stringify(LT_SORT)); } catch(e){}
+  paintLongTerm();
+}
+
+function ltHead(key, label, align){
+  var on = LT_SORT.key === key;
+  return '<th class="sortable' + (align ? ' ' + align : '') + (on ? ' sorted' : '') +
+    '" onclick="setLtSort(\'' + key + '\')">' + label +
+    '<i class="sort-mark">' + (on ? (LT_SORT.dir === 1 ? '\u2191' : '\u2193') : '') + '</i>' +
+  '</th>';
+}
+
+function buildLongTerm(){
+  var body = document.getElementById('ltBody');
+  if(!body) return;
+
+  if(!canSeeModel()){
+    body.innerHTML = lockPanel(
+      'The long term book',
+      'Every position with its trailing stop, the day it was taken and the room it has left.',
+      'model');
+    return;
+  }
+
+  body.innerHTML = '<div class="scr-load">Loading the book\u2026</div>';
+  ensureFeed()
+    .then(paintLongTerm)
+    .catch(function(){ body.innerHTML = '<div class="scr-load">Unavailable right now.</div>'; });
+}
+
+function sortLt(rows){
+  var k = LT_SORT.key, dir = LT_SORT.dir;
+  function val(p){
+    switch(k){
+      case 'symbol': return String(p.symbol || '');
+      case 'pnl':    return +p.pnlPct || 0;
+      case 'room':   return +p.roomPct || 0;
+      case 'held':   return +p.daysHeld || 0;
+      case 'price':  return +p.currPrice || 0;
+      case 'stop':   return +p.stopLoss || 0;
+      default:       return 0;
+    }
+  }
+  return rows.slice().sort(function(a, b){
+    var x = val(a), y = val(b);
+    if(typeof x === 'string') return dir * x.localeCompare(y);
+    return dir * (x - y);
+  });
+}
+
+function paintLongTerm(){
+  var body = document.getElementById('ltBody');
+  if(!body) return;
+
+  var lt = (SCR_DATA && SCR_DATA.longTerm) || {};
+  var pos = lt.positions || [];
+  var jnl = lt.journal || [];
+
+  if(!pos.length){
+    body.innerHTML = canSeeModel()
+      ? '<div class="scr-load">The long term book is empty today.</div>'
+      : lockPanel('The long term book', 'Positions held on a trailing stop, with no target.', 'model');
+    return;
+  }
+
+  var meta = {};
+  ((SCR_DATA.tabs && SCR_DATA.tabs.ALL) || []).forEach(function(x){
+    if(x && x.symbol) meta[String(x.symbol).toUpperCase()] = x;
+  });
+
+  /* --- the strip: how the book is positioned, not how it performed --- */
+  var up = pos.filter(function(p){ return (+p.pnlPct || 0) > 0; }).length;
+  var totalPnl = pos.reduce(function(a, p){ return a + (+p.pnlPct || 0); }, 0);
+  var avgRoom = pos.reduce(function(a, p){ return a + (+p.roomPct || 0); }, 0) / pos.length;
+  var tight = pos.filter(function(p){ return (+p.roomPct || 0) < 5; }).length;
+
+  var strip =
+    '<div class="scorecard">' +
+      '<div class="sc-cell"><div class="sc-l">Held</div>' +
+        '<div class="sc-v">' + pos.length + '<span class="sc-of">/' + (lt.capacity || 30) + '</span></div>' +
+        '<div class="sc-s">' + up + ' of them in profit</div></div>' +
+      '<div class="sc-cell"><div class="sc-l">Unrealised</div>' +
+        '<div class="sc-v" style="color:' + (totalPnl >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+          (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(1) + '%</div>' +
+        '<div class="sc-s">summed across the book</div></div>' +
+      '<div class="sc-cell"><div class="sc-l">Average room</div>' +
+        '<div class="sc-v">' + avgRoom.toFixed(1) + '%</div>' +
+        '<div class="sc-s">from price down to the stop</div></div>' +
+      '<div class="sc-cell"><div class="sc-l">Close to the line</div>' +
+        '<div class="sc-v"' + (tight ? ' style="color:var(--tier-w)"' : '') + '>' + tight + '</div>' +
+        '<div class="sc-s">within 5% of being stopped</div></div>' +
+      '<div class="sc-cell"><div class="sc-l">Target</div>' +
+        '<div class="sc-v" style="font-size:19px">None</div>' +
+        '<div class="sc-s">exit only on the trailing line</div></div>' +
+    '</div>' +
+    '<p class="sc-note">Supertrend 22, average 2 SMA, multiplier 3.5. The stop is ' +
+    'rewritten every evening and only ever moves up.</p>';
+
+  /* --- positions --- */
+  var rows = sortLt(pos);
+
+  var cards = rows.map(function(p){
+    var pnl  = +p.pnlPct || 0;
+    var room = +p.roomPct || 0;
+    var hue  = pnl > 0.01 ? 'var(--tier-sb)' : pnl < -0.01 ? 'var(--red)' : 'var(--brand)';
+    var m    = meta[String(p.symbol).toUpperCase()] || {};
+
+    /* Where price sits between the stop and where it is now. With no
+       target there is no upper end, so the bar shows the cushion. */
+    var pct = Math.max(4, Math.min(100, room * 4));
+
+    return '<div class="hold" style="--hue:' + hue + ';--sec:' + sectorHue(m.sector) + '">' +
+      '<div class="hold-top">' +
+        '<div>' +
+          '<button class="hold-sym as-link" onclick="openChart(\'' + p.symbol + '\')">' +
+            p.symbol + '</button>' +
+          (m.sector || m.cat
+            ? '<div class="hold-sec">' +
+                (m.sector && m.sector !== 'Other' ? sectorChip(m.sector) : '') +
+                capChip(m.cat) + '</div>'
+            : '') +
+        '</div>' +
+        '<span class="hold-st">Trailing</span>' +
+      '</div>' +
+
+      '<div class="hold-main">' +
+        '<div class="hold-pnl" style="color:' + hue + '">' +
+          (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</div>' +
+        '<div class="hold-cmp">' + pfMoney(p.currPrice) +
+          '<span>from ' + pfMoney(p.entryPrice) + '</span></div>' +
+      '</div>' +
+
+      '<div class="hold-track">' +
+        '<div class="ht-bar"><i class="ht-fill" style="width:' + pct +
+          '%;background:' + (room < 5 ? 'var(--tier-w)' : hue) + '"></i></div>' +
+        '<div class="ht-ends">' +
+          '<span>' + pfMoney(p.stopLoss) + '<b>trailing stop</b></span>' +
+          '<span class="r">' + room.toFixed(1) + '%<b>room left</b></span>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="hold-stats">' +
+        (m.rank != null ? '<div><span>RS rank</span><b>' + Math.round(m.rank) + '</b></div>' : '') +
+        '<div><span>Entry</span><b>' + pfMoney(p.entryPrice) + '</b></div>' +
+        '<div><span>Held</span><b>' + (p.daysHeld || 0) + 'd</b></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var tableRows = rows.map(function(p){
+    var pnl  = +p.pnlPct || 0;
+    var room = +p.roomPct || 0;
+    return '<tr>' +
+      '<td><button class="tkr as-link" style="color:' +
+        (pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '" onclick="openChart(\'' +
+        p.symbol + '\')">' + p.symbol + '</button></td>' +
+      '<td class="num r" style="color:' + (pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)') +
+        ';font-weight:700">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</td>' +
+      '<td class="num r">' + pfMoney(p.currPrice) + '</td>' +
+      '<td class="num r dim">' + pfMoney(p.entryPrice) + '</td>' +
+      '<td class="num r" style="color:var(--red)">' + pfMoney(p.stopLoss) + '</td>' +
+      '<td class="num r"' + (room < 5 ? ' style="color:var(--tier-w);font-weight:700"' : '') + '>' +
+        room.toFixed(1) + '%</td>' +
+      '<td class="num r dim">' + (p.daysHeld || 0) + 'd</td>' +
+    '</tr>';
+  }).join('');
+
+  var posBody = VIEW_MODE === 'table'
+    ? '<div class="scr-table" style="--seg:var(--r70)"><table class="tbl"><thead><tr>' +
+      ltHead('symbol', 'Symbol') +
+      ltHead('pnl',    'P&L',           'r') +
+      ltHead('price',  'Price',         'r') +
+      '<th class="r">Entry</th>' +
+      ltHead('stop',   'Trailing stop', 'r') +
+      ltHead('room',   'Room',          'r') +
+      ltHead('held',   'Held',          'r') +
+      '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
+    : '<div class="hold-grid">' + cards + '</div>';
+
+  /* --- journal --- */
+  var jRows = jnl.slice(0, 250).map(function(j){
+    var act = j.action === 'ENTRY'       ? '<span class="sig sig-b">Entry</span>'
+            : j.action === 'TRAIL EXIT'  ? '<span class="sig" style="color:var(--red)">Trail exit</span>'
+            : '<span class="sig sig-sb">Stop raised</span>';
+    var pnl = (j.pnlPct == null || j.action !== 'TRAIL EXIT')
+      ? '<span class="dim">\u2014</span>'
+      : '<span style="color:' + (j.pnlPct >= 0 ? 'var(--tier-sb)' : 'var(--red)') +
+        ';font-weight:700">' + (j.pnlPct >= 0 ? '+' : '') + (+j.pnlPct).toFixed(1) + '%</span>';
+    return '<tr>' +
+      '<td><button class="tkr as-link" onclick="openChart(\'' + j.symbol + '\')">' +
+        j.symbol + '</button></td>' +
+      '<td>' + act + '</td>' +
+      '<td class="num r">' + pfMoney(j.price) + '</td>' +
+      '<td class="num r">' + pnl + '</td>' +
+      '<td class="dim" style="white-space:normal">' + (j.notes || '') + '</td>' +
+      '<td class="num r dim">' + fmtDate(j.date) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  body.innerHTML = strip +
+    '<div class="mp-sec">' +
+      '<div class="mp-sec-head"><div class="mp-sec-t">The book</div>' + viewToggle() + '</div>' +
+      posBody +
+    '</div>' +
+    (jnl.length
+      ? '<div class="mp-sec">' +
+          '<div class="mp-sec-head"><div class="mp-sec-t">Journal</div></div>' +
+          '<div class="scr-table" style="--seg:var(--r70)"><table class="tbl"><thead><tr>' +
+            '<th>Symbol</th><th>Action</th><th class="r">Price</th><th class="r">Result</th>' +
+            '<th>Note</th><th class="r">Date</th>' +
+          '</tr></thead><tbody>' + jRows + '</tbody></table></div>' +
+        '</div>'
+      : '');
+}
+
 /* --- Ready to move ---
    The queue the Model Portfolio draws from. READY means a slot is
    open today; QUEUED means the name qualifies but the book is full.
@@ -3620,6 +3866,7 @@ function rebuildTabs(){
   if(LANDING_TAB === 'ready') buildReadyTab();
   if(LANDING_TAB === 'account') buildAccount();
   if(LANDING_TAB === 'ask') buildAsk();
+  if(LANDING_TAB === 'longterm') buildLongTerm();
 }
 
 function goHome(){ setLandingTab('overview', document.querySelector('#ltabs .ltab-btn')); }
@@ -3895,6 +4142,9 @@ function ensureFeed(){
        can be told apart from one that has been waiting a fortnight. */
     db.from('waitlist_rows').select('symbol, as_of').order('as_of', { ascending:true }).limit(2000),
     db.from('mp_history').select('as_of, symbol, status, entry_price, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
+    db.from('lt_today').select('symbol, entry_date, entry_price, stop_loss, curr_price, pnl_pct, days_held, room_pct'),
+    db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(400),
+    db.from('lt_waitlist').select('position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').order('position'),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
   ]).then(function(res){
     var scr = res[0].data || [];
@@ -3907,7 +4157,10 @@ function ensureFeed(){
        two were the wrong way round, so the notes read the calls list
        and found no snapshots. */
     var hist2 = res[6].data || [];
-    var cl    = res[7].data || [];
+    var ltp   = res[7].data || [];
+    var ltj   = res[8].data || [];
+    var ltw   = res[9].data || [];
+    var cl    = res[10].data || [];
 
     /* The first date each symbol appeared in the queue. */
     var firstSeen = {};
@@ -3975,6 +4228,29 @@ function ensureFeed(){
         })
       },
       history: hist2,
+
+      /* The same names as the model portfolio, held on a trailing
+         Supertrend instead of a fixed target. */
+      longTerm: {
+        capacity:  ltw.length ? ltw[0].capacity   : 30,
+        held:      ltp.length,
+        freeSlots: ltw.length ? ltw[0].free_slots : null,
+        positions: ltp.map(function(p){
+          return { symbol:p.symbol, entryDate:p.entry_date,
+                   entryPrice:p.entry_price, stopLoss:p.stop_loss,
+                   currPrice:p.curr_price, pnlPct:p.pnl_pct,
+                   daysHeld:p.days_held, roomPct:p.room_pct };
+        }),
+        journal: ltj.map(function(j){
+          return { date:j.trade_date, symbol:j.symbol, action:j.action,
+                   price:j.price, pnlPct:j.pnl_pct, notes:j.notes };
+        }),
+        queue: ltw.map(function(r){
+          return { pos:r.position, symbol:r.symbol, state:r.state,
+                   price:r.price, stopLoss:r.stop_loss, roomPct:r.room_pct };
+        })
+      },
+
       calls: cl.map(function(c){
         return { symbol:c.symbol, name:c.name, horizon:c.horizon,
                  price:c.price, entry:c.entry, target:c.target,
