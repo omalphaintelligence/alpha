@@ -3328,6 +3328,20 @@ function paintLongTerm(){
     if(x && x.symbol) meta[String(x.symbol).toUpperCase()] = x;
   });
 
+  /* --- closed trades, from the journal --- */
+  var closed = jnl.filter(function(j){ return j.action === 'TRAIL EXIT'; });
+  var closedRets = closed.map(function(j){ return +j.pnlPct || 0; });
+  var wins = closedRets.filter(function(r){ return r > 0; }).length;
+  var bigWins = closedRets.filter(function(r){ return r > 50; }).length;
+  var avgClosed = closedRets.length
+    ? closedRets.reduce(function(a, b){ return a + b; }, 0) / closedRets.length : 0;
+
+  var span = '';
+  if(closed.length){
+    var dates = closed.map(function(j){ return String(j.date).slice(0, 4); }).sort();
+    span = dates[0] + '\u2013' + dates[dates.length - 1];
+  }
+
   /* --- the strip: how the book is positioned, not how it performed --- */
   var up = pos.filter(function(p){ return (+p.pnlPct || 0) > 0; }).length;
   var totalPnl = pos.reduce(function(a, p){ return a + (+p.pnlPct || 0); }, 0);
@@ -3353,6 +3367,27 @@ function paintLongTerm(){
         '<div class="sc-v" style="font-size:19px">None</div>' +
         '<div class="sc-s">exit only on the trailing line</div></div>' +
     '</div>' +
+    (closed.length
+      ? '<div class="scorecard" style="margin-top:12px">' +
+          '<div class="sc-cell"><div class="sc-l">Closed trades</div>' +
+            '<div class="sc-v">' + closed.length.toLocaleString('en-IN') + '</div>' +
+            '<div class="sc-s">' + (span ? span : '') + '</div></div>' +
+          '<div class="sc-cell"><div class="sc-l">Win rate</div>' +
+            '<div class="sc-v">' + (100 * wins / closed.length).toFixed(0) + '%</div>' +
+            '<div class="sc-s">' + wins.toLocaleString('en-IN') + ' of them profitable</div></div>' +
+          '<div class="sc-cell"><div class="sc-l">Average trade</div>' +
+            '<div class="sc-v" style="color:' + (avgClosed >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+              (avgClosed >= 0 ? '+' : '') + avgClosed.toFixed(1) + '%</div>' +
+            '<div class="sc-s">across every closed trade</div></div>' +
+          '<div class="sc-cell"><div class="sc-l">Ran past 50%</div>' +
+            '<div class="sc-v" style="color:var(--tier-sb)">' + bigWins.toLocaleString('en-IN') + '</div>' +
+            '<div class="sc-s">what having no target buys</div></div>' +
+          '<div class="sc-cell"><div class="sc-l">Worst trade</div>' +
+            '<div class="sc-v" style="color:var(--red)">' +
+              Math.min.apply(null, closedRets).toFixed(0) + '%</div>' +
+            '<div class="sc-s">what it costs</div></div>' +
+        '</div>'
+      : '') +
     '<p class="sc-note">Supertrend 22, average 2 SMA, multiplier 3.5. The stop is ' +
     'rewritten every evening and only ever moves up.</p>';
 
@@ -4143,7 +4178,7 @@ function ensureFeed(){
     db.from('waitlist_rows').select('symbol, as_of').order('as_of', { ascending:true }).limit(2000),
     db.from('mp_history').select('as_of, symbol, status, entry_price, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
     db.from('lt_today').select('symbol, entry_date, entry_price, stop_loss, curr_price, pnl_pct, days_held, room_pct'),
-    db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(400),
+    db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(8000),
     db.from('lt_waitlist').select('position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').order('position'),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
   ]).then(function(res){
