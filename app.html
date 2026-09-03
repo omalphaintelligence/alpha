@@ -3307,109 +3307,289 @@ function ltHead(key, label, align){
   '</th>';
 }
 
-/* The curve is drawn as an SVG rather than on a canvas: it is a
-   fixed series that never animates, so there is nothing to gain from
-   a canvas and an SVG stays sharp at any zoom. */
+/* ============================================================
+   LONG TERM PERFORMANCE
+   Built to match the Model Portfolio page section for section, so
+   the two read the same way. The accent is violet rather than
+   purple, which is the only thing that should tell them apart at a
+   glance. --- */
 var LT_RANGE = 'max';
 var LT_RANGES = [['1y', 52], ['3y', 156], ['5y', 260], ['10y', 522], ['max', 0]];
+var LT_ACCENT = 'var(--r70)';
+
+/* Nifty starts 43 weeks into the long term curve. Both are weekly,
+   so one offset lines them up for the whole overlap. */
+var LT_BENCH_OFFSET = 43;
+
+var LT_CAP_INPUT = LT_CAPITAL;
+
+function setLtCapital(v){
+  var n = parseFloat(String(v).replace(/[^0-9.]/g, ''));
+  LT_CAP_INPUT = (isFinite(n) && n > 0) ? n : LT_CAPITAL;
+  paintLongTerm();
+}
 
 function setLtRange(r){
   LT_RANGE = r;
   paintLongTerm();
 }
 
-function ltCurveSlice(){
+function ltWeeks(){
+  var w = 0;
+  LT_RANGES.forEach(function(r){ if(r[0] === LT_RANGE) w = r[1]; });
+  return w;
+}
+
+function ltDateAt(i){
+  var d = new Date(LT_CURVE_START);
+  d.setDate(d.getDate() + i * 7);
+  return d;
+}
+
+/* The window, the two series aligned inside it, and everything the
+   cards need — computed once so no two figures can disagree. */
+function ltStats(){
   var n = LT_CURVE.length;
-  var weeks = 0;
-  LT_RANGES.forEach(function(r){ if(r[0] === LT_RANGE) weeks = r[1]; });
+  var weeks = ltWeeks();
   var from = weeks ? Math.max(0, n - weeks) : 0;
 
   var vals = LT_CURVE.slice(from);
-  var start = new Date(LT_CURVE_START);
-  start.setDate(start.getDate() + from * 7);
+  var scale = LT_CAP_INPUT / LT_CURVE[0];
+  var money = vals.map(function(v){ return v * scale; });
 
-  /* Values stay in rupees. A shorter window starts from whatever the
-     account was worth that day, not from a rebased 100 — the point is
-     to show what the money did, not an index. */
+  var mult = vals[vals.length - 1] / vals[0];
+  var years = (vals.length - 1) / 52.18;
+
+  /* Nifty, aligned to the same weeks. It starts 43 weeks into this
+     curve, so on the longest window there is a stretch at the front
+     with no benchmark: those points are left null rather than the
+     whole comparison being dropped. The percentage is only quoted
+     when Nifty covers the entire window. */
+  var bench = null, benchMult = null, benchFull = false;
+  if(typeof PF_BENCH !== 'undefined' && PF_BENCH.length){
+    bench = [];
+    for(var bi = 0; bi < vals.length; bi++){
+      var src = from + bi - LT_BENCH_OFFSET;
+      bench.push((src >= 0 && src < PF_BENCH.length) ? PF_BENCH[src] : null);
+    }
+    var firstB = null, lastB = null;
+    bench.forEach(function(x){ if(x != null){ if(firstB === null) firstB = x; lastB = x; } });
+    if(firstB != null && lastB != null && firstB !== lastB){
+      benchMult = lastB / firstB;
+      benchFull = bench[0] != null;
+    }
+    if(firstB === null) bench = null;
+  }
+
+  /* Calendar years inside the window. */
+  var byYear = {}, order = [];
+  for(var i = 0; i < vals.length; i++){
+    var y = ltDateAt(from + i).getFullYear();
+    if(!(y in byYear)){ byYear[y] = { first: vals[i], last: vals[i], bFirst: null, bLast: null }; order.push(y); }
+    byYear[y].last = vals[i];
+    if(bench && bench[i] != null){
+      if(byYear[y].bFirst == null) byYear[y].bFirst = bench[i];
+      byYear[y].bLast = bench[i];
+    }
+  }
+  var years_ = order.map(function(y){
+    var r = byYear[y];
+    return {
+      year: y,
+      pct: (r.last / r.first - 1) * 100,
+      bench: (r.bFirst && r.bLast) ? (r.bLast / r.bFirst - 1) * 100 : null
+    };
+  });
+
+  var best = null, worst = null;
+  years_.forEach(function(y){
+    if(best === null || y.pct > best.pct) best = y;
+    if(worst === null || y.pct < worst.pct) worst = y;
+  });
+
   return {
-    values: vals,
-    from: start,
-    opening: vals[0],
-    closing: vals[vals.length - 1],
-    gain: vals[vals.length - 1] / vals[0] - 1
+    from: from, values: vals, money: money, bench: bench,
+    startDate: ltDateAt(from), endDate: ltDateAt(n - 1),
+    opening: money[0], closing: money[money.length - 1],
+    totalPct: (mult - 1) * 100,
+    cagr: years > 0.15 ? (Math.pow(mult, 1 / years) - 1) * 100 : null,
+    years: years,
+    benchPct: benchMult != null ? (benchMult - 1) * 100 : null,
+    benchFull: benchFull,
+    yearRows: years_.reverse(),
+    best: best, worst: worst
   };
 }
 
-function renderLtCurve(){
-  var d = ltCurveSlice();
-  var v = d.values;
+function ltSvg(st){
+  var v = st.values, b = st.bench;
   if(v.length < 2) return '';
 
-  var W = 1000, H = 240, PAD = 6;
-  var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
-  var span = (hi - lo) || 1;
+  var W = 1000, H = 260, PAD = 8;
 
-  var x = function(i){ return PAD + i / (v.length - 1) * (W - PAD * 2); };
-  var y = function(val){ return PAD + (1 - (val - lo) / span) * (H - PAD * 2); };
+  /* Both series are rebased inside the window so they share one
+     axis; the rupee figures live above the chart. */
+  var pf = v.map(function(x){ return x / v[0] * 100; });
 
-  var line = v.map(function(val, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(val).toFixed(1); }).join(' ');
-  var area = line + ' L' + x(v.length - 1).toFixed(1) + ' ' + H + ' L' + x(0).toFixed(1) + ' ' + H + ' Z';
-
-  /* Mark each calendar year where it actually starts. Stepping 52
-     points at a time drifts — a year is 52.18 weeks — and after a
-     decade the labels repeat. */
-  var marks = '';
-  var seenYear = null;
-  for(var i = 0; i < v.length; i++){
-    var at = new Date(d.from);
-    at.setDate(at.getDate() + i * 7);
-    var yr = at.getFullYear();
-    if(yr === seenYear) continue;
-    seenYear = yr;
-    if(i === 0 && v.length > 60) continue;   /* skip a label on the edge */
-    marks += '<line x1="' + x(i).toFixed(1) + '" y1="0" x2="' + x(i).toFixed(1) +
-      '" y2="' + H + '" class="ltc-grid"/>' +
-      '<text x="' + (x(i) + 5).toFixed(1) + '" y="' + (H - 6) + '" class="ltc-year">' +
-      yr + '</text>';
+  /* Rebase the benchmark on its own first real point, and keep the
+     gaps as nulls so the line simply starts where the data does. */
+  var bm = null;
+  if(b){
+    var base = null;
+    for(var k = 0; k < b.length; k++) if(b[k] != null){ base = b[k]; break; }
+    if(base) bm = b.map(function(x){ return x == null ? null : x / base * 100; });
   }
 
-  var up = d.gain >= 0;
-  var hue = up ? 'var(--tier-sb)' : 'var(--red)';
+  var all = pf.concat((bm || []).filter(function(x){ return x != null; }));
+  var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+  var span = (hi - lo) || 1;
 
-  var buttons = LT_RANGES.map(function(r){
+  var X = function(i){ return PAD + i / (v.length - 1) * (W - PAD * 2); };
+  var Y = function(x){ return PAD + (1 - (x - lo) / span) * (H - PAD * 2); };
+  var path = function(a){
+    var out = '', pen = false;
+    for(var i = 0; i < a.length; i++){
+      if(a[i] == null){ pen = false; continue; }
+      out += (pen ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(a[i]).toFixed(1) + ' ';
+      pen = true;
+    }
+    return out.trim();
+  };
+
+  var marks = '', seen = null;
+  for(var i = 0; i < v.length; i++){
+    var y = ltDateAt(st.from + i).getFullYear();
+    if(y === seen) continue;
+    seen = y;
+    if(i === 0 && v.length > 60) continue;
+    marks += '<line x1="' + X(i).toFixed(1) + '" y1="0" x2="' + X(i).toFixed(1) +
+      '" y2="' + H + '" class="ltc-grid"/>' +
+      '<text x="' + (X(i) + 5).toFixed(1) + '" y="' + (H - 6) + '" class="ltc-year">' + y + '</text>';
+  }
+
+  var line = path(pf);
+  var area = line + ' L' + X(v.length - 1).toFixed(1) + ' ' + H + ' L' + X(0).toFixed(1) + ' ' + H + ' Z';
+
+  return '<svg class="ltc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' +
+    '<defs><linearGradient id="ltcFill" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="' + LT_ACCENT + '" stop-opacity="0.20"/>' +
+      '<stop offset="100%" stop-color="' + LT_ACCENT + '" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    marks +
+    '<path d="' + area + '" fill="url(#ltcFill)"/>' +
+    (bm ? '<path d="' + path(bm) + '" fill="none" stroke="var(--muted)" stroke-width="1.5" ' +
+          'stroke-dasharray="4 4" vector-effect="non-scaling-stroke" opacity="0.85"/>' : '') +
+    '<path d="' + line + '" fill="none" stroke="' + LT_ACCENT + '" stroke-width="2" ' +
+      'stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+  '</svg>';
+}
+
+function renderLtPerf(closed){
+  var st = ltStats();
+  var pct = function(x){ return (x >= 0 ? '+' : '') + x.toFixed(1) + '%'; };
+  var hue = st.totalPct >= 0 ? LT_ACCENT : 'var(--red)';
+
+  var btns = LT_RANGES.map(function(r){
     return '<button class="perf-btn' + (r[0] === LT_RANGE ? ' on' : '') +
       '" onclick="setLtRange(\'' + r[0] + '\')">' + r[0] + '</button>';
   }).join('');
 
-  return '<div class="mp-sec">' +
-    '<div class="mp-sec-head">' +
-      '<div class="mp-sec-t">Equity curve</div>' +
-      '<div class="perf-ctl">' + buttons + '</div>' +
+  var rets = closed.map(function(j){ return +j.pnlPct || 0; });
+  var wins = rets.filter(function(r){ return r > 0; }).length;
+  var avg = rets.length ? rets.reduce(function(a, b){ return a + b; }, 0) / rets.length : 0;
+
+  function card(label, value, sub, colour){
+    return '<div class="card">' +
+      '<div class="card-l">' + label + '</div>' +
+      '<div class="card-v"' + (colour ? ' style="color:' + colour + '"' : '') + '>' + value + '</div>' +
+      (sub ? '<div class="card-s">' + sub + '</div>' : '') +
+    '</div>';
+  }
+
+  var cards =
+    card('Total return', pct(st.totalPct), 'over the selected window', hue) +
+    card('CAGR', st.cagr != null ? pct(st.cagr) : '\u2014',
+         st.years >= 1 ? st.years.toFixed(1) + ' years' : 'window too short', hue) +
+    (st.benchPct != null && st.benchFull
+      ? card('Against ' + PF_BENCH_LABEL, pct(st.totalPct - st.benchPct),
+             PF_BENCH_LABEL + ' did ' + pct(st.benchPct),
+             st.totalPct - st.benchPct >= 0 ? LT_ACCENT : 'var(--red)')
+      : '') +
+    (st.best ? card('Best year', pct(st.best.pct), String(st.best.year), LT_ACCENT) : '') +
+    (st.worst ? card('Worst year', pct(st.worst.pct), String(st.worst.year),
+                     st.worst.pct < 0 ? 'var(--red)' : '') : '') +
+    (rets.length
+      ? card('Closed trades', rets.length.toLocaleString('en-IN'),
+             (100 * wins / rets.length).toFixed(0) + '% profitable') +
+        card('Average trade', pct(avg), 'across every closed trade',
+             avg >= 0 ? LT_ACCENT : 'var(--red)')
+      : '');
+
+  var yearRows = st.yearRows.map(function(y){
+    var diff = y.bench != null ? y.pct - y.bench : null;
+    return '<tr>' +
+      '<td>' + y.year + '</td>' +
+      '<td class="num r" style="color:' + (y.pct >= 0 ? LT_ACCENT : 'var(--red)') + '">' + pct(y.pct) + '</td>' +
+      '<td class="num r dim">' + (y.bench != null ? pct(y.bench) : '\u2014') + '</td>' +
+      '<td class="num r" style="color:' + (diff == null ? 'var(--muted)' : diff >= 0 ? LT_ACCENT : 'var(--red)') + '">' +
+        (diff != null ? pct(diff) : '\u2014') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="perf">' +
+    '<div class="perf-hd">' +
+      '<div><span class="perf-ttl">Long Term Performance</span> ' +
+        '<span class="perf-tag">' +
+          st.startDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + ' \u2013 ' +
+          st.endDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + '</span></div>' +
+      '<div class="perf-ctl">' + btns + '</div>' +
     '</div>' +
-    '<div class="ltc-wrap">' +
-      '<div class="ltc-top">' +
-        '<div class="ltc-gain" style="color:' + hue + '">' +
-          (up ? '+' : '') + (d.gain * 100).toFixed(0) + '%</div>' +
-        '<div class="ltc-sub">' + pfMoney(d.opening) + ' \u2192 ' + pfMoney(d.closing) +
-          ' \u00b7 since ' +
-          d.from.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + '</div>' +
+
+    '<div class="perf-tops">' +
+      '<div class="perf-lede">' +
+        '<div class="cap-row">' +
+          '<label class="cap-l" for="ltCapIn">Invested ' +
+            st.startDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + '</label>' +
+          '<div class="cap-in"><span>\u20b9</span>' +
+            '<input id="ltCapIn" type="text" inputmode="numeric" value="' +
+              Math.round(LT_CAP_INPUT).toLocaleString('en-IN') +
+              '" oninput="setLtCapital(this.value)"></div>' +
+        '</div>' +
+        '<div class="cap-out">would be worth <b style="color:' + hue + '">' +
+          pfMoney(st.closing * (LT_CAP_INPUT / st.opening)) + '</b> today</div>' +
+        '<div class="cap-note">Percentages below are for the selected window.</div>' +
       '</div>' +
-      '<svg class="ltc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' +
-        '<defs><linearGradient id="ltcFill" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0%" stop-color="' + hue + '" stop-opacity="0.22"/>' +
-          '<stop offset="100%" stop-color="' + hue + '" stop-opacity="0"/>' +
-        '</linearGradient></defs>' +
-        marks +
-        '<path d="' + area + '" fill="url(#ltcFill)"/>' +
-        '<path d="' + line + '" fill="none" stroke="' + hue + '" stroke-width="2" ' +
-          'stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
-      '</svg>' +
-      '<p class="ltc-note">The account opens with ' + LT_SLOTS + ' positions of ' +
-      pfMoney(LT_PER_TRADE) + '. Each new position takes an equal share of the ' +
-      'account as it stands that day, so gains are put back to work \u2014 a ' +
-      'position taken today would be ' + pfMoney(LT_CURVE[LT_CURVE.length - 1] / LT_SLOTS) +
-      ', not ' + pfMoney(LT_PER_TRADE) + '.</p>' +
+      '<div><div class="perf-k-l" style="color:' + LT_ACCENT + '">Long Term' +
+        '<span class="perf-k-p">' + pct(st.totalPct) + '</span></div>' +
+        '<div class="perf-k-v">' + pfMoney(st.closing) + '</div></div>' +
+      (st.benchPct != null && st.benchFull
+        ? '<div><div class="perf-k-l" style="color:var(--muted)">' + PF_BENCH_LABEL +
+          '<span class="perf-k-p">' + pct(st.benchPct) + '</span></div>' +
+          '<div class="perf-k-v dim">' + pct(st.benchPct) + '</div></div>'
+        : '') +
     '</div>' +
+
+    '<div class="perf-legend">' +
+      '<span><i style="background:' + LT_ACCENT + '"></i>Long Term</span>' +
+      (st.bench ? '<span><i style="background:var(--muted)"></i>' + PF_BENCH_LABEL + '</span>' : '') +
+    '</div>' +
+
+    ltSvg(st) +
+
+    '<div class="cards">' + cards + '</div>' +
+
+    '<div class="perf-sub">Year by year</div>' +
+    '<div class="tw" style="margin-top:10px"><table><thead><tr>' +
+      '<th>Year</th><th class="r">Long Term</th><th class="r">' + PF_BENCH_LABEL + '</th>' +
+      '<th class="r">Difference</th>' +
+    '</tr></thead><tbody>' + yearRows + '</tbody></table></div>' +
+
+    '<div class="perf-foot">The account opens with ' + LT_SLOTS + ' positions of ' +
+      pfMoney(LT_PER_TRADE) + ' and every new position takes an equal share of the account ' +
+      'as it stands that day, so gains are put back to work. Reconstructed from entry and ' +
+      'exit prices, so the line runs smooth between them and does not show intra-trade ' +
+      'drawdown. ' + PF_BENCH_LABEL + ' is shown at index level, excluding dividends. ' +
+      'Past performance does not guarantee future returns.</div>' +
   '</div>';
 }
 
@@ -3510,27 +3690,6 @@ function paintLongTerm(){
         '<div class="sc-v" style="font-size:19px">None</div>' +
         '<div class="sc-s">exit only on the trailing line</div></div>' +
     '</div>' +
-    (closed.length
-      ? '<div class="scorecard" style="margin-top:12px">' +
-          '<div class="sc-cell"><div class="sc-l">Closed trades</div>' +
-            '<div class="sc-v">' + closed.length.toLocaleString('en-IN') + '</div>' +
-            '<div class="sc-s">' + (span ? span : '') + '</div></div>' +
-          '<div class="sc-cell"><div class="sc-l">Win rate</div>' +
-            '<div class="sc-v">' + (100 * wins / closed.length).toFixed(0) + '%</div>' +
-            '<div class="sc-s">' + wins.toLocaleString('en-IN') + ' of them profitable</div></div>' +
-          '<div class="sc-cell"><div class="sc-l">Average trade</div>' +
-            '<div class="sc-v" style="color:' + (avgClosed >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
-              (avgClosed >= 0 ? '+' : '') + avgClosed.toFixed(1) + '%</div>' +
-            '<div class="sc-s">across every closed trade</div></div>' +
-          '<div class="sc-cell"><div class="sc-l">Ran past 50%</div>' +
-            '<div class="sc-v" style="color:var(--tier-sb)">' + bigWins.toLocaleString('en-IN') + '</div>' +
-            '<div class="sc-s">what having no target buys</div></div>' +
-          '<div class="sc-cell"><div class="sc-l">Worst trade</div>' +
-            '<div class="sc-v" style="color:var(--red)">' +
-              Math.min.apply(null, closedRets).toFixed(0) + '%</div>' +
-            '<div class="sc-s">what it costs</div></div>' +
-        '</div>'
-      : '') +
     '<p class="sc-note">The stop is recalculated every evening and only ever ' +
     'moves up. A position is closed the day price breaks it.</p>';
 
@@ -3578,9 +3737,10 @@ function paintLongTerm(){
       '</div>' +
 
       '<div class="hold-stats">' +
-        (m.rank != null ? '<div><span>RS rank</span><b>' + Math.round(m.rank) + '</b></div>' : '') +
         '<div><span>Entry</span><b>' + pfMoney(p.entryPrice) + '</b></div>' +
+        '<div><span>Taken</span><b>' + (p.entryDate ? fmtDate(p.entryDate) : '\u2014') + '</b></div>' +
         '<div><span>Held</span><b>' + (p.daysHeld || 0) + 'd</b></div>' +
+        (m.rank != null ? '<div><span>RS rank</span><b>' + Math.round(m.rank) + '</b></div>' : '') +
       '</div>' +
     '</div>';
   }).join('');
@@ -3596,6 +3756,7 @@ function paintLongTerm(){
         ';font-weight:700">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</td>' +
       '<td class="num r">' + pfMoney(p.currPrice) + '</td>' +
       '<td class="num r dim">' + pfMoney(p.entryPrice) + '</td>' +
+      '<td class="num r dim">' + (p.entryDate ? fmtDate(p.entryDate) : '\u2014') + '</td>' +
       '<td class="num r" style="color:var(--red)">' + pfMoney(p.stopLoss) + '</td>' +
       '<td class="num r"' + (room < 5 ? ' style="color:var(--tier-w);font-weight:700"' : '') + '>' +
         room.toFixed(1) + '%</td>' +
@@ -3608,7 +3769,7 @@ function paintLongTerm(){
       ltHead('symbol', 'Symbol') +
       ltHead('pnl',    'P&L',           'r') +
       ltHead('price',  'Price',         'r') +
-      '<th class="r">Entry</th>' +
+      '<th class="r">Entry</th><th class="r">Taken</th>' +
       ltHead('stop',   'Trailing stop', 'r') +
       ltHead('room',   'Room',          'r') +
       ltHead('held',   'Held',          'r') +
@@ -3644,10 +3805,11 @@ function paintLongTerm(){
     '</tr>';
   }).join('');
 
-  body.innerHTML = strip +
-    renderLtCurve() +
+  body.innerHTML =
+    renderLtPerf(closed) +
+    strip +
     '<div class="mp-sec">' +
-      '<div class="mp-sec-head"><div class="mp-sec-t">The book</div>' + viewToggle() + '</div>' +
+      '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings</div>' + viewToggle() + '</div>' +
       posBody +
     '</div>' +
     (jnl.length
