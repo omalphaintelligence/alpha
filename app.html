@@ -2166,7 +2166,7 @@ body.s-light .new-tag{color:#fff}
           <h2>Held until the trend says otherwise.</h2>
           <p id="ltLede">Positions run without a profit target. The stop moves up as the trend does, and the position closes the day price breaks it — so a winner is never cut short, and whatever the stop gives back on the way out is the cost of that.</p>
         </div>
-        <div id="ltBody"></div>
+        <div id="ltBody" class="dash-scope"></div>
       </div>
     </div>
   </div>
@@ -3576,7 +3576,7 @@ function renderLtPerf(closed){
 
     ltSvg(st) +
 
-    '<div class="cards">' + cards + '</div>' +
+    '<div class="card-grid">' + cards + '</div>' +
 
     '<div class="perf-sub">Year by year</div>' +
     '<div class="tw" style="margin-top:10px"><table><thead><tr>' +
@@ -3596,6 +3596,11 @@ function renderLtPerf(closed){
 function buildLongTerm(){
   var body = document.getElementById('ltBody');
   if(!body) return;
+
+  /* The perf block, cards and tables are all defined under
+     .dash-scope. Without the class none of it applies and the page
+     renders as a column of unstyled text. */
+  body.className = 'dash-scope t-' + currentTheme();
 
   if(!canSeeModel()){
     body.innerHTML = lockPanel(
