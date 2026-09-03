@@ -2682,7 +2682,7 @@ function setViewMode(m){
   });
   if(LANDING_TAB === 'model') buildPublicModel(true);
   if(LANDING_TAB === 'calls') paintCalls();
-  if(LANDING_TAB === 'ready') paintReady();
+  if(LANDING_TAB === 'ready'){ RTM_VIEW === 'longterm' ? paintLtQueue() : paintReady(); }
   if(LANDING_TAB === 'longterm') paintLongTerm();
 }
 
@@ -3308,6 +3308,160 @@ function ltHead(key, label, align){
 }
 
 /* ============================================================
+   LONG TERM COMMENTARY
+   The same idea as the Model Portfolio's, on this book's own events:
+   the day's move from consecutive snapshots, and entries, exits and
+   raised stops from its journal.
+   ============================================================ */
+var LT_TAB = 'book';
+var LT_CM_FILTER = 'all';
+var LT_NOTES_OPEN = {};
+
+function setLtTab(v){ LT_TAB = v; paintLongTerm(); }
+function setLtCmFilter(f){ LT_CM_FILTER = f; paintLongTerm(); }
+
+function toggleLtNote(i){
+  LT_NOTES_OPEN[i] = !LT_NOTES_OPEN[i];
+  var el = document.getElementById('ltnote-' + i);
+  if(el) el.classList.toggle('open', LT_NOTES_OPEN[i]);
+}
+
+function buildLtNotes(){
+  var lt = (SCR_DATA && SCR_DATA.longTerm) || {};
+  var hist = lt.history || [];
+  var jnl = lt.journal || [];
+  var notes = [];
+
+  var byDay = {};
+  hist.forEach(function(r){
+    if(!r || !r.as_of) return;
+    var k = String(r.as_of).slice(0, 10);
+    (byDay[k] = byDay[k] || []).push(r);
+  });
+  var days = Object.keys(byDay).sort().reverse();
+
+  for(var i = 0; i < days.length - 1 && i < 30; i++){
+    var today = byDay[days[i]], prevBy = {};
+    byDay[days[i + 1]].forEach(function(r){ prevBy[r.symbol] = r; });
+
+    var moves = [];
+    today.forEach(function(r){
+      var was = prevBy[r.symbol];
+      if(!was || !was.curr_price || !r.curr_price) return;
+      var chg = (r.curr_price - was.curr_price) / was.curr_price * 100;
+      if(Math.abs(chg) < 0.01) return;
+      moves.push({ symbol: r.symbol, chg: chg });
+    });
+    if(!moves.length) continue;
+
+    var net = moves.reduce(function(a, m){ return a + m.chg; }, 0) / moves.length;
+    moves.sort(function(a, b){ return b.chg - a.chg; });
+    notes.push({
+      date: days[i], kind: 'day',
+      hue: net >= 0 ? LT_ACCENT : 'var(--red)',
+      title: 'The book ' + (net >= 0 ? 'gained' : 'gave back') + ' ' +
+             Math.abs(net).toFixed(2) + '% today',
+      summary: moves.filter(function(m){ return m.chg > 0; }).length + ' up, ' +
+               moves.filter(function(m){ return m.chg < 0; }).length + ' down',
+      detail: renderDayDetail(moves.filter(function(m){ return m.chg > 0; }),
+                              moves.filter(function(m){ return m.chg < 0; }), net)
+    });
+  }
+
+  jnl.slice(0, 80).forEach(function(e){
+    if(!e.date) return;
+    var when = String(e.date).slice(0, 10);
+
+    if(e.action === 'ENTRY'){
+      notes.push({
+        date: when, kind: 'in', hue: 'var(--tier-b)',
+        title: e.symbol + ' added to the book',
+        summary: 'taken at ' + pfMoney(e.price),
+        detail: '<p class="nd-p">A slot opened and this name met every entry ' +
+          'condition, so it took the place. It will be held with no target ' +
+          'until its stop is broken.</p>' +
+          '<div class="nd-facts"><div><span>Taken at</span><b>' +
+            pfMoney(e.price) + '</b></div></div>'
+      });
+    } else if(e.action === 'STOP RAISED'){
+      notes.push({
+        date: when, kind: 'stop', hue: LT_ACCENT,
+        title: e.symbol + ' stop raised',
+        summary: String(e.notes || '').trim(),
+        detail: '<p class="nd-p">The trend moved up, so the stop moved with it. ' +
+          'It never moves back down \u2014 once given, the level is kept.</p>' +
+          '<div class="nd-facts"><div><span>Now at</span><b>' +
+            pfMoney(e.price) + '</b></div></div>'
+      });
+    } else {
+      var pnl = +e.pnlPct || 0;
+      notes.push({
+        date: when, kind: 'out',
+        hue: pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)',
+        title: e.symbol + ' closed ' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%',
+        summary: 'stop taken out',
+        detail: '<p class="nd-p">Price broke the trailing stop, so the position ' +
+          'was closed. There was no target: the trade ran until the trend ' +
+          'stopped supporting it.</p>' +
+          '<div class="nd-facts">' +
+            '<div><span>Closed at</span><b>' + pfMoney(e.price) + '</b></div>' +
+            '<div><span>Result</span><b style="color:' +
+              (pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+              (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</b></div>' +
+          '</div>'
+      });
+    }
+  });
+
+  notes.sort(function(a, b){ return b.date.localeCompare(a.date); });
+  return notes.slice(0, 60);
+}
+
+var LT_CM_TABS = [
+  ['all',  'All'], ['in', 'Additions'], ['out', 'Removals'],
+  ['stop', 'Stops raised'], ['day', 'Daily reports']
+];
+
+function renderLtNotes(){
+  var all = buildLtNotes();
+
+  var counts = { all: all.length };
+  all.forEach(function(n){ counts[n.kind] = (counts[n.kind] || 0) + 1; });
+
+  var notes = LT_CM_FILTER === 'all'
+    ? all
+    : all.filter(function(n){ return n.kind === LT_CM_FILTER; });
+
+  var filters = '<div class="cm-filters">' + LT_CM_TABS.map(function(t){
+    return '<button class="cm-filter' + (LT_CM_FILTER === t[0] ? ' on' : '') +
+      '" onclick="setLtCmFilter(\'' + t[0] + '\')">' + t[1] +
+      (counts[t[0]] ? ' <span class="dim">' + counts[t[0]] + '</span>' : '') +
+    '</button>';
+  }).join('') + '</div>';
+
+  if(!notes.length){
+    return filters + '<div class="scr-load">Nothing filed under this yet. ' +
+      'Daily reports start once there are two days of history to compare.</div>';
+  }
+
+  return filters + '<div class="feed">' + notes.map(function(n, i){
+    var when = new Date(n.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+    return '<div class="feed-item' + (LT_NOTES_OPEN[i] ? ' open' : '') +
+      '" id="ltnote-' + i + '" style="--n:' + n.hue + '" onclick="toggleLtNote(' + i + ')">' +
+      '<div class="feed-head">' +
+        '<div class="feed-when">' + when + '</div>' +
+        '<div class="feed-body">' +
+          '<div class="feed-title">' + n.title + '</div>' +
+          '<div class="feed-sum">' + n.summary + '</div>' +
+        '</div>' +
+        '<div class="feed-chev">\u203A</div>' +
+      '</div>' +
+      '<div class="feed-detail">' + n.detail + '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+/* ============================================================
    LONG TERM PERFORMANCE
    Built to match the Model Portfolio page section for section, so
    the two read the same way. The accent is violet rather than
@@ -3810,7 +3964,19 @@ function paintLongTerm(){
     '</tr>';
   }).join('');
 
-  body.innerHTML =
+  var subTabs = '<div class="cm-sub">' +
+    '<button class="' + (LT_TAB === 'book' ? 'on' : '') +
+      '" onclick="setLtTab(\'book\')">Long Term</button>' +
+    '<button class="' + (LT_TAB === 'commentary' ? 'on' : '') +
+      '" onclick="setLtTab(\'commentary\')">Commentary</button>' +
+  '</div>';
+
+  if(LT_TAB === 'commentary'){
+    body.innerHTML = subTabs + renderLtNotes();
+    return;
+  }
+
+  body.innerHTML = subTabs +
     renderLtPerf(closed) +
     strip +
     '<div class="mp-sec">' +
@@ -3832,6 +3998,25 @@ function paintLongTerm(){
    The queue the Model Portfolio draws from. READY means a slot is
    open today; QUEUED means the name qualifies but the book is full.
    Same access as the portfolio itself. --- */
+/* Two books, two queues. A name can clear one and not the other —
+   the long term book also needs its trend to be up on the day — so
+   showing one list for both would be wrong. */
+var RTM_VIEW = 'model';
+
+function setRtmView(v){
+  RTM_VIEW = v;
+  buildReadyTab();
+}
+
+function rtmTabs(){
+  return '<div class="cm-sub">' +
+    '<button class="' + (RTM_VIEW === 'model' ? 'on' : '') +
+      '" onclick="setRtmView(\'model\')">Model Portfolio</button>' +
+    '<button class="' + (RTM_VIEW === 'longterm' ? 'on' : '') +
+      '" onclick="setRtmView(\'longterm\')">Long Term</button>' +
+  '</div>';
+}
+
 function buildReadyTab(){
   var body = document.getElementById('readyBody');
   if(!body) return;
@@ -3844,10 +4029,101 @@ function buildReadyTab(){
     return;
   }
 
-  body.innerHTML = '<div class="scr-load">Loading the queue\u2026</div>';
+  body.innerHTML = rtmTabs() + '<div class="scr-load">Loading the queue\u2026</div>';
+
+  /* Whichever book the sub-tab is on. This used to always paint the
+     model queue, so switching to Long Term changed the highlighted
+     tab and nothing else. */
   ensureFeed()
-    .then(paintReady)
-    .catch(function(){ body.innerHTML = '<div class="scr-load">Unavailable right now.</div>'; });
+    .then(function(){
+      if(RTM_VIEW === 'longterm') paintLtQueue();
+      else paintReady();
+    })
+    .catch(function(){
+      body.innerHTML = rtmTabs() + '<div class="scr-load">Unavailable right now.</div>';
+    });
+}
+
+/* --- the long term queue --- */
+function paintLtQueue(){
+  var body = document.getElementById('readyBody');
+  if(!body) return;
+
+  var lt = (SCR_DATA && SCR_DATA.longTerm) || {};
+  var rows = lt.queue || [];
+
+  if(!rows.length){
+    body.innerHTML = rtmTabs() +
+      '<div class="slot-strip' + (lt.freeSlots ? ' slot-strip--open' : '') + '">' +
+        '<div class="slot-k">' + (lt.held || 0) + '<span>/' + (lt.capacity || 30) + '</span></div>' +
+        '<div class="slot-t"><b>' +
+          ((lt.freeSlots || 0) > 0
+            ? lt.freeSlots + ' slot' + (lt.freeSlots === 1 ? '' : 's') + ' open'
+            : 'The book is full') + '</b><br>' +
+          'Nothing is waiting today \u2014 every name that qualifies has a place.' +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
+  var freshQ = newestThree(rows, function(r){ return r.since; });
+
+  var cards = rows.map(function(r){
+    var ready = String(r.state).toUpperCase() === 'READY';
+    var hue = ready ? 'var(--tier-sb)' : 'var(--r70)';
+    var fresh = freshQ[String(r.symbol).toUpperCase()];
+    return '<div class="call' + (fresh != null ? ' is-new' : '') + '"' +
+      ' style="--hue:' + hue + (fresh != null ? ';--n:' + NEW_HUES[fresh] : '') + '">' +
+      '<div class="call-top">' +
+        '<button class="call-sym as-link" onclick="openChart(\'' + r.symbol + '\')">' +
+          r.symbol + '</button>' +
+        '<div class="hold-flags">' + newBadge(fresh, r.since) +
+          '<span class="call-hz">' + r.state + '</span></div>' +
+      '</div>' +
+      '<div class="rdy-line">' +
+        '<span class="rdy-q">' + fmtPct(r.roomPct) + '</span>' +
+        '<span class="rdy-p">room above the stop</span>' +
+      '</div>' +
+      '<div class="call-nums">' +
+        '<div><span>Price</span><b>' + pfMoney(r.price) + '</b></div>' +
+        '<div><span>Stop</span><b>' + pfMoney(r.stopLoss) + '</b></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var tableRows = rows.map(function(r, i){
+    var ready = String(r.state).toUpperCase() === 'READY';
+    var fresh = freshQ[String(r.symbol).toUpperCase()];
+    return '<tr' + (fresh != null ? ' class="row-new" style="--n:' + NEW_HUES[fresh] + '"' : '') + '>' +
+      '<td class="num dim r">' + (r.pos || (i + 1)) + '</td>' +
+      '<td><button class="tkr as-link" onclick="openChart(\'' + r.symbol + '\')">' +
+        r.symbol + '</button></td>' +
+      '<td><span class="sig ' + (ready ? 'sig-ready' : 'sig-queued') + '">' +
+        (ready ? 'Ready' : 'Queued') + '</span></td>' +
+      '<td class="num r">' + pfMoney(r.price) + '</td>' +
+      '<td class="num r" style="color:var(--red)">' + pfMoney(r.stopLoss) + '</td>' +
+      '<td class="num r">' + fmtPct(r.roomPct) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var free = +lt.freeSlots || 0;
+  body.innerHTML = rtmTabs() +
+    '<div class="slot-strip' + (free ? ' slot-strip--open' : '') + '">' +
+      '<div class="slot-k">' + (lt.held || 0) + '<span>/' + (lt.capacity || 30) + '</span></div>' +
+      '<div class="slot-t"><b>' +
+        (free ? free + ' slot' + (free === 1 ? '' : 's') + ' open' : 'The book is full') + '</b><br>' +
+        (free
+          ? 'The top ' + Math.min(free, rows.length) + ' below can be taken today.'
+          : 'Every name below qualifies and is waiting for a position to close.') +
+      '</div>' +
+    '</div>' +
+    viewToggle() +
+    (VIEW_MODE === 'table'
+      ? '<div class="scr-table" style="--seg:var(--r70)"><table class="tbl"><thead><tr>' +
+        '<th class="r" style="width:52px">#</th><th>Symbol</th><th>State</th>' +
+        '<th class="r">Price</th><th class="r">Stop</th><th class="r">Room</th>' +
+        '</tr></thead><tbody>' + tableRows + '</tbody></table></div>'
+      : '<div class="call-grid" style="margin-top:14px">' + cards + '</div>');
 }
 
 /* --- Sorting the queue ---
@@ -3916,11 +4192,11 @@ function paintReady(){
     /* The server returns nothing both when the queue is genuinely
        empty and when this account is not entitled to it. Those are
        different situations and used to read the same. */
-    body.innerHTML = canSeeModel()
+    body.innerHTML = rtmTabs() + (canSeeModel()
       ? '<div class="scr-load">Nothing clears the entry bar today.</div>'
       : lockPanel('The waiting list',
           'Every name that already clears the entry bar, ranked, with the levels each one would be taken at.',
-          'model');
+          'model'));
     return;
   }
 
@@ -3993,7 +4269,7 @@ function paintReady(){
     '</tr>';
   }).join('');
 
-  body.innerHTML = strip + viewToggle() +
+  body.innerHTML = rtmTabs() + strip + viewToggle() +
     (VIEW_MODE === 'table'
       ? '<div class="scr-table" style="--seg:var(--tier-w)"><table class="tbl"><thead><tr>' +
         wlHead('pos',     '#',          'r') +
@@ -4499,7 +4775,8 @@ function ensureFeed(){
     db.from('mp_history').select('as_of, symbol, status, entry_price, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
     db.from('lt_today').select('symbol, entry_date, entry_price, stop_loss, curr_price, pnl_pct, days_held, room_pct'),
     db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(8000),
-    db.from('lt_waitlist').select('position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').order('position'),
+    db.from('lt_waitlist').select('as_of, position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').order('position'),
+    db.from('lt_history').select('as_of, symbol, entry_price, stop_loss, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
   ]).then(function(res){
     var scr = res[0].data || [];
@@ -4515,7 +4792,8 @@ function ensureFeed(){
     var ltp   = res[7].data || [];
     var ltj   = res[8].data || [];
     var ltw   = res[9].data || [];
-    var cl    = res[10].data || [];
+    var lth   = res[10].data || [];
+    var cl    = res[11].data || [];
 
     /* The first date each symbol appeared in the queue. */
     var firstSeen = {};
@@ -4601,8 +4879,10 @@ function ensureFeed(){
         }),
         queue: ltw.map(function(r){
           return { pos:r.position, symbol:r.symbol, state:r.state,
-                   price:r.price, stopLoss:r.stop_loss, roomPct:r.room_pct };
-        })
+                   price:r.price, stopLoss:r.stop_loss, roomPct:r.room_pct,
+                   since:r.as_of };
+        }),
+        history: lth
       },
 
       calls: cl.map(function(c){
