@@ -454,19 +454,6 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
 }
 
 /* auth modal */
-.chartwrap{
-  position:fixed;inset:0;z-index:600;
-  background:color-mix(in srgb,var(--ink) 82%,transparent);backdrop-filter:blur(6px);
-  display:none;align-items:center;justify-content:center;padding:24px;
-}
-.chartwrap.open{display:flex}
-.chart-sheet{
-  width:100%;max-width:1060px;height:min(78vh,720px);
-  display:flex;flex-direction:column;
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:18px;overflow:hidden;
-  animation:rise .22s cubic-bezier(.2,.8,.3,1);
-}
 .chart-hd{
   display:flex;align-items:center;justify-content:space-between;gap:16px;
   padding:18px 22px;border-bottom:1px solid var(--line-soft);flex-shrink:0;
@@ -479,12 +466,8 @@ footer{border-top:1px solid var(--line-soft);padding:44px 0 56px}
   text-decoration:none;white-space:nowrap;
 }
 .chart-out:hover{text-decoration:underline;text-underline-offset:3px}
-.chart-body{flex:1;min-height:0;position:relative}
-.chart-body iframe{width:100%;height:100%;border:none;display:block}
 @media(max-width:700px){
-  .chartwrap{padding:0}
-  .chart-sheet{height:100vh;max-width:none;border-radius:0;border:none}
-  .chart-out{display:none}
+      .chart-out{display:none}
 }
 
 .authwrap{
@@ -1831,7 +1814,8 @@ body.s-light .new-tag{color:#fff}
 .dash-scope .perf-legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-bottom:6px}
 .dash-scope .perf-legend i{display:inline-block;width:9px;height:9px;border-radius:8px;margin-right:6px}
 .dash-scope .perf-canvas-wrap{position:relative}
-.dash-scope #perfCanvas{width:100%;height:250px;display:block;cursor:crosshair}
+.dash-scope #perfCanvas,
+.dash-scope #ltPerfCanvas{width:100%;height:250px;display:block;cursor:crosshair}
 .dash-scope .perf-tip{display:none;position:absolute;background:var(--text);color:var(--bg);
   padding:6px 9px;border-radius:10px;font-size:10.5px;
   white-space:nowrap;
@@ -1898,7 +1882,8 @@ body.s-light .new-tag{color:#fff}
 .dash-scope .cap-note{margin-top:7px;font-size:11.5px;color:var(--muted);opacity:.8}
 
 .dash-scope .perf-tops{grid-template-columns:1fr;gap:10px}
-  .dash-scope #perfCanvas{height:200px}
+  .dash-scope #perfCanvas,
+  .dash-scope #ltPerfCanvas{height:200px}
 }
 .dash-scope ::-webkit-scrollbar{width:4px;height:4px}
 .dash-scope ::-webkit-scrollbar-track{background:var(--s1)}
@@ -2299,20 +2284,6 @@ body.s-light .new-tag{color:#fff}
 </div>
 
 <!-- ==================== CHART ==================== -->
-<div class="chartwrap" id="chartwrap" onclick="if(event.target===this)closeChart()">
-  <div class="chart-sheet">
-    <div class="chart-hd">
-      <div>
-        <div class="chart-sym" id="chartSym"></div>
-        <div class="chart-sub" id="chartSub"></div>
-      </div>
-      <div class="chart-acts">
-        <a class="chart-out" id="chartOut" target="_blank" rel="noopener">Open in TradingView &#8599;</a>
-        <button class="x" onclick="closeChart()" aria-label="Close">&times;</button>
-      </div>
-    </div>
-    <div class="chart-body" id="chartBody"></div>
-  </div>
 </div>
 
 <!-- ==================== AUTH MODAL ==================== -->
@@ -2878,39 +2849,20 @@ function buildPricing(){
    TradingView's free widget, opened in place. Sending people off to
    tradingview.com to check a name is a good way to lose them for the
    session; this keeps the check inside the page. --- */
-function openChart(symbol, note){
-  var wrap = document.getElementById('chartwrap');
-  if(!wrap || !symbol) return;
-
+/* Straight to TradingView rather than the embedded widget. The
+   widget cannot carry a reader's own indicators or drawings, which
+   is the whole reason they open a chart in the first place. */
+function openChart(symbol){
+  if(!symbol) return;
   var sym = String(symbol).toUpperCase();
-  document.getElementById('chartSym').textContent = sym;
-  document.getElementById('chartSub').textContent = note || 'NSE \u00b7 daily';
-  document.getElementById('chartOut').href =
-    'https://www.tradingview.com/chart/?symbol=NSE%3A' + encodeURIComponent(sym) + '&interval=D';
-
-  /* Rebuilt each time so the widget picks up the current theme. */
-  var dark = !document.body.classList.contains('s-light');
-  var body = document.getElementById('chartBody');
-  body.innerHTML = '<iframe title="' + sym + ' chart" loading="lazy" src="' +
-    'https://s.tradingview.com/widgetembed/?symbol=NSE%3A' + encodeURIComponent(sym) +
-    '&interval=D&theme=' + (dark ? 'dark' : 'light') +
-    '&style=1&locale=in&hide_side_toolbar=0&allow_symbol_change=0&save_image=0' +
-    '&withdateranges=1&hide_legend=0' + '"></iframe>';
-
-  wrap.classList.add('open');
+  window.open(
+    'https://www.tradingview.com/chart/?symbol=NSE%3A' + encodeURIComponent(sym) + '&interval=D',
+    '_blank', 'noopener'
+  );
 }
 
-function closeChart(){
-  var wrap = document.getElementById('chartwrap');
-  if(!wrap) return;
-  wrap.classList.remove('open');
-  /* Drop the iframe so it stops streaming in the background. */
-  var body = document.getElementById('chartBody');
-  if(body) body.innerHTML = '';
-}
 
 document.addEventListener('keydown', function(e){
-  if(e.key === 'Escape') closeChart();
 });
 
 /* --- Stock query ---
@@ -3476,6 +3428,14 @@ var LT_ACCENT = 'var(--r70)';
 var LT_BENCH_OFFSET = 43;
 
 var LT_CAP_INPUT = LT_CAPITAL;
+var LT_YEARS_OPEN = false;
+
+function toggleLtYearTable(btn){
+  LT_YEARS_OPEN = !LT_YEARS_OPEN;
+  var box = document.getElementById('ltYearBox');
+  if(box) box.style.display = LT_YEARS_OPEN ? '' : 'none';
+  if(btn) btn.textContent = LT_YEARS_OPEN ? 'Hide the full record' : 'See the full record';
+}
 
 function setLtCapital(v){
   var n = parseFloat(String(v).replace(/[^0-9.]/g, ''));
@@ -3573,6 +3533,28 @@ function ltStats(){
     yearRows: years_.reverse(),
     best: best, worst: worst
   };
+}
+
+/* The same shape perfSlice() returns, so one chart routine serves
+   both books. */
+function ltSlice(){
+  var st = ltStats();
+  var pf = st.values.map(function(x){ return x / st.values[0] * 100; });
+
+  var bm = null;
+  if(st.bench){
+    var base = null;
+    for(var k = 0; k < st.bench.length; k++) if(st.bench[k] != null){ base = st.bench[k]; break; }
+    if(base) bm = st.bench.map(function(x){ return x == null ? null : x / base * 100; });
+  }
+
+  var dates = pf.map(function(_, i){ return ltDateAt(st.from + i); });
+  return { pf: pf, bm: bm, dates: dates };
+}
+
+function drawLtPerf(){
+  drawPerf({ canvas: 'ltPerfCanvas', tip: 'ltPerfTip',
+             slice: ltSlice, accent: '--r70', label: 'Long Term' });
 }
 
 function ltSvg(st){
@@ -3728,15 +3710,22 @@ function renderLtPerf(closed){
       (st.bench ? '<span><i style="background:var(--muted)"></i>' + PF_BENCH_LABEL + '</span>' : '') +
     '</div>' +
 
-    ltSvg(st) +
+    '<div class="perf-canvas-wrap">' +
+      '<canvas id="ltPerfCanvas"></canvas>' +
+      '<div class="perf-tip" id="ltPerfTip"></div>' +
+    '</div>' +
 
     '<div class="card-grid">' + cards + '</div>' +
 
-    '<div class="perf-sub">Year by year</div>' +
-    '<div class="tw" style="margin-top:10px"><table><thead><tr>' +
-      '<th>Year</th><th class="r">Long Term</th><th class="r">' + PF_BENCH_LABEL + '</th>' +
-      '<th class="r">Difference</th>' +
-    '</tr></thead><tbody>' + yearRows + '</tbody></table></div>' +
+    '<button class="perf-btn perf-toggle" onclick="toggleLtYearTable(this)">' +
+      (LT_YEARS_OPEN ? 'Hide the full record' : 'See the full record') + '</button>' +
+    '<div id="ltYearBox"' + (LT_YEARS_OPEN ? '' : ' style="display:none"') + '>' +
+      '<div class="perf-sub">Year by year</div>' +
+      '<div class="tw" style="margin-top:10px"><table><thead><tr>' +
+        '<th>Year</th><th class="r">Long Term</th><th class="r">' + PF_BENCH_LABEL + '</th>' +
+        '<th class="r">Difference</th>' +
+      '</tr></thead><tbody>' + yearRows + '</tbody></table></div>' +
+    '</div>' +
 
     '<div class="perf-foot">The account opens with ' + LT_SLOTS + ' positions of ' +
       pfMoney(LT_PER_TRADE) + ' and every new position takes an equal share of the account ' +
@@ -3992,6 +3981,9 @@ function paintLongTerm(){
           '</tr></thead><tbody>' + jRows + '</tbody></table></div>' +
         '</div>'
       : '');
+
+  /* The canvas has to be in the document before it can be sized. */
+  setTimeout(drawLtPerf, 20);
 }
 
 /* --- Ready to move ---
@@ -7283,12 +7275,18 @@ function paintPerfHeads(){
   }
 }
 
-function drawPerf(){
-  const cv = document.getElementById('perfCanvas');
-  const tip = document.getElementById('perfTip');
+/* Draws either book. It used to assume one canvas and one series;
+   the long term page needs the same chart, the same hover and the
+   same tooltip, and copying all of it would have meant two versions
+   drifting apart. */
+function drawPerf(cfg){
+  cfg = cfg || {};
+  const cv = document.getElementById(cfg.canvas || 'perfCanvas');
+  const tip = document.getElementById(cfg.tip || 'perfTip');
   if(!cv) return;
-  const d = perfSlice();
-  if(d.pf.length < 2) return;
+  const d = (cfg.slice || perfSlice)();
+  if(!d || d.pf.length < 2) return;
+  const seriesLabel = cfg.label || 'Portfolio';
 
   const dpr = window.devicePixelRatio || 1;
   const w = cv.clientWidth, h = cv.clientHeight;
@@ -7298,7 +7296,7 @@ function drawPerf(){
 
   const themeEl = dashRoot() || document.body;
   const cs = getComputedStyle(themeEl);
-  const accent = cs.getPropertyValue('--purple').trim() || '#8b7fe0';
+  const accent = cs.getPropertyValue(cfg.accent || '--purple').trim() || '#8b7fe0';
   const muted  = cs.getPropertyValue('--muted').trim()  || '#888';
   const bcol   = cs.getPropertyValue('--b1').trim()     || '#333';
 
@@ -7390,7 +7388,7 @@ function drawPerf(){
     render(i);
     if(tip){
       const dt = d.dates[i].toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-      let html = '<b>' + dt + '</b><br>Portfolio \u20b9' + d.pf[i].toFixed(2);
+      let html = '<b>' + dt + '</b><br>' + seriesLabel + ' \u20b9' + d.pf[i].toFixed(2);
       if(d.bm && d.bm[i] != null) html += '<br>' + PF_BENCH_LABEL + ' \u20b9' + d.bm[i].toFixed(2);
       tip.innerHTML = html;
       tip.style.display = 'block';
