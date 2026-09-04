@@ -863,6 +863,15 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 }
 .scr-table .tbl th{position:sticky;top:0;z-index:2}
 .scr-table .tbl td{padding:12px 20px}
+
+/* On a phone the columns still scroll sideways, but the padding
+   alone was eating a third of the width. */
+@media(max-width:520px){
+  .scr-table .tbl th,
+  .scr-table .tbl td{padding:10px 12px;font-size:12.5px}
+  .scr-table{max-height:none}
+  .tkr,.tkr.as-link{font-size:14px}
+}
 .chart-btn{
   color:var(--brand);font-weight:700;font-size:15px;
   padding:2px 6px;border-radius:6px;
@@ -1117,6 +1126,17 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .sc-of{font-size:17px;color:var(--muted);font-weight:400}
 .sc-s{margin-top:7px;font-size:11.5px;color:var(--muted);line-height:1.4}
 .sc-note{margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+@media(max-width:520px){
+  /* Scoped to match the rule it overrides — an unscoped .card-grid
+     loses to .dash-scope .card-grid and silently does nothing. */
+  .dash-scope .card-grid{grid-template-columns:repeat(2,1fr)}
+  .cm-sub button{margin-right:16px;font-size:14.5px}
+  .cm-filters{gap:5px}
+  .cm-filter{padding:6px 11px;font-size:12.5px}
+}
+@media(max-width:400px){
+  .dash-scope .card-grid{grid-template-columns:1fr}
+}
 @media(max-width:1000px){ .scorecard{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:560px){ .scorecard{grid-template-columns:1fr} }
 
@@ -1913,6 +1933,19 @@ body.s-light .new-tag{color:#fff}
 .dash-scope .perf-tops{grid-template-columns:1fr;gap:10px}
   .dash-scope #perfCanvas,
   .dash-scope #ltPerfCanvas{height:200px}
+
+  /* Written for a desktop dashboard: four stat cards across and a
+     three-column header. On a phone they run off the screen. */
+  .dash-scope .card-grid{grid-template-columns:repeat(2,1fr)}
+  .dash-scope .perf-tops{grid-template-columns:1fr;gap:14px}
+  .dash-scope .perf-hd{flex-direction:column;align-items:flex-start;gap:10px}
+  .dash-scope .perf-ctl{flex-wrap:wrap}
+  .dash-scope .perf{padding:14px 14px 12px}
+  .dash-scope .perf-k-v{font-size:21px}
+  .dash-scope .cap-out b{font-size:19px}
+  .dash-scope .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .dash-scope .tw table{min-width:420px}
+  .dash-scope .perf-foot{font-size:9.5px}
 }
 .dash-scope ::-webkit-scrollbar{width:4px;height:4px}
 .dash-scope ::-webkit-scrollbar-track{background:var(--s1)}
