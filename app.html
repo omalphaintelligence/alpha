@@ -1214,6 +1214,26 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .ltc-year{fill:var(--muted);font-size:11px;font-family:var(--sans)}
 .ltc-note{margin:14px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
 
+/* when this panel's data was last written */
+.fresh-line{
+  margin-top:5px;font-size:11.5px;font-weight:500;
+  color:var(--muted);letter-spacing:0;
+}
+.fresh-line.stale{color:var(--tier-w)}
+.mp-sec-t .fresh-line{margin-top:4px}
+.scr-sub + .fresh-line{margin-top:4px}
+
+/* last updated */
+.fresh-line{
+  font-size:12px;color:var(--muted);
+  margin-bottom:14px;display:flex;align-items:center;gap:7px;
+}
+.fresh-line::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--tier-sb);flex-shrink:0;
+}
+.fresh-line b{color:var(--tier-w);font-weight:600}
+
 /* newest arrivals — three colours, brightest first */
 .new-tag{
   display:inline-flex;align-items:center;
@@ -1519,6 +1539,26 @@ body.s-light .new-tag{color:#fff}
 .dash-scope,.dash-scope *{box-sizing:border-box;margin:0}
 .dash-scope ul,.dash-scope ol{padding:0;list-style:none}
 .dash-scope{overflow-x:hidden;position:relative;width:100%;font-family:var(--sans);font-size:13.5px;min-height:100vh;line-height:normal}
+
+/* The full-height floor belongs to the standalone dashboard, which
+   fills the window on its own. Panels that borrow these styles are
+   sections inside a longer page, and the floor left a screen of
+   empty space under them. */
+#mpGated.dash-scope,
+#ltBody.dash-scope,
+#readyBody.dash-scope,
+/* .dash-scope is sized for the full dashboard, where 100vh is the
+   whole page. Panes embedded inside a tab only need the height of
+   what they contain — otherwise a short section leaves a screenful
+   of empty space beneath it. */
+#callsBody.dash-scope,
+#pub-model-body.dash-scope,
+#mpGated.dash-scope,
+#ltBody.dash-scope,
+#readyBody.dash-scope,
+#scrBody.dash-scope,
+#askBody.dash-scope,
+#accountBody.dash-scope{min-height:0}
 .dash-scope .mono{font-variant-numeric:tabular-nums lining}
 /* The dashboard was built with its own palette. Rather than keep two
    sets of colours in step by hand, its tokens are aliased onto the
@@ -3965,11 +4005,12 @@ function paintLongTerm(){
     return;
   }
 
-  body.innerHTML = subTabs +
+  body.innerHTML = subTabs + freshLine() +
     renderLtPerf(closed) +
     strip +
     '<div class="mp-sec">' +
-      '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings</div>' + viewToggle() + '</div>' +
+      '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
+        freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
       posBody +
     '</div>' +
     (jnl.length
@@ -4261,7 +4302,7 @@ function paintReady(){
     '</tr>';
   }).join('');
 
-  body.innerHTML = rtmTabs() + strip + viewToggle() +
+  body.innerHTML = rtmTabs() + freshLine() + strip + viewToggle() +
     (VIEW_MODE === 'table'
       ? '<div class="scr-table" style="--seg:var(--tier-w)"><table class="tbl"><thead><tr>' +
         wlHead('pos',     '#',          'r') +
@@ -4952,6 +4993,50 @@ function setScrSeg(key){
 /* Prices are pushed on a timer, not streamed. Saying when they were
    last written is the difference between a number that looks wrong
    and one the reader can judge for themselves. */
+/* One line, same wording everywhere: when the data behind this
+   panel was last written. Reading a stale table without knowing it
+   is stale is the actual problem. */
+function freshLine(dateStr){
+  if(!dateStr) return '';
+  var d = new Date(dateStr);
+  if(isNaN(d.getTime())) return '';
+
+  var today = new Date();
+  var days = Math.round((today.setHours(0,0,0,0) - new Date(dateStr).setHours(0,0,0,0)) / 86400000);
+
+  var when = days <= 0 ? 'today'
+           : days === 1 ? 'yesterday'
+           : days < 7   ? days + ' days ago'
+           : d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+  return '<div class="fresh-line' + (days > 3 ? ' stale' : '') + '">Updated ' + when + '</div>';
+}
+
+function feedAsOf(){
+  return (SCR_DATA && SCR_DATA.asOf) || null;
+}
+
+/* A short line saying when the data was last written. Without it a
+   stale number just looks wrong, and a fresh one looks unverified. */
+function freshLine(){
+  var d = SCR_DATA && SCR_DATA.asOf;
+  if(!d) return '';
+
+  var when = new Date(d);
+  if(isNaN(when.getTime())) return '';
+
+  var today = new Date();
+  var days = Math.round((today.setHours(0,0,0,0) - new Date(d).setHours(0,0,0,0)) / 86400000);
+
+  var word = days <= 0 ? 'today'
+           : days === 1 ? 'yesterday'
+           : days + ' days ago';
+
+  return '<div class="fresh-line">Updated ' + word + ' \u00b7 ' +
+    when.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) +
+    (days > 3 ? ' <b>\u2014 the evening job may not have run</b>' : '') + '</div>';
+}
+
 function priceAge(){
   var d = SCR_DATA && SCR_DATA.asOf;
   if(!d) return '';
@@ -5000,7 +5085,7 @@ function paintScreenerSegment(){
   var bu = rows.filter(function(x){ return x.signal === 'BUY'; }).length;
   var wa = rows.filter(function(x){ return x.signal === 'WATCH'; }).length;
 
-  var head =
+  var head = freshLine() +
     '<div class="scr-top" style="--hue:' + meta[2] + '">' +
       '<div><div class="scr-title">' + meta[1] + '</div>' +
         '<div class="scr-sub">' + rows.length.toLocaleString() + ' ranked' +
@@ -5089,7 +5174,7 @@ function buildPublicModel(force){
   if(!gate) return;
 
   if(canSeeModel()){
-    gate.className = 'dash-scope';
+    gate.className = 'dash-scope t-' + currentTheme();
     if(!force) gate.innerHTML = '<div class="scr-load">Loading the book\u2026</div>';
     ensureFeed()
       .then(function(){ gate.innerHTML = renderMpTables(); })
@@ -8376,9 +8461,11 @@ function renderMpTables(){
      commentary above the holdings, which is not what anyone opens
      this tab for. */
   var portfolioView =
+    freshLine() +
     renderScorecard(mpScorecard(pos, events)) +
     '<div class="mp-sec">' +
-    '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings</div>' + viewToggle() + '</div>' +
+    '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
+      freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
     posBody +
     '</div>' +
     '<div class="mp-sec"><div class="mp-sec-t">Trade journal</div>' +
