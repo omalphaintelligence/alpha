@@ -1223,17 +1223,6 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .mp-sec-t .fresh-line{margin-top:4px}
 .scr-sub + .fresh-line{margin-top:4px}
 
-/* last updated */
-.fresh-line{
-  font-size:12px;color:var(--muted);
-  margin-bottom:14px;display:flex;align-items:center;gap:7px;
-}
-.fresh-line::before{
-  content:'';width:6px;height:6px;border-radius:50%;
-  background:var(--tier-sb);flex-shrink:0;
-}
-.fresh-line b{color:var(--tier-w);font-weight:600}
-
 /* newest arrivals — three colours, brightest first */
 .new-tag{
   display:inline-flex;align-items:center;
@@ -4005,7 +3994,7 @@ function paintLongTerm(){
     return;
   }
 
-  body.innerHTML = subTabs + freshLine() +
+  body.innerHTML = subTabs + freshLine('longterm') +
     renderLtPerf(closed) +
     strip +
     '<div class="mp-sec">' +
@@ -4302,7 +4291,7 @@ function paintReady(){
     '</tr>';
   }).join('');
 
-  body.innerHTML = rtmTabs() + freshLine() + strip + viewToggle() +
+  body.innerHTML = rtmTabs() + freshLine(RTM_VIEW === 'longterm' ? 'longterm' : 'waitlist') + strip + viewToggle() +
     (VIEW_MODE === 'table'
       ? '<div class="scr-table" style="--seg:var(--tier-w)"><table class="tbl"><thead><tr>' +
         wlHead('pos',     '#',          'r') +
@@ -4810,7 +4799,8 @@ function ensureFeed(){
     db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(8000),
     db.from('lt_waitlist').select('as_of, position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').order('position'),
     db.from('lt_history').select('as_of, symbol, entry_price, stop_loss, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
-    db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order')
+    db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order'),
+    db.from('sync_log').select('dataset, pushed_at, rows, as_of')
   ]).then(function(res){
     var scr = res[0].data || [];
     var tea = res[1].data || [];
@@ -4827,6 +4817,7 @@ function ensureFeed(){
     var ltw   = res[9].data || [];
     var lth   = res[10].data || [];
     var cl    = res[11].data || [];
+    var sync  = res[12].data || [];
 
     /* The first date each symbol appeared in the queue. */
     var firstSeen = {};
@@ -4894,6 +4885,7 @@ function ensureFeed(){
         })
       },
       history: hist2,
+      sync: sync,
 
       /* A separate book with its own entries, exits and record. */
       longTerm: {
@@ -4996,46 +4988,63 @@ function setScrSeg(key){
 /* One line, same wording everywhere: when the data behind this
    panel was last written. Reading a stale table without knowing it
    is stale is the actual problem. */
-function freshLine(dateStr){
-  if(!dateStr) return '';
-  var d = new Date(dateStr);
-  if(isNaN(d.getTime())) return '';
+/* When the data was last written.
 
-  var today = new Date();
-  var days = Math.round((today.setHours(0,0,0,0) - new Date(dateStr).setHours(0,0,0,0)) / 86400000);
-
-  var when = days <= 0 ? 'today'
-           : days === 1 ? 'yesterday'
-           : days < 7   ? days + ' days ago'
-           : d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
-
-  return '<div class="fresh-line' + (days > 3 ? ' stale' : '') + '">Updated ' + when + '</div>';
-}
-
+   Called two ways: with a dataset name, which reads the exact push
+   time out of sync_log, or with a date string, which is all the
+   older call sites have and can only be reported to the day. */
+/* The date the current data belongs to, for the callers that show
+   it beside a section heading. */
 function feedAsOf(){
   return (SCR_DATA && SCR_DATA.asOf) || null;
 }
 
-/* A short line saying when the data was last written. Without it a
-   stale number just looks wrong, and a fresh one looks unverified. */
-function freshLine(){
-  var d = SCR_DATA && SCR_DATA.asOf;
-  if(!d) return '';
+function freshLine(what){
+  var rows = (SCR_DATA && SCR_DATA.sync) || [];
+  var row = null;
 
-  var when = new Date(d);
-  if(isNaN(when.getTime())) return '';
+  if(what && !/\d{4}-\d{2}-\d{2}/.test(String(what))){
+    row = rows.filter(function(r){ return r.dataset === what; })[0];
+    if(!row) rows.forEach(function(r){
+      if(!row || String(r.pushed_at) > String(row.pushed_at)) row = r;
+    });
+  }
 
-  var today = new Date();
-  var days = Math.round((today.setHours(0,0,0,0) - new Date(d).setHours(0,0,0,0)) / 86400000);
+  if(row && row.pushed_at){
+    var when = new Date(row.pushed_at);
+    if(!isNaN(when.getTime())){
+      var mins = Math.round((Date.now() - when.getTime()) / 60000);
+      var word = mins < 2    ? 'just now'
+               : mins < 60   ? mins + ' minutes ago'
+               : mins < 120  ? 'an hour ago'
+               : mins < 1440 ? Math.round(mins / 60) + ' hours ago'
+               : mins < 2880 ? 'yesterday'
+               :               Math.round(mins / 1440) + ' days ago';
 
-  var word = days <= 0 ? 'today'
-           : days === 1 ? 'yesterday'
-           : days + ' days ago';
+      return '<div class="fresh-line' + (mins > 4320 ? ' stale' : '') + '">Updated ' +
+        word + ' \u00b7 ' + when.toLocaleString('en-IN', {
+          day:'numeric', month:'short', hour:'numeric', minute:'2-digit', hour12:true
+        }) + '</div>';
+    }
+  }
 
-  return '<div class="fresh-line">Updated ' + word + ' \u00b7 ' +
-    when.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) +
-    (days > 3 ? ' <b>\u2014 the evening job may not have run</b>' : '') + '</div>';
+  /* No sync row yet — fall back to the date the data belongs to. */
+  var dateStr = what || (SCR_DATA && SCR_DATA.asOf);
+  if(!dateStr) return '';
+  var d = new Date(dateStr);
+  if(isNaN(d.getTime())) return '';
+
+  var days = Math.round((new Date().setHours(0,0,0,0) -
+                         new Date(dateStr).setHours(0,0,0,0)) / 86400000);
+  var w = days <= 0 ? 'today'
+        : days === 1 ? 'yesterday'
+        : days < 7   ? days + ' days ago'
+        : d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+  return '<div class="fresh-line' + (days > 3 ? ' stale' : '') + '">Updated ' + w + '</div>';
 }
+
+
 
 function priceAge(){
   var d = SCR_DATA && SCR_DATA.asOf;
@@ -5085,7 +5094,7 @@ function paintScreenerSegment(){
   var bu = rows.filter(function(x){ return x.signal === 'BUY'; }).length;
   var wa = rows.filter(function(x){ return x.signal === 'WATCH'; }).length;
 
-  var head = freshLine() +
+  var head = freshLine('screener') +
     '<div class="scr-top" style="--hue:' + meta[2] + '">' +
       '<div><div class="scr-title">' + meta[1] + '</div>' +
         '<div class="scr-sub">' + rows.length.toLocaleString() + ' ranked' +
@@ -8461,7 +8470,7 @@ function renderMpTables(){
      commentary above the holdings, which is not what anyone opens
      this tab for. */
   var portfolioView =
-    freshLine() +
+    freshLine('portfolio') +
     renderScorecard(mpScorecard(pos, events)) +
     '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
