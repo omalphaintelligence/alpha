@@ -198,6 +198,15 @@ body.s-dark .btn-gold,body.s-saffron .btn-gold{color:var(--ink)}
 
 /* hero */
 .hero{padding:96px 0 72px;position:relative;overflow:hidden}
+.hero::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 15% 0%,
+      color-mix(in srgb,var(--brand) 13%,transparent) 0%, transparent 55%),
+    radial-gradient(90% 70% at 85% 10%,
+      color-mix(in srgb,var(--r70) 10%,transparent) 0%, transparent 60%);
+  opacity:.9;
+}
 .hero::after{
   content:'';position:absolute;top:-160px;left:50%;transform:translateX(-50%);
   width:760px;height:420px;pointer-events:none;
@@ -1243,6 +1252,27 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .mp-sec-t .fresh-line{margin-top:4px}
 .scr-sub + .fresh-line{margin-top:4px}
 
+/* the market rail under the hero */
+.mkt-rail{margin-top:34px}
+.mkt-chart{
+  border:1px solid var(--line-soft);
+  border-radius:14px 14px 0 0;border-bottom:none;
+  padding:16px 18px 8px;
+  background:color-mix(in srgb,var(--panel) 70%,transparent);
+  backdrop-filter:blur(8px);
+}
+.mkt-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:6px}
+.mkt-t{font-family:var(--disp);font-size:15px;font-weight:600;letter-spacing:-.01em}
+.mkt-sub{margin-top:3px;font-size:11.5px;color:var(--muted)}
+.mkt-val{
+  font-family:var(--fig);font-size:19px;font-weight:600;
+  font-variant-numeric:tabular-nums lining;text-align:right;line-height:1.2;
+}
+.mkt-val span{display:block;font-family:var(--sans);font-size:11.5px;font-weight:500}
+#mktCanvas{display:block;width:100%;height:96px}
+.mkt-rail .pulse-strip{border-radius:0 0 14px 14px;margin-top:0}
+@media(max-width:600px){ #mktCanvas{height:74px} }
+
 /* newest arrivals — three colours, brightest first */
 .new-tag{
   display:inline-flex;align-items:center;
@@ -1352,8 +1382,52 @@ body.s-light .new-tag{color:#fff}
 @media(max-width:980px){ .nav-who{display:none!important} }
 
 /* ---------- scroll reveal ---------- */
-.rv{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
-.rv.in{opacity:1;transform:none}
+/* Reveal. Motion is kept to the marketing surfaces — a table of
+   numbers that slides in is slower to read, not more impressive. */
+.rv{
+  opacity:0;transform:translateY(26px) scale(.985);
+  filter:blur(6px);
+  transition:opacity .8s var(--ease),transform .8s var(--ease),filter .8s var(--ease);
+  will-change:opacity,transform;
+}
+.rv.in{opacity:1;transform:none;filter:none}
+
+/* The hero is already on screen at load, so it does not wait for a
+   scroll — it plays once, in order, and then never again. */
+@keyframes heroIn{
+  from{opacity:0;transform:translateY(18px);filter:blur(8px)}
+  to{opacity:1;transform:none;filter:none}
+}
+.hero-grid > div > .eyebrow,
+.hero-grid > div > h1,
+.hero-grid > div > .lede,
+.hero-grid > div > .hero-cta,
+.hero-grid > div > .note,
+.hero-grid > div > .quote-rail,
+.hero .show-wrap{
+  animation:heroIn .9s var(--ease) both;
+}
+.hero-grid > div > .eyebrow   {animation-delay:.05s}
+.hero-grid > div > h1         {animation-delay:.13s}
+.hero-grid > div > .lede      {animation-delay:.24s}
+.hero-grid > div > .hero-cta  {animation-delay:.34s}
+.hero-grid > div > .note      {animation-delay:.42s}
+.hero-grid > div > .quote-rail{animation-delay:.50s}
+.hero .show-wrap             {animation-delay:.58s}
+.ladder{animation:heroIn 1s var(--ease) .3s both}
+
+@media(prefers-reduced-motion:reduce){
+  .hero-grid > div > *,
+  .hero .show-wrap,
+  .ladder{animation:none!important}
+}
+
+/* A heading arrives a beat before what sits under it. */
+.sec-head.rv{transition-duration:.9s}
+.sec-head.rv .sec-tag{transition:opacity .6s var(--ease) .1s;opacity:0}
+.sec-head.rv.in .sec-tag{opacity:1}
+.sec-head.rv h2{transition:transform .9s var(--ease) .06s;transform:translateY(8px)}
+.sec-head.rv.in h2{transform:none}
 
 /* ---------- hero layout ---------- */
 .hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:52px;align-items:start}
@@ -1435,6 +1509,15 @@ body.s-light .new-tag{color:#fff}
   transition:opacity .55s var(--ease),transform .55s var(--ease);
 }
 .q-text.in{opacity:.92;transform:none}
+
+/* A cursor while the line is being typed, gone once it settles. */
+.q-text.typing::after{
+  content:'';display:inline-block;
+  width:2px;height:1em;margin-left:3px;
+  background:var(--brand);vertical-align:-2px;
+  animation:caret .9s steps(1) infinite;
+}
+@keyframes caret{50%{opacity:0}}
 .q-by{margin-top:9px;font-size:12.5px;
   letter-spacing:0;color:var(--r85);
   opacity:0;transition:opacity .55s var(--ease) .1s;font-variant-numeric:tabular-nums lining}
@@ -1522,6 +1605,7 @@ body.s-light .new-tag{color:#fff}
   .eyebrow .livedot{animation:none!important}
   .rv{opacity:1!important;transform:none!important;transition:none!important}
   .q-text,.q-by{transition:none!important}
+  .q-text.typing::after{display:none}
   .fcard:hover{transform:none}
   html{scroll-behavior:auto}
 }
@@ -2022,9 +2106,21 @@ body.s-light .new-tag{color:#fff}
         <div class="show-chips" id="showChips"></div>
       </div>
 
-      <div class="pulse-strip rv">
-        <div class="ps-lbl">NSE indices</div>
-        <div class="ps-track"><div class="ps-move" id="psMove"></div></div>
+      <div class="mkt-rail rv">
+        <div class="mkt-chart">
+          <div class="mkt-hd">
+            <div>
+              <div class="mkt-t">Nifty 50</div>
+              <div class="mkt-sub" id="mktSub">weekly, last 3 years</div>
+            </div>
+            <div class="mkt-val" id="mktVal"></div>
+          </div>
+          <canvas id="mktCanvas"></canvas>
+        </div>
+        <div class="pulse-strip">
+          <div class="ps-lbl">NSE indices</div>
+          <div class="ps-track"><div class="ps-move" id="psMove"></div></div>
+        </div>
       </div>
     </div>
 
@@ -2461,24 +2557,55 @@ function maskSymbol(sym){
    ============================================================ */
 const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-/* --- scroll reveal --- */
-(function(){
-  const targets = document.querySelectorAll('#view-landing .fcard, #view-landing .sec-head, #view-landing .stats, #view-landing .locked, #view-landing .band, #view-landing .rv');
-  targets.forEach(t => t.classList.add('rv'));
+/* --- scroll reveal ---
+   Ran once at load, which was fine when the page was one long
+   document. Now that tabs render their own content, anything drawn
+   later never got observed and simply sat there. This can be called
+   again after a tab paints.
+
+   Only marketing surfaces are listed. Tables and holdings are left
+   alone on purpose: motion on a column of numbers makes it slower
+   to read, not more impressive. */
+var REVEAL_IO = null;
+
+function revealScan(root){
+  var scope = root || document.getElementById('view-landing');
+  if(!scope) return;
+
+  var sel = '.fcard, .sec-head, .stats, .locked, .band, .voice, .rv';
+  var targets = [].slice.call(scope.querySelectorAll(sel))
+    .filter(function(el){
+      /* The hero has its own entrance and plays at load. Letting the
+         observer hold it at opacity 0 as well means whichever
+         finishes last wins, which looked like a flicker. */
+      if(el.closest && el.closest('.hero')) return false;
+      return !el.classList.contains('in');
+    });
+  if(!targets.length) return;
+
+  targets.forEach(function(t){ t.classList.add('rv'); });
+
   if(REDUCED || !('IntersectionObserver' in window)){
-    targets.forEach(t => t.classList.add('in'));
+    targets.forEach(function(t){ t.classList.add('in'); });
     return;
   }
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((e, i) => {
-      if(e.isIntersecting){
-        setTimeout(() => e.target.classList.add('in'), i * 70);
-        io.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  targets.forEach(t => io.observe(t));
-})();
+
+  if(!REVEAL_IO){
+    REVEAL_IO = new IntersectionObserver(function(entries){
+      entries.forEach(function(e, i){
+        if(!e.isIntersecting) return;
+        /* Staggered, but capped — a long list should not take two
+           seconds to finish arriving. */
+        setTimeout(function(){ e.target.classList.add('in'); }, Math.min(i, 6) * 80);
+        REVEAL_IO.unobserve(e.target);
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  }
+
+  targets.forEach(function(t){ REVEAL_IO.observe(t); });
+}
+
+revealScan();
 
 /* --- cursor glow on feature cards --- */
 document.querySelectorAll('#view-landing .fcard').forEach(card => {
@@ -2539,26 +2666,57 @@ const DOUGLAS = [
 
   let order = DOUGLAS.map((_, i) => i).sort(() => Math.random() - 0.5);
   let i = 0;
+  let timer = null;
+
+  /* Typed rather than faded. A line about waiting for the right
+     setup lands differently when it arrives a word at a time. */
+  function type(text, done){
+    const words = text.split(' ');
+    let n = 0;
+    tEl.textContent = '\u201C';
+    tEl.classList.add('typing');
+
+    (function step(){
+      if(n >= words.length){
+        tEl.classList.remove('typing');
+        if(done) done();
+        return;
+      }
+      tEl.textContent = '\u201C' + words.slice(0, ++n).join(' ') +
+                        (n < words.length ? '' : '\u201D');
+      timer = setTimeout(step, 55 + Math.random() * 45);
+    })();
+  }
 
   function paint(){
     const [text, who] = DOUGLAS[order[i % order.length]];
-    tEl.textContent = '\u201C' + text + '\u201D';
-    bEl.textContent = who;
-    requestAnimationFrame(() => {
-      tEl.classList.add('in');
-      bEl.classList.add('in');
-    });
     i++;
+
+    bEl.classList.remove('in');
+    tEl.classList.add('in');
+
+    if(REDUCED){
+      tEl.textContent = '\u201C' + text + '\u201D';
+      bEl.textContent = who;
+      bEl.classList.add('in');
+      return;
+    }
+
+    type(text, function(){
+      bEl.textContent = who;
+      requestAnimationFrame(function(){ bEl.classList.add('in'); });
+    });
   }
 
   paint();
   if(REDUCED) return;
 
-  setInterval(() => {
+  setInterval(function(){
+    clearTimeout(timer);
     tEl.classList.remove('in');
     bEl.classList.remove('in');
-    setTimeout(paint, 600);
-  }, 7000);
+    setTimeout(paint, 700);
+  }, 9000);
 })();
 
 /* ============================================================
@@ -2699,6 +2857,7 @@ function setLandingTab(tab, btn){
   if(tab === 'ask') buildAsk();
   if(tab === 'longterm') buildLongTerm();
   if(tab === 'overview'){ buildShowcase(); buildVoices(); }
+  if(ZONE === 'free') setTimeout(function(){ revealScan(); }, 30);
   if(tab !== 'overview') showStop();
 }
 
@@ -5230,48 +5389,150 @@ function buildPublicModel(force){
   }
 }
 
-/* --- signal flow strip: real NSE index moves ---
-   Reads the same ?action=indices feed the dashboard ticker uses.
-   On failure it says so rather than inventing numbers.          */
+/* --- Nifty on the landing page ---
+   Drawn from the benchmark series the performance pages already
+   carry, so it costs no request and cannot disagree with the numbers
+   quoted elsewhere on the site. */
+/* Deferred: the benchmark series is declared further down this same
+   block, so running immediately would find nothing. */
+function drawMarketRail(){
+  const cv = document.getElementById('mktCanvas');
+  if(!cv || typeof PF_BENCH === 'undefined' || PF_BENCH.length < 20) return;
+
+  const WEEKS = 156;                       /* three years */
+  const series = PF_BENCH.slice(-WEEKS);
+  const first = series[0], last = series[series.length - 1];
+  const up = last >= first;
+  const pct = (last / first - 1) * 100;
+
+  const val = document.getElementById('mktVal');
+  if(val){
+    val.innerHTML = Math.round(last).toLocaleString('en-IN') +
+      '<span style="color:' + (up ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+      (up ? '+' : '') + pct.toFixed(1) + '% over 3 years</span>';
+  }
+
+  function draw(){
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if(!w || !h) return;
+
+    cv.width = w * dpr; cv.height = h * dpr;
+    const g = cv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+
+    const cs = getComputedStyle(document.body);
+    const line = (cs.getPropertyValue(up ? '--tier-sb' : '--red') || '').trim() || '#3DDC84';
+
+    const lo = Math.min.apply(null, series);
+    const hi = Math.max.apply(null, series);
+    const span = (hi - lo) || 1;
+    const pad = 6;
+
+    const X = i => i / (series.length - 1) * w;
+    const Y = v => pad + (1 - (v - lo) / span) * (h - pad * 2);
+
+    /* fill first, so the stroke sits on top of it */
+    const fill = g.createLinearGradient(0, 0, 0, h);
+    fill.addColorStop(0, line + '38');
+    fill.addColorStop(1, line + '00');
+
+    g.beginPath();
+    g.moveTo(X(0), Y(series[0]));
+    for(let i = 1; i < series.length; i++) g.lineTo(X(i), Y(series[i]));
+    g.lineTo(X(series.length - 1), h);
+    g.lineTo(X(0), h);
+    g.closePath();
+    g.fillStyle = fill;
+    g.fill();
+
+    g.beginPath();
+    g.moveTo(X(0), Y(series[0]));
+    for(let i = 1; i < series.length; i++) g.lineTo(X(i), Y(series[i]));
+    g.strokeStyle = line;
+    g.lineWidth = 1.8;
+    g.lineJoin = 'round';
+    g.stroke();
+
+    /* a dot on the latest point, so it reads as the present */
+    g.beginPath();
+    g.arc(X(series.length - 1), Y(last), 3, 0, Math.PI * 2);
+    g.fillStyle = line;
+    g.fill();
+  }
+
+  draw();
+  window.addEventListener('resize', draw);
+
+  /* Redraw on a theme change — the line colour comes from the theme. */
+  const tog = document.getElementById('theme-tog');
+  if(tog) tog.addEventListener('click', function(){ setTimeout(draw, 60); });
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', drawMarketRail);
+} else {
+  setTimeout(drawMarketRail, 0);
+}
+
+/* --- the strip under the hero ---
+   It used to read an index feed from the retired Apps Script URL,
+   so it has been dark since that endpoint went. It now runs off the
+   same screener data the page already loads: the strongest names of
+   the session, which is a better advertisement than four index
+   levels anyone can get elsewhere. */
 (function(){
   const el = document.getElementById('psMove');
+  const lbl = document.querySelector('.pulse-strip .ps-lbl');
   if(!el) return;
 
   function msg(text){
     el.innerHTML = '<div class="ps-item"><span class="ps-sec">' + text + '</span></div>';
   }
 
-  function render(list){
-    const rows = (list || []).filter(x => x && x.label && typeof x.price === 'number');
-    if(!rows.length){ msg('Index data unavailable'); return; }
+  function render(rows){
+    if(!rows.length){ msg('Ranking in progress'); return; }
 
-    const html = rows.map(x => {
-      const chg = typeof x.chg === 'number' ? x.chg : 0;
-      const up = chg >= 0;
+    const item = r => {
+      const rank = r.rank != null ? Math.round(r.rank) : null;
+      const hue = rank == null ? 'var(--muted)'
+                : rank >= 90 ? 'var(--tier-sb)'
+                : rank >= 80 ? 'var(--tier-b)' : 'var(--tier-w)';
       return '<div class="ps-item">' +
-               '<span class="ps-sym">' + x.label + '</span>' +
-               '<span class="ps-px">' + x.price.toLocaleString('en-IN', {maximumFractionDigits: 2}) + '</span>' +
-               '<span class="ps-chg ' + (up ? 'u' : 'd') + '">' +
-                 (up ? '\u25B2 +' : '\u25BC ') + chg.toFixed(2) + '%' +
-               '</span>' +
-             '</div>';
-    }).join('');
+        '<span class="ps-sym">' + r.symbol + '</span>' +
+        (r.price != null
+          ? '<span class="ps-px">\u20b9' +
+            Number(r.price).toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</span>'
+          : '') +
+        (rank != null
+          ? '<span class="ps-chg" style="color:' + hue + '">' + rank + '</span>'
+          : '') +
+      '</div>';
+    };
 
-    /* doubled so the marquee can loop seamlessly */
-    el.innerHTML = rows.length >= 4 ? html + html : html;
+    /* Doubled so the marquee can loop without a seam. */
+    const half = rows.map(item).join('');
+    el.innerHTML = half + half;
   }
 
-  /* Index quotes came from the Apps Script endpoint, which is being
-     retired. Until they are pushed into Supabase like everything
-     else, the strip simply stays out of the way rather than showing
-     a stale number. */
-  function load(){
-    var strip = document.querySelector('.pulse-strip');
-    if(strip) strip.style.display = 'none';
-  }
+  msg('Loading\u2026');
 
-  load();
-  if(!REDUCED) setInterval(load, 60000);
+  ensureFeed().then(function(data){
+    const all = (data && data.tabs && data.tabs.ALL) || [];
+    const rows = all
+      .filter(function(r){ return r && r.symbol; })
+      .sort(function(a, b){ return (b.rank || 0) - (a.rank || 0); })
+      .slice(0, 18);
+
+    if(lbl) lbl.textContent = rows.length
+      ? (data.teased ? 'Top ranked today' : 'Strongest names today')
+      : 'NSE';
+
+    render(rows);
+  }).catch(function(){
+    msg('Data unavailable');
+  });
 })();
 
 /* --- signature: the rank ladder ---
