@@ -1252,6 +1252,38 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .mp-sec-t .fresh-line{margin-top:4px}
 .scr-sub + .fresh-line{margin-top:4px}
 
+/* top holdings on the free page */
+.th-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.th-card{
+  position:relative;padding:22px 24px;border-radius:16px;
+  border:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel) 78%,transparent);
+  transition:transform .25s var(--ease),border-color .25s var(--ease);
+}
+.th-card::before{
+  content:'';position:absolute;left:24px;right:24px;top:0;height:2px;
+  border-radius:0 0 2px 2px;background:var(--sec);
+}
+.th-card:hover{
+  transform:translateY(-3px);
+  border-color:color-mix(in srgb,var(--sec) 45%,transparent);
+}
+.th-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.th-sym{
+  font-family:var(--name);font-size:20px;font-weight:600;letter-spacing:.01em;
+  background:none;border:none;padding:0;cursor:pointer;color:var(--text);
+}
+.th-sym:hover{color:var(--brand)}
+.th-pnl{
+  font-family:var(--fig);font-size:34px;font-weight:600;
+  letter-spacing:-.02em;line-height:1;
+  font-variant-numeric:tabular-nums lining;
+}
+.th-held{margin-top:8px;font-size:12.5px;color:var(--muted)}
+.th-note{margin:20px 0 0;font-size:13px;color:var(--muted);line-height:1.6}
+@media(max-width:900px){ .th-grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:560px){ .th-grid{grid-template-columns:1fr} }
+
 /* the market rail under the hero */
 .mkt-rail{margin-top:34px}
 .mkt-chart{
@@ -2143,6 +2175,17 @@ body.s-light .new-tag{color:#fff}
     </div>
   </div>
 
+  <div class="sec" id="topHoldings" style="display:none">
+    <div class="wrap-x">
+      <div class="sec-head">
+        <div class="sec-tag">In the book right now</div>
+        <h2>Positions the engine is holding today.</h2>
+        <p>Live from the Model Portfolio. Entry, stop and target are what a subscription opens.</p>
+      </div>
+      <div id="topHoldingsBody"></div>
+    </div>
+  </div>
+
   <div class="sec sec--band" id="how">
     <div class="wrap-x">
       <div class="sec-head">
@@ -2856,7 +2899,7 @@ function setLandingTab(tab, btn){
   if(tab === 'account') buildAccount();
   if(tab === 'ask') buildAsk();
   if(tab === 'longterm') buildLongTerm();
-  if(tab === 'overview'){ buildShowcase(); buildVoices(); }
+  if(tab === 'overview'){ buildShowcase(); buildVoices(); buildTopHoldings(); }
   if(ZONE === 'free') setTimeout(function(){ revealScan(); }, 30);
   if(tab !== 'overview') showStop();
 }
@@ -3454,6 +3497,45 @@ var LT_CAPITAL     = 500000;
 var LT_SLOTS       = 50;
 var LT_PER_TRADE   = 10000;
 var LT_CURVE = [500000, 499557, 498301, 496425, 495267, 493681, 491707, 489151, 486748, 485642, 484212, 482152, 482215, 482419, 481159, 481510, 481650, 481679, 481502, 481261, 481108, 482194, 484186, 485433, 487413, 489483, 492371, 495634, 497153, 496541, 497417, 500720, 503719, 506049, 508523, 511555, 514888, 518599, 522788, 529142, 536714, 544489, 552398, 560958, 569574, 578557, 587831, 597191, 606594, 615671, 624503, 633336, 642168, 650953, 659542, 667817, 675049, 681301, 686555, 695788, 705194, 715182, 726253, 738185, 751067, 763943, 778674, 793613, 809018, 824644, 841510, 859263, 877262, 894996, 912851, 930705, 945738, 958825, 973396, 987757, 997849, 1001733, 1009360, 1017541, 1028121, 1038860, 1049313, 1059143, 1068956, 1078930, 1088648, 1096010, 1103710, 1112472, 1121686, 1130851, 1139695, 1148538, 1157381, 1166211, 1174987, 1182567, 1187480, 1191600, 1195509, 1199678, 1203427, 1206669, 1208926, 1210576, 1212086, 1213981, 1216226, 1219089, 1221987, 1224299, 1226074, 1226992, 1226826, 1225879, 1225798, 1229319, 1233425, 1237834, 1239719, 1240199, 1239626, 1244979, 1252206, 1263826, 1278309, 1293529, 1308684, 1323840, 1336848, 1340736, 1339281, 1330616, 1319975, 1320133, 1321052, 1322035, 1319642, 1320477, 1319945, 1319979, 1320275, 1321763, 1325872, 1331156, 1333712, 1331448, 1328815, 1327908, 1330866, 1331411, 1331055, 1330742, 1326973, 1323676, 1322263, 1317540, 1315582, 1315760, 1315897, 1315842, 1320336, 1326838, 1334478, 1342208, 1347596, 1356327, 1367343, 1378358, 1389645, 1401290, 1413041, 1425991, 1442652, 1459925, 1477513, 1493894, 1509373, 1525635, 1541898, 1558160, 1573851, 1587609, 1600162, 1612171, 1625235, 1638300, 1651364, 1661035, 1668385, 1674295, 1679128, 1683655, 1688245, 1692295, 1697016, 1699831, 1693403, 1692982, 1694267, 1695680, 1694618, 1694533, 1700479, 1711088, 1722450, 1733812, 1745174, 1756831, 1768834, 1780200, 1790507, 1801768, 1813432, 1824675, 1835466, 1843726, 1855598, 1867081, 1878564, 1890150, 1901833, 1911747, 1918887, 1926134, 1932609, 1939644, 1946575, 1952185, 1958671, 1967879, 1976876, 1984987, 1991412, 1995454, 2003538, 2017396, 2037034, 2056629, 2075686, 2093327, 2110969, 2129306, 2147633, 2171193, 2196750, 2222099, 2247394, 2272033, 2298737, 2325727, 2350181, 2375325, 2401689, 2426207, 2450724, 2474055, 2495803, 2514652, 2529954, 2547013, 2546709, 2544316, 2533117, 2521382, 2516375, 2513299, 2512933, 2520549, 2528711, 2537433, 2546156, 2554878, 2563601, 2572513, 2581179, 2587318, 2591900, 2596391, 2598409, 2595561, 2587216, 2587310, 2587288, 2589204, 2596335, 2603280, 2609295, 2612863, 2615443, 2618542, 2619263, 2608775, 2605830, 2603870, 2603319, 2601799, 2599290, 2596145, 2591730, 2584352, 2573419, 2560978, 2549225, 2537955, 2531389, 2527708, 2524437, 2519815, 2514043, 2505555, 2494716, 2486909, 2482634, 2481796, 2484045, 2486863, 2489714, 2492684, 2493873, 2493619, 2489675, 2485391, 2480036, 2475649, 2472148, 2471351, 2472633, 2473267, 2463931, 2451893, 2439577, 2431380, 2428924, 2419320, 2398880, 2381277, 2366918, 2363059, 2364083, 2364498, 2367589, 2374716, 2381878, 2390520, 2400512, 2412369, 2424850, 2438894, 2453583, 2467259, 2480462, 2493589, 2505962, 2516292, 2526373, 2534758, 2544234, 2553390, 2559695, 2565913, 2573681, 2583039, 2592788, 2602121, 2608769, 2611957, 2612936, 2611411, 2612080, 2614088, 2614077, 2614721, 2615714, 2618368, 2632328, 2663264, 2700281, 2741741, 2785323, 2829321, 2875722, 2928982, 2983808, 3038634, 3093460, 3145618, 3197960, 3253037, 3309957, 3368105, 3432156, 3493579, 3545585, 3597704, 3642355, 3676605, 3715642, 3752775, 3792239, 3828204, 3853735, 3893968, 3957244, 4044784, 4109848, 4176023, 4241573, 4307877, 4376065, 4439943, 4492613, 4548239, 4605736, 4664037, 4714428, 4759561, 4822545, 4914693, 5004647, 5092634, 5176107, 5254917, 5325785, 5387997, 5431401, 5476381, 5518284, 5570786, 5633931, 5699193, 5764456, 5829718, 5894736, 5957918, 6029337, 6120390, 6204617, 6288845, 6367777, 6420787, 6473028, 6519125, 6539405, 6576868, 6611941, 6645252, 6688465, 6732468, 6776471, 6821077, 6864450, 6902152, 6930782, 6947278, 6930645, 6891327, 6849005, 6805666, 6786317, 6780113, 6761836, 6702894, 6679031, 6679034, 6678312, 6680065, 6681161, 6673706, 6667308, 6630167, 6564030, 6521743, 6531179, 6539491, 6553989, 6568866, 6583742, 6599339, 6617783, 6633649, 6635254, 6619735, 6615599, 6622078, 6612396, 6594985, 6547886, 6488532, 6482930, 6506924, 6540904, 6575067, 6609952, 6655644, 6703177, 6750710, 6798138, 6845935, 6893731, 6941528, 6989325, 7015896, 7006471, 7014397, 7014312, 7009768, 7001861, 6999372, 6995472, 6992300, 6984246, 6969853, 6962257, 6960127, 6933395, 6935027, 6918364, 6894053, 6859112, 6829251, 6841702, 6864645, 6896790, 6929392, 6961063, 6998319, 7039599, 7086064, 7138118, 7214934, 7295239, 7380128, 7465018, 7552176, 7641413, 7729230, 7820010, 7923305, 8029499, 8135560, 8241290, 8345312, 8450966, 8557263, 8661508, 8764525, 8861014, 8957110, 9042926, 9139850, 9239121, 9332557, 9387597, 9452792, 9506872, 9562880, 9621846, 9682830, 9744911, 9840523, 9949946, 10060467, 10170020, 10279419, 10386923, 10504966, 10621349, 10727982, 10833485, 10938577, 11042753, 11146799, 11243508, 11332341, 11404782, 11471490, 11534979, 11581384, 11613627, 11661922, 11748508, 11849886, 11951201, 12052358, 12153515, 12254672, 12356754, 12461556, 12568235, 12665357, 12779137, 12895854, 13014771, 13133688, 13250852, 13357536, 13440103, 13518068, 13603961, 13671425, 13742245, 13825345, 13903890, 13983577, 14056148, 14126303, 14197141, 14271345, 14318025, 14265808, 14207287, 14191010, 14177711, 14171419, 14185136, 14202563, 14225427, 14248291, 14270152, 14265597, 14200294, 14051296, 13964087, 13924181, 13879585, 13778669, 13643858, 13574136, 13527151, 13509968, 13475111, 13422625, 13354484, 13222325, 13115432, 13123467, 13117087, 13098692, 13116680, 13156417, 13204788, 13250952, 13299351, 13353259, 13409774, 13459747, 13502196, 13552229, 13606796, 13645341, 13597300, 13650717, 13707817, 13763738, 13821428, 13892279, 13962467, 14025917, 14085837, 14148308, 14221273, 14292323, 14354516, 14386517, 14409649, 14439674, 14450246, 14457848, 14467860, 14491446, 14524608, 14555067, 14562712, 14557586, 14547509, 14571607, 14619200, 14638490, 14606860, 14562075, 14506192, 14450717, 14422723, 14489537, 14566808, 14650121, 14752404, 14900948, 15049890, 15200905, 15357101, 15453411, 15618211, 15772134, 15920673, 16083283, 16252967, 16432387, 16606166, 16725210, 16865709, 16995285, 17183958, 17416312, 17666410, 17914968, 18117441, 18227206];
+
+/* --- Top holdings on the free page ---
+   The book stays locked; this is the shop window. Symbol, sector and
+   what the position has done — never the levels, which are the thing
+   being sold. --- */
+function buildTopHoldings(){
+  var sec = document.getElementById('topHoldings');
+  var box = document.getElementById('topHoldingsBody');
+  if(!sec || !box) return;
+
+  sec.style.display = 'none';
+
+  ensureFeed().then(function(data){
+    var rows = ((data && data.teaserHoldings) || [])
+      .filter(function(r){ return r && r.book === 'model' && r.symbol; });
+    if(!rows.length) return;
+
+    sec.style.display = '';
+    box.innerHTML = '<div class="th-grid">' + rows.map(function(r){
+      var pnl = +r.pnl_pct || 0;
+      var hue = pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)';
+      var shue = sectorHue(r.sector);
+      return '<div class="th-card" style="--sec:' + shue + '">' +
+        '<div class="th-top">' +
+          '<button class="th-sym as-link" onclick="openChart(\'' + r.symbol + '\')">' +
+            r.symbol + '</button>' +
+          (r.sector && r.sector !== 'Other' ? sectorChip(r.sector) : '') +
+        '</div>' +
+        '<div class="th-pnl" style="color:' + hue + '">' +
+          (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</div>' +
+        '<div class="th-held">held ' + (r.days_held || 0) + ' days</div>' +
+      '</div>';
+    }).join('') + '</div>' +
+    '<p class="th-note">Six of the open positions, best first. The rest of the book, ' +
+    'and the levels behind every one of them, sit behind the plan.</p>';
+
+    revealScan(sec);
+  }).catch(function(){});
+}
 
 /* --- Long term book ---
    Same names as the Model Portfolio, different exit. There is no
@@ -4992,7 +5074,8 @@ function ensureFeed(){
     db.from('lt_waitlist').select('as_of, position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').order('position'),
     db.from('lt_history').select('as_of, symbol, entry_price, stop_loss, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order'),
-    db.from('sync_log').select('dataset, pushed_at, rows, as_of')
+    db.from('sync_log').select('dataset, pushed_at, rows, as_of'),
+    db.from('mp_teaser_today').select('book, position, symbol, sector, pnl_pct, days_held').order('position')
   ]).then(function(res){
     var scr = res[0].data || [];
     var tea = res[1].data || [];
@@ -5010,6 +5093,7 @@ function ensureFeed(){
     var lth   = res[10].data || [];
     var cl    = res[11].data || [];
     var sync  = res[12].data || [];
+    var teas2 = res[13].data || [];
 
     /* The first date each symbol appeared in the queue. */
     var firstSeen = {};
@@ -5078,6 +5162,7 @@ function ensureFeed(){
       },
       history: hist2,
       sync: sync,
+      teaserHoldings: teas2,
 
       /* A separate book with its own entries, exits and record. */
       longTerm: {
@@ -5825,6 +5910,7 @@ async function refreshStatus(){ await route(); }
   paintZoneTabs();
   buildShowcase();
   buildVoices();
+  buildTopHoldings();
   buildVoices();
   try { await route(); }
   catch(e){ console.error(e); show('view-landing'); }
