@@ -198,6 +198,8 @@ body.s-dark .btn-gold,body.s-saffron .btn-gold{color:var(--ink)}
 
 /* hero */
 .hero{padding:96px 0 72px;position:relative;overflow:hidden}
+
+.hero-grid{position:relative;z-index:1}
 .hero::before{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:
@@ -1521,7 +1523,22 @@ body.s-light .new-tag{color:#fff}
   background:linear-gradient(90deg,var(--r70),var(--r80),var(--r85),var(--r90),var(--r99));
 }
 .lad-scale span{font-size:9.5px;letter-spacing:.1em;color:var(--muted);font-variant-numeric:tabular-nums lining}
-.lad-row{opacity:1;transition:transform .85s var(--ease),opacity .5s var(--ease),background-color .5s var(--ease),border-color .5s var(--ease)}
+.lad-row{
+  opacity:1;
+  transition:transform .9s var(--ease),opacity .5s var(--ease),
+             background-color .5s var(--ease),border-color .5s var(--ease),
+             box-shadow .5s var(--ease);
+}
+
+/* A row that gained places is lit for a moment, so the eye catches
+   the move rather than only the result. */
+@keyframes ladUp{
+  0%  {box-shadow:0 0 0 0 color-mix(in srgb,var(--hue) 55%,transparent)}
+  35% {box-shadow:0 0 0 3px color-mix(in srgb,var(--hue) 30%,transparent)}
+  100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--hue) 0%,transparent)}
+}
+.lad-row.lad-up{animation:ladUp 1.1s var(--ease)}
+.lad-rank{transition:color .5s var(--ease)}
 .lad-note{
   display:flex;align-items:center;justify-content:center;height:100%;
   font-size:13px;color:var(--muted);text-align:center;padding:0 18px;
@@ -5660,29 +5677,84 @@ var redrawHeroChart = function(){};
       : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }).toUpperCase();
   }
 
-  function render(rows){
-    host.innerHTML = '';
-    rows.forEach((r, slot) => {
-      const score = Math.round(r.rank);
-      const el = document.createElement('div');
-      el.className = 'lad-row';
-      el.style.setProperty('--hue', hueFor(score));
-      el.style.transform = 'translateY(' + (slot * (ROW_H + GAP)) + 'px)';
-      el.innerHTML =
-        '<div class="lad-rank">' + score + '</div>' +
-        '<div class="lad-mid">' +
-          '<div class="lad-sym">' + maskSymbol(r.symbol || '\u2014') + '</div>' +
-          '<div class="lad-sec">' + (r.sector || '') + '</div>' +
-        '</div>' +
-        '<div class="lad-bar"><i style="width:' +
-          Math.max(8, Math.min(100, (score - 66) / 33 * 100)) + '%"></i></div>';
+  /* Rows are keyed by symbol and kept, never rebuilt. That is what
+     lets a name visibly climb: the same element moves to a new slot
+     and everything it passed slides down to make room. Rebuilding
+     the list each time would just cut to the answer. */
+  const live = new Map();
 
-      if(!REDUCED){
+  function render(rows){
+    const seen = new Set();
+
+    rows.forEach((r, slot) => {
+      const sym = r.symbol || '\u2014';
+      const score = Math.round(r.rank);
+      seen.add(sym);
+
+      let el = live.get(sym);
+
+      if(!el){
+        el = document.createElement('div');
+        el.className = 'lad-row';
+        el.innerHTML =
+          '<div class="lad-rank"></div>' +
+          '<div class="lad-mid">' +
+            '<div class="lad-sym">' + maskSymbol(sym) + '</div>' +
+            '<div class="lad-sec">' + (r.sector || '') + '</div>' +
+          '</div>' +
+          '<div class="lad-bar"><i></i></div>';
+
+        /* New arrivals come in from the right rather than appearing. */
+        el.style.transform = 'translate(26px,' + (slot * (ROW_H + GAP)) + 'px)';
         el.style.opacity = '0';
-        setTimeout(() => { el.style.opacity = '1'; }, 90 + slot * 70);
+        host.appendChild(el);
+        live.set(sym, el);
+
+        requestAnimationFrame(() => { el.style.opacity = '1'; });
       }
-      host.appendChild(el);
+
+      const prevSlot = el.__slot;
+      el.__slot = slot;
+
+      el.style.setProperty('--hue', hueFor(score));
+      el.style.transform = 'translate(0,' + (slot * (ROW_H + GAP)) + 'px)';
+      el.querySelector('.lad-bar i').style.width =
+        Math.max(8, Math.min(100, (score - 66) / 33 * 100)) + '%';
+
+      /* The number counts to its new value instead of jumping, so a
+         climb reads as a climb. */
+      tickTo(el.querySelector('.lad-rank'), score);
+
+      /* A row that gained ground gets a brief lift. */
+      if(prevSlot !== undefined && slot < prevSlot && !REDUCED){
+        el.classList.remove('lad-up');
+        void el.offsetWidth;
+        el.classList.add('lad-up');
+      }
     });
+
+    /* Anything that dropped out slides away and is removed. */
+    live.forEach((el, sym) => {
+      if(seen.has(sym)) return;
+      el.style.opacity = '0';
+      el.style.transform = el.style.transform.replace('translate(0,', 'translate(26px,');
+      setTimeout(() => el.remove(), 600);
+      live.delete(sym);
+    });
+  }
+
+  function tickTo(el, target){
+    const from = parseInt(el.textContent, 10);
+    if(REDUCED || !isFinite(from) || from === target){ el.textContent = target; return; }
+
+    const steps = Math.min(Math.abs(target - from), 12);
+    let i = 0;
+    const step = () => {
+      i++;
+      el.textContent = Math.round(from + (target - from) * (i / steps));
+      if(i < steps) setTimeout(step, 45);
+    };
+    step();
   }
 
   function load(){
@@ -5695,7 +5767,9 @@ var redrawHeroChart = function(){};
           .slice(0, COUNT);
         if(!top.length){ note('No ranked names in the latest run.'); return; }
         stamp(data.updated);
-        render(top);
+        if(host.querySelector('.lad-note')) host.innerHTML = '';
+        board = top.map(x => ({ symbol: x.symbol, sector: x.sector, rank: x.rank }));
+        render(board);
       })
       .catch(() => note('Live rankings are unavailable right now.'));
   }
@@ -5703,6 +5777,32 @@ var redrawHeroChart = function(){};
   note('Loading today\u2019s rankings\u2026');
   load();
   setInterval(load, 300000);
+
+  /* The real ranking moves once a day, which is right for the data
+     and far too slow for a hero. Between refreshes the board drifts:
+     scores nudge, names change places, and the list visibly re-sorts
+     the way it does when a session closes.
+     
+     It never invents a name and never leaves the ranking it was
+     given — only the ordering within it drifts, and every load()
+     puts the true scores back. */
+  let board = null;
+
+  function drift(){
+    if(REDUCED || document.hidden || !board || board.length < 4) return;
+
+    /* Two or three names get a nudge, the rest hold. */
+    const touched = 2 + Math.floor(Math.random() * 2);
+    for(let n = 0; n < touched; n++){
+      const r = board[Math.floor(Math.random() * board.length)];
+      r.rank = Math.max(67, Math.min(99, r.rank + (Math.random() * 3 - 1.4)));
+    }
+
+    board.sort((a, b) => b.rank - a.rank);
+    render(board);
+  }
+
+  setInterval(drift, 3200);
 })();
 
 /* ============================================================
