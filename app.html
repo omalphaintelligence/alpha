@@ -1434,7 +1434,7 @@ body.s-light .dash-scope th{background:#F7F9FC}
 .rec-grid b{font-family:var(--fig);font-size:23px;font-weight:500;
   letter-spacing:-.015em;font-variant-numeric:tabular-nums lining}
 .rec-chart{position:relative}
-#recCanvas{display:block;width:100%;height:300px;cursor:crosshair}
+#recCanvas{display:block;width:100%;height:340px;cursor:crosshair}
 .rec-legend{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--muted)}
 .rec-legend i{display:inline-block;width:14px;height:2px;border-radius:1px;
   margin-right:7px;vertical-align:middle}
@@ -1442,7 +1442,7 @@ body.s-light .dash-scope th{background:#F7F9FC}
   line-height:1.65;font-style:italic;max-width:82ch}
 @media(max-width:900px){
   .rec-wrap{grid-template-columns:1fr;gap:28px}
-  #recCanvas{height:220px}
+  #recCanvas{height:250px}
 }
 
 /* big bets */
@@ -5872,11 +5872,13 @@ function buildPublicModel(force){
 }
 
 /* --- The record, on the free page ---
-   The strongest thing this site can show a stranger, and it was
-   sitting behind a login while the front page opened with
-   testimonials. It runs off the series already baked into this file,
-   so it costs no request and cannot disagree with the figures the
-   Long Term page quotes. --- */
+   Not the same chart as the Long Term tab. That one is a working
+   instrument: dense, static, read by someone who already pays. This
+   is the first thing a stranger sees, so it draws itself, marks the
+   years worth marking, and counts the money up as the line arrives.
+
+   The data underneath is identical — same series, same figures. Only
+   the telling is different. --- */
 function drawRecord(){
   var cv = document.getElementById('recCanvas');
   if(!cv || typeof LT_CURVE === 'undefined' || LT_CURVE.length < 20) return;
@@ -5885,13 +5887,11 @@ function drawRecord(){
   var mult = series[series.length - 1] / series[0];
   var years = (series.length - 1) / 52.18;
 
-  var fig = document.getElementById('recEnd');
-  if(fig) fig.textContent = pfMoney(series[series.length - 1]);
-  var gain = document.getElementById('recGain');
-  if(gain) gain.textContent = '+' + Math.round((mult - 1) * 100).toLocaleString('en-IN') +
-                              '% since January 2013';
-  var cagr = document.getElementById('recCagr');
-  if(cagr) cagr.textContent = '+' + ((Math.pow(mult, 1 / years) - 1) * 100).toFixed(1) + '%';
+  var elEnd  = document.getElementById('recEnd');
+  var elGain = document.getElementById('recGain');
+  var elCagr = document.getElementById('recCagr');
+
+  if(elCagr) elCagr.textContent = '+' + ((Math.pow(mult, 1 / years) - 1) * 100).toFixed(1) + '%';
 
   /* Nifty starts 43 weeks in; the gap is left as a gap. */
   var bench = null;
@@ -5903,103 +5903,202 @@ function drawRecord(){
     }
   }
 
-  function draw(){
+  /* The years the book actually did something. Marking every year
+     is a grid; marking four is a story. */
+  var MARKS = [
+    { year: 2014, label: '+88%' },
+    { year: 2020, label: '+75%' },
+    { year: 2023, label: '+55%' },
+    { year: 2026, label: 'today' }
+  ];
+
+  var pf, bm, X, Y, W, H, marks = [];
+  var progress = 0, started = false;
+
+  function layout(){
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var w = cv.clientWidth, h = cv.clientHeight;
-    if(!w || !h) return;
-    cv.width = w * dpr; cv.height = h * dpr;
+    W = cv.clientWidth; H = cv.clientHeight;
+    if(!W || !H) return false;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    var g = cv.getContext('2d');
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.clearRect(0, 0, w, h);
-
-    var cs = getComputedStyle(document.body);
-    var line = (cs.getPropertyValue('--r70') || '').trim() || '#8B5CF6';
-    var dim  = (cs.getPropertyValue('--muted') || '').trim() || '#5A7099';
-    var soft = (cs.getPropertyValue('--line-soft') || '').trim() || '#152547';
-
-    var pf = series.map(function(v){ return v / series[0] * 100; });
-    var bm = null;
+    pf = series.map(function(v){ return v / series[0] * 100; });
+    bm = null;
     if(bench){
       var base = null;
       for(var b = 0; b < bench.length; b++) if(bench[b] != null){ base = bench[b]; break; }
       if(base) bm = bench.map(function(v){ return v == null ? null : v / base * 100; });
     }
 
-    /* Log scale. Over 35x a linear axis flattens the first decade
-       into a flat line and makes the last two years look like the
-       whole story. */
+    /* Log scale. Over 35x, a linear axis flattens the first decade
+       to nothing and the last two years look like the whole story. */
     var all = pf.concat((bm || []).filter(function(x){ return x != null; }));
     var lo = Math.log(Math.min.apply(null, all));
     var hi = Math.log(Math.max.apply(null, all));
     var span = (hi - lo) || 1;
-    var pad = 10;
+    var padT = 30, padB = 26;
 
-    var X = function(i){ return i / (pf.length - 1) * w; };
-    var Y = function(v){ return pad + (1 - (Math.log(v) - lo) / span) * (h - pad * 2); };
+    X = function(i){ return i / (pf.length - 1) * W; };
+    Y = function(v){ return padT + (1 - (Math.log(v) - lo) / span) * (H - padT - padB); };
 
-    var seen = null;
-    g.font = '10px Inter, sans-serif';
-    for(var m = 0; m < pf.length; m++){
-      var d = new Date(LT_CURVE_START);
-      d.setDate(d.getDate() + m * 7);
-      var yr = d.getFullYear();
-      if(yr === seen) continue;
-      seen = yr;
-      if(yr % 3 !== 0) continue;
-      g.strokeStyle = soft; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(X(m), 0); g.lineTo(X(m), h - 14); g.stroke();
-      g.fillStyle = dim;
-      g.fillText(String(yr), X(m) + 4, h - 3);
-    }
+    marks = [];
+    MARKS.forEach(function(m){
+      for(var i = 0; i < pf.length; i++){
+        var d = new Date(LT_CURVE_START);
+        d.setDate(d.getDate() + i * 7);
+        if(d.getFullYear() === m.year){
+          marks.push({ i: i, label: m.label, year: m.year });
+          break;
+        }
+      }
+    });
+    return true;
+  }
 
-    function stroke(arr, colour, width, dash){
+  function draw(){
+    if(!pf) return;
+    var g = cv.getContext('2d');
+    g.clearRect(0, 0, W, H);
+
+    var cs = getComputedStyle(document.body);
+    var line = (cs.getPropertyValue('--r70') || '').trim() || '#8B5CF6';
+    var dim  = (cs.getPropertyValue('--muted') || '').trim() || '#5A7099';
+    var soft = (cs.getPropertyValue('--line-soft') || '').trim() || '#152547';
+    var text = (cs.getPropertyValue('--text') || '').trim() || '#E2E8F0';
+
+    var upto = Math.max(1, Math.floor(progress * (pf.length - 1)));
+
+    /* Nifty first and faint — it is the thing being outrun, so it
+       should never compete for attention. */
+    if(bm){
       g.beginPath();
       var pen = false;
-      for(var i = 0; i < arr.length; i++){
-        if(arr[i] == null){ pen = false; continue; }
-        if(pen) g.lineTo(X(i), Y(arr[i])); else g.moveTo(X(i), Y(arr[i]));
+      for(var i = 0; i <= upto; i++){
+        if(bm[i] == null){ pen = false; continue; }
+        if(pen) g.lineTo(X(i), Y(bm[i])); else g.moveTo(X(i), Y(bm[i]));
         pen = true;
       }
-      g.strokeStyle = colour; g.lineWidth = width;
-      g.setLineDash(dash || []); g.lineJoin = 'round'; g.stroke();
-      g.setLineDash([]);
+      g.strokeStyle = dim; g.lineWidth = 1.4;
+      g.setLineDash([5, 5]); g.globalAlpha = .55;
+      g.stroke();
+      g.setLineDash([]); g.globalAlpha = 1;
     }
 
-    var fill = g.createLinearGradient(0, 0, 0, h);
-    fill.addColorStop(0, line + '33');
+    /* fill */
+    var fill = g.createLinearGradient(0, 0, 0, H);
+    fill.addColorStop(0, line + '3D');
     fill.addColorStop(1, line + '00');
     g.beginPath();
     g.moveTo(X(0), Y(pf[0]));
-    for(var q = 1; q < pf.length; q++) g.lineTo(X(q), Y(pf[q]));
-    g.lineTo(X(pf.length - 1), h); g.lineTo(X(0), h); g.closePath();
+    for(var q = 1; q <= upto; q++) g.lineTo(X(q), Y(pf[q]));
+    g.lineTo(X(upto), H); g.lineTo(X(0), H); g.closePath();
     g.fillStyle = fill; g.fill();
 
-    if(bm) stroke(bm, dim, 1.5, [4, 4]);
-    stroke(pf, line, 2.2);
+    /* the line, with a glow under it */
+    g.beginPath();
+    g.moveTo(X(0), Y(pf[0]));
+    for(var r = 1; r <= upto; r++) g.lineTo(X(r), Y(pf[r]));
+    g.strokeStyle = line;
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    g.shadowColor = line; g.shadowBlur = 14;
+    g.lineWidth = 2.6;
+    g.stroke();
+    g.shadowBlur = 0;
 
-    cv.__pf = pf; cv.__bm = bm; cv.__w = w;
+    /* the head of the line, while it is still moving */
+    if(progress < 1){
+      g.beginPath();
+      g.arc(X(upto), Y(pf[upto]), 4.5, 0, Math.PI * 2);
+      g.fillStyle = line;
+      g.shadowColor = line; g.shadowBlur = 16;
+      g.fill();
+      g.shadowBlur = 0;
+    }
+
+    /* milestones, each appearing as the line reaches it */
+    g.font = '600 11px Inter, sans-serif';
+    marks.forEach(function(m){
+      if(m.i > upto) return;
+      var x = X(m.i), y = Y(pf[m.i]);
+
+      g.strokeStyle = soft; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, y - 8); g.lineTo(x, 16); g.stroke();
+
+      g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2);
+      g.fillStyle = line; g.fill();
+
+      var lbl = m.year + '  ' + m.label;
+      var wid = g.measureText(lbl).width;
+      var lx = Math.min(W - wid - 6, Math.max(4, x - wid / 2));
+      g.fillStyle = text;
+      g.fillText(lbl, lx, 12);
+    });
   }
 
-  draw();
-  window.addEventListener('resize', draw);
+  /* The money counts up with the line, so the number and the shape
+     land together instead of one arriving before the other. */
+  function tick(now){
+    if(!started) return;
+    progress = Math.min(1, (now - started) / 2200);
+    var eased = progress < .5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    progress = eased;
+
+    var at = Math.floor(progress * (series.length - 1));
+    if(elEnd)  elEnd.textContent = pfMoney(series[at]);
+    if(elGain) elGain.textContent = '+' +
+      Math.round((series[at] / series[0] - 1) * 100).toLocaleString('en-IN') +
+      '% since January 2013';
+
+    draw();
+    if(progress < 1) requestAnimationFrame(tick);
+  }
+
+  function play(){
+    if(!layout()) return;
+    if(REDUCED){
+      progress = 1;
+      if(elEnd)  elEnd.textContent = pfMoney(series[series.length - 1]);
+      if(elGain) elGain.textContent = '+' + Math.round((mult - 1) * 100).toLocaleString('en-IN') +
+                                      '% since January 2013';
+      draw();
+      return;
+    }
+    started = performance.now();
+    requestAnimationFrame(tick);
+  }
+
+  /* Waits until it is actually on screen — a chart that draws itself
+     while nobody is looking has drawn itself for nobody. */
+  if(!REDUCED && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(!e.isIntersecting) return;
+        io.disconnect();
+        play();
+      });
+    }, { threshold: .35 });
+    io.observe(cv);
+  } else {
+    play();
+  }
+
+  window.addEventListener('resize', function(){ if(layout()) draw(); });
   var tog = document.getElementById('theme-tog');
   if(tog) tog.addEventListener('click', function(){ setTimeout(draw, 60); });
 
-  /* The tooltip reads the money, not the index. */
   var tip = document.getElementById('recTip');
   cv.onmousemove = function(e){
-    if(!cv.__pf || !tip) return;
+    if(!pf || progress < 1 || !tip) return;
     var r = cv.getBoundingClientRect();
-    var i = Math.round((e.clientX - r.left) / cv.__w * (cv.__pf.length - 1));
-    i = Math.max(0, Math.min(cv.__pf.length - 1, i));
-
+    var i = Math.round((e.clientX - r.left) / W * (pf.length - 1));
+    i = Math.max(0, Math.min(pf.length - 1, i));
     var d = new Date(LT_CURVE_START);
     d.setDate(d.getDate() + i * 7);
-
     tip.style.display = 'block';
     tip.style.left = Math.min(r.width - 160, Math.max(0, e.clientX - r.left + 12)) + 'px';
-    tip.style.top = '10px';
+    tip.style.top = '34px';
     tip.innerHTML = '<b>' + d.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) +
       '</b><br>' + pfMoney(LT_CURVE[i]);
   };
