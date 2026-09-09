@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#05070C">
@@ -13,8 +12,8 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 
 <!-- ============================================================
      PART 1 — SHELL STYLES (landing page, auth modal, gate views)
@@ -104,7 +103,7 @@ body.s-light{
   /* The page background sits a shade below the cards, and the lines
      are dark enough to hold an edge — otherwise the translucent
      surfaces used everywhere else dissolve into one white sheet. */
-  --ink:#EEF1F6; --panel:#FFFFFF; --panel-2:#F4F7FB;
+  --ink:#E8ECF3; --panel:#FFFFFF; --panel-2:#F4F7FB;
   --line:#BFC8D8; --line-soft:#D6DEEB;
   --text:#0B1220; --muted:#5A6474;
   --gold:#9A6E12; --gold-dim:#B99236;
@@ -163,10 +162,18 @@ input{font-family:inherit}
 #ltab-ready .wrap-x,
 #ltab-calls .wrap-x{max-width:1440px}
 
-header.nav{
+header/* Once the page moves under it, the bar gets a shadow — otherwise
+   content slides beneath a pane of glass with no edge and the two
+   planes read as one. */
+.nav.stuck{
+  box-shadow:0 1px 0 var(--line-soft),
+             0 8px 24px -16px rgba(16,26,45,.35);
+}
+
+.nav{
   position:sticky;top:0;z-index:100;
-  background:color-mix(in srgb,var(--ink) 62%,transparent);
-  backdrop-filter:blur(18px) saturate(140%);
+  background:color-mix(in srgb,var(--ink) 72%,transparent);
+  backdrop-filter:blur(20px) saturate(150%);
   border-bottom:1px solid var(--line-soft);
 }
 .nav-in{
@@ -229,6 +236,11 @@ h1{
 }
 h1 em{font-style:italic;font-weight:400}
 h1 em{font-style:normal;color:var(--brand)}
+
+/* The two-tone headline is the site's one typographic signature and
+   it only ever appeared on the front page. Inner headings get it
+   too, in that page's own colour. */
+h2 em{font-style:normal;color:var(--page,var(--brand))}
 .hero p.lede{margin-top:20px;max-width:54ch;font-size:17.5px;color:var(--muted);line-height:1.62;font-weight:500}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
 
@@ -245,7 +257,17 @@ h1 em{font-style:normal;color:var(--brand)}
 .stat-l{margin-top:7px;font-family:var(--sans);font-size:12.5px;color:var(--muted);letter-spacing:0;font-weight:600}
 
 /* sections */
-.sec{padding:84px 0}
+.sec{padding:84px 0;position:relative}
+
+/* Between full sections, a hairline that fades at both ends — a hard
+   edge across the full width would cut the page into boxes. */
+.sec + .sec::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-soft) 18%,
+                             var(--line-soft) 82%,transparent);
+}
+.sec--band + .sec::before,
+.sec + .sec--band::before{display:none}
 .sec--band{
   background:
     linear-gradient(180deg,transparent,color-mix(in srgb,var(--panel) 70%,transparent) 12%,
@@ -254,6 +276,62 @@ h1 em{font-style:normal;color:var(--brand)}
   border-bottom:1px solid var(--line-soft);
 }
 .sec-head{max-width:62ch;margin-bottom:44px}
+
+/* Each page carries the colour its own data already uses, so the
+   screener feels like the screener and the long term book does not.
+   Without this every page is the same neutral sheet and only the
+   heading tells you where you are. */
+#ltab-screener  { --page:var(--r99); }
+#ltab-model     { --page:var(--purple, #8b7fe0); }
+#ltab-longterm  { --page:var(--r70); }
+#ltab-bigbets   { --page:#C97A0E; }
+#ltab-ready     { --page:var(--tier-sb); }
+#ltab-calls     { --page:var(--r85); }
+#ltab-ask       { --page:var(--tier-b); }
+#ltab-overview  { --page:var(--brand); }
+
+/* The same hues, darkened for the light theme. The dark-theme values
+   are chosen to glow on a near-black page and several of them fall
+   below 3:1 as text on a pale one — the eyebrow is text, so it has
+   to hold its own. */
+body.s-light #ltab-screener { --page:#8A5D06; }
+body.s-light #ltab-model    { --page:#5B3FA8; }
+body.s-light #ltab-longterm { --page:#5B3391; }
+body.s-light #ltab-bigbets  { --page:#8A5308; }
+body.s-light #ltab-ready    { --page:#0B6A32; }
+body.s-light #ltab-calls    { --page:#0A5F70; }
+body.s-light #ltab-ask      { --page:#236142; }
+body.s-light #ltab-overview { --page:#1D4ED8; }
+
+/* The eyebrow stops being grey text and becomes the page's mark. */
+.sec-head .sec-tag{color:var(--page,var(--brand));font-weight:600}
+.sec-head .sec-tag::before{
+  content:'';width:22px;height:2px;border-radius:1px;
+  background:var(--page,var(--brand));flex-shrink:0;
+}
+
+/* A wash of that colour behind the top of the page, so the identity
+   is felt before it is read. */
+.ltab-pane > .sec:first-child::after{
+  content:'';position:absolute;inset:0 0 auto;height:340px;
+  pointer-events:none;z-index:-1;
+  background:radial-gradient(80% 100% at 12% 0%,
+    color-mix(in srgb,var(--page,var(--brand)) 11%,transparent) 0%,
+    transparent 68%);
+}
+
+/* A rule under the eyebrow, running out to the edge of the measure.
+   Sections were separated only by whitespace, so on a long page one
+   ran into the next and nothing announced a new subject. */
+.sec-head .sec-tag{position:relative;padding-bottom:16px;display:flex}
+.sec-head .sec-tag::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--page,var(--brand)) 60%,transparent) 0%,
+    var(--line-soft) 30%,
+    transparent 100%);
+}
+.sec-head h2{margin-top:18px}
 .sec-tag{display:inline-flex;align-items:center;gap:9px;
   font-family:var(--sans);font-size:12.5px;letter-spacing:0;
   color:var(--muted);font-weight:600}
@@ -791,10 +869,15 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
   transition:color .18s var(--ease),background .18s var(--ease);
 }
 .ltab-btn:hover{color:var(--text);background:color-mix(in srgb,var(--panel) 70%,transparent)}
+.ltab-btn{position:relative}
+
+/* The active tab was a tinted pill and nothing else, which on a pale
+   page reads as a faint smudge. A solid mark under it says which
+   page you are on from across the room. */
 .ltab-btn.on{
   color:var(--text);
-  background:color-mix(in srgb,var(--brand) 16%,transparent);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--brand) 34%,transparent);
+  background:color-mix(in srgb,var(--brand) 12%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--brand) 30%,transparent);
 }
 @media(max-width:1180px){
   /* Below this the row cannot hold everything without crowding, so
@@ -1285,6 +1368,82 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 .th-note{margin:20px 0 0;font-size:13px;color:var(--muted);line-height:1.6}
 @media(max-width:900px){ .th-grid{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:560px){ .th-grid{grid-template-columns:1fr} }
+
+/* ---- Light theme: elevation ----
+   Every surface on this site is drawn as a translucent panel, which
+   works over a dark page and dissolves over a pale one — white at
+   78% opacity on an almost-white background is just white. So in
+   the light theme the cards are made solid and given a real shadow.
+   That, not colour, is what separates one plane from another when
+   the page itself is bright. */
+body.s-light .hold,
+body.s-light .call,
+body.s-light .voice,
+body.s-light .th-card,
+body.s-light .bb-card,
+body.s-light .feed-item,
+body.s-light .qa,
+body.s-light .ask-form,
+body.s-light .acc-card,
+body.s-light .scr-table,
+body.s-light .mkt-chart,
+body.s-light .ltc-wrap,
+body.s-light .scorecard,
+body.s-light .ladder,
+body.s-light .dash-scope .perf,
+body.s-light .dash-scope .card,
+body.s-light .dash-scope .tw{
+  background:#FFFFFF;
+  box-shadow:0 1px 2px rgba(16,26,45,.05),
+             0 6px 16px -8px rgba(16,26,45,.10);
+}
+
+/* Cards that lift on hover should lift further, not just move. */
+body.s-light .hold:hover,
+body.s-light .th-card:hover,
+body.s-light .bb-card:hover{
+  box-shadow:0 2px 4px rgba(16,26,45,.06),
+             0 18px 34px -14px rgba(16,26,45,.18);
+}
+
+/* The banner over a table reads as one object with it. */
+body.s-light .scr-top{
+  background:#FFFFFF;
+  box-shadow:0 1px 2px rgba(16,26,45,.05);
+}
+
+/* A hairline is enough once there is a shadow; the heavier border
+   was doing the separating on its own and looked drawn-on. */
+body.s-light{ --line-soft:#E3E9F2; --line:#CBD4E2; }
+
+/* Sticky headers need to be opaque or rows show through them. */
+body.s-light .scr-table .tbl th,
+body.s-light .dash-scope th{background:#F7F9FC}
+
+/* the record, on the free page */
+.rec-wrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:38px;align-items:center}
+.rec-big{padding-bottom:26px;border-bottom:1px solid var(--line-soft)}
+.rec-l{font-size:13px;color:var(--muted)}
+.rec-v{margin-top:10px;font-family:var(--fig);font-size:clamp(34px,4.6vw,52px);
+  font-weight:600;letter-spacing:-.025em;line-height:1;
+  font-variant-numeric:tabular-nums lining}
+.rec-s{margin-top:10px;font-size:15px;font-weight:600;color:var(--tier-sb)}
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px 26px;margin-top:26px}
+.rec-grid div{display:flex;flex-direction:column;gap:5px}
+.rec-grid span{font-size:12.5px;color:var(--muted)}
+.rec-grid b{font-family:var(--fig);font-size:23px;font-weight:500;
+  letter-spacing:-.015em;font-variant-numeric:tabular-nums lining}
+.rec-chart{position:relative}
+#recCanvas{display:block;width:100%;height:300px;cursor:crosshair}
+.rec-legend{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--muted)}
+.rec-legend i{display:inline-block;width:14px;height:2px;border-radius:1px;
+  margin-right:7px;vertical-align:middle}
+.rec-note{margin:26px 0 0;font-size:11.5px;color:var(--muted);
+  line-height:1.65;font-style:italic;max-width:82ch}
+@media(max-width:900px){
+  .rec-wrap{grid-template-columns:1fr;gap:28px}
+  #recCanvas{height:220px}
+}
 
 /* big bets */
 .bb-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
@@ -2245,21 +2404,47 @@ body.s-light .new-tag{color:#fff}
   </div>
 
   <div class="ltab-pane on" id="ltab-overview">
-  <div class="sec" id="voices">
+  <div class="sec" id="record" style="padding-top:0">
     <div class="wrap-x">
       <div class="sec-head">
-        <div class="sec-tag">In their words</div>
-        <h2>What subscribers say.</h2>
+        <div class="sec-tag">The record</div>
+        <h2>Thirteen years, <em>2,343 trades</em>, one rule.</h2>
+        <p>Every position taken by the same test and closed by the same stop. No name picked by hand, no trade left out of the count.</p>
       </div>
-      <div id="voicesBody"></div>
+      <div class="rec-wrap">
+        <div class="rec-figures">
+          <div class="rec-big">
+            <div class="rec-l">₹5,00,000 invested in 2013</div>
+            <div class="rec-v" id="recEnd">—</div>
+            <div class="rec-s" id="recGain">—</div>
+          </div>
+          <div class="rec-grid">
+            <div><span>Compounded</span><b id="recCagr">—</b></div>
+            <div><span>Closed trades</span><b>2,343</b></div>
+            <div><span>Profitable</span><b>48%</b></div>
+            <div><span>Ran past +50%</span><b>209</b></div>
+          </div>
+        </div>
+        <div class="rec-chart">
+          <canvas id="recCanvas"></canvas>
+          <div class="perf-tip" id="recTip"></div>
+          <div class="rec-legend">
+            <span><i style="background:var(--r70)"></i>The book</span>
+            <span><i style="background:var(--muted)"></i>Nifty 50</span>
+          </div>
+        </div>
+      </div>
+      <p class="rec-note">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Nifty 50 at index level, excluding dividends. Past performance does not guarantee future returns.</p>
     </div>
   </div>
+
+  
 
   <div class="sec" id="topHoldings" style="display:none">
     <div class="wrap-x">
       <div class="sec-head">
         <div class="sec-tag">In the book right now</div>
-        <h2>Positions the engine is holding today.</h2>
+        <h2>Positions the engine is <em>holding today</em>.</h2>
         <p>Live from the Model Portfolio. Entry, stop and target are what a subscription opens.</p>
       </div>
       <div id="topHoldingsBody"></div>
@@ -2270,41 +2455,49 @@ body.s-light .new-tag{color:#fff}
     <div class="wrap-x">
       <div class="sec-head">
         <div class="sec-tag">How it works</div>
-        <h2>A ranking engine, not a newsletter.</h2>
+        <h2>A ranking engine, <em>not a newsletter</em>.</h2>
         <p>Every stock on the exchange is scored against the same rules, every day. Nothing is hand-picked, and the list doesn't care what anyone on TV thinks.</p>
       </div>
       <div class="features">
         <div class="fcard" style="--hue:var(--r99)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"></path></svg></div>
           <h3>Scored, then ranked</h3>
           <p>Each name gets a composite score from price behaviour, trend structure and volume. The ranking is the output — you always see where a stock sits relative to everything else.</p>
         </div>
         <div class="fcard" style="--hue:var(--r90)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 13.5 12 18l9-4.5"/></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="M3 13.5 12 18l9-4.5"></path></svg></div>
           <h3>Three conviction tiers</h3>
           <p>Names sort into Strong Buy, Buy and Watch. The tier tells you how much of the engine's criteria a stock currently satisfies, so you can size your attention accordingly.</p>
         </div>
         <div class="fcard" style="--hue:var(--r85)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg></div>
           <h3>Rank history you can check</h3>
           <p>See how long a name has held its position and whether it's climbing or slipping. A stock that's been top-ranked for weeks reads very differently from one that appeared yesterday.</p>
         </div>
         <div class="fcard" style="--hue:var(--r80)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6.2 5.8"/></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 3.5V12l6.2 5.8"></path></svg></div>
           <h3>Sector rotation at a glance</h3>
           <p>A sector summary shows where the ranked names are clustering, so you can see which parts of the market money is actually rotating into.</p>
         </div>
         <div class="fcard" style="--hue:var(--r70)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6Z"/><path d="M6 3.5v17M9.5 8.5h6M9.5 12h6"/></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6Z"></path><path d="M6 3.5v17M9.5 8.5h6M9.5 12h6"></path></svg></div>
           <h3>A journal that stays honest</h3>
           <p>Log your entries and exits against the signals you acted on. Over time it tells you something no backtest can: how you actually traded the list.</p>
         </div>
         <div class="fcard" style="--hue:var(--r90)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"/><path d="M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"/><path d="M4 20v-4h4"/></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"></path><path d="M20 4v4h-4"></path><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"></path><path d="M4 20v-4h4"></path></svg></div>
           <h3>Same rules, every session</h3>
           <p>The engine doesn't get bored, doesn't chase headlines and doesn't change its mind after a bad week. Consistency is the whole point.</p>
         </div>
       </div>
+    </div>
+  </div><div class="sec" id="voices">
+    <div class="wrap-x">
+      <div class="sec-head">
+        <div class="sec-tag">In their words</div>
+        <h2>What subscribers say.</h2>
+      </div>
+      <div id="voicesBody"></div>
     </div>
   </div>
 
@@ -2330,7 +2523,7 @@ body.s-light .new-tag{color:#fff}
           </table>
         </div>
         <div class="veil">
-          <div class="lock-ico">&#128274;</div>
+          <div class="lock-ico">🔒</div>
           <h4>Locked</h4>
           <p>Create an account and activate your subscription to see the full ranked list.</p>
           <button class="btn btn-gold cta" id="cta-veil" data-guest="See plans" onclick="ctaClick(this)">See plans</button>
@@ -2356,7 +2549,7 @@ body.s-light .new-tag{color:#fff}
       <div class="wrap-x">
         <div class="sec-head" id="scrHead">
           <div class="sec-tag">Screeners</div>
-          <h2>Every segment, ranked after each close.</h2>
+          <h2>Every segment, ranked <em>after each close</em>.</h2>
           <p id="scrLede">The engine scores the whole exchange and sorts it. Pick a segment below — subscribers see the full table, filters and export.</p>
         </div>
 
@@ -2372,7 +2565,7 @@ body.s-light .new-tag{color:#fff}
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">Model Portfolio</div>
-          <h2>The record, in full.</h2>
+          <h2>The record, <em>in full</em>.</h2>
           <p>Performance is open to everyone — the equity curve, every calendar year and the drawdowns. What the portfolio holds right now, and the trade-by-trade journal, are for subscribers.</p>
         </div>
         <div class="dash-scope" id="pub-model-body"></div>
@@ -2387,7 +2580,7 @@ body.s-light .new-tag{color:#fff}
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">Stock query</div>
-          <h2>Ask about a stock you hold.</h2>
+          <h2>Ask about <em>a stock you hold</em>.</h2>
           <p>Send a question about any name and we will come back on it. Answers land here — you do not need to watch your inbox.</p>
         </div>
         <div id="askBody"></div>
@@ -2429,7 +2622,7 @@ body.s-light .new-tag{color:#fff}
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">Big bets</div>
-          <h2>The few that clear every test at once.</h2>
+          <h2>The few that clear <em>every test</em> at once.</h2>
           <p>A name reaches this page only if it is among the strongest on the exchange, sitting in a tightening base, inside its buy range, and backed by the numbers underneath. Most days that leaves two or three. Some days it leaves none.</p>
         </div>
         <div id="bigBetsBody"></div>
@@ -2443,7 +2636,7 @@ body.s-light .new-tag{color:#fff}
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">Long term</div>
-          <h2>Held until the trend says otherwise.</h2>
+          <h2>Held until <em>the trend says otherwise</em>.</h2>
           <p id="ltLede">Positions run without a profit target. The stop moves up as the trend does, and the position closes the day price breaks it — so a winner is never cut short, and whatever the stop gives back on the way out is the cost of that.</p>
         </div>
         <div id="ltBody" class="dash-scope"></div>
@@ -2457,7 +2650,7 @@ body.s-light .new-tag{color:#fff}
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">Ready to move</div>
-          <h2>Next in line for the portfolio.</h2>
+          <h2>Next in line <em>for the portfolio</em>.</h2>
           <p>These clear every condition the Model Portfolio requires. The book runs a fixed number of positions — when one closes, the top of this list is what replaces it.</p>
         </div>
         <div id="readyBody"></div>
@@ -2471,7 +2664,7 @@ body.s-light .new-tag{color:#fff}
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">Fundamental Calls</div>
-          <h2>Conviction ideas, with a horizon attached.</h2>
+          <h2>Conviction ideas, <em>with a horizon attached</em>.</h2>
           <p id="callsLede">Names we are backing on fundamentals, held open until the reason to own them changes.</p>
         </div>
         <div class="horizon-bar" id="horizonBar"></div>
@@ -2500,9 +2693,9 @@ body.s-light .new-tag{color:#fff}
       <div class="sb-sec">
         <div class="sb-lbl">Signal</div>
         <div class="chk-g">
-          <label class="chk"><input type="checkbox" id="fSB" checked> Strong Buy</label>
-          <label class="chk"><input type="checkbox" id="fBUY" checked> Buy</label>
-          <label class="chk"><input type="checkbox" id="fWT" checked> Watch</label>
+          <label class="chk"><input type="checkbox" id="fSB" checked=""> Strong Buy</label>
+          <label class="chk"><input type="checkbox" id="fBUY" checked=""> Buy</label>
+          <label class="chk"><input type="checkbox" id="fWT" checked=""> Watch</label>
         </div>
       </div>
       <div class="sb-sec">
@@ -2545,7 +2738,7 @@ body.s-light .new-tag{color:#fff}
     <div class="modal-box">
       <div class="modal-hd">
         <div class="modal-sym" id="mdSymbol">-</div>
-        <button class="modal-close" onclick="closeDetail()">&times;</button>
+        <button class="modal-close" onclick="closeDetail()">×</button>
       </div>
       <div class="modal-body" id="mdBody"></div>
     </div>
@@ -2560,7 +2753,7 @@ body.s-light .new-tag{color:#fff}
         <h3>Scan to pay</h3>
         <p id="payPlan"></p>
       </div>
-      <button class="x" onclick="closePay()" aria-label="Close">&times;</button>
+      <button class="x" onclick="closePay()" aria-label="Close">×</button>
     </div>
 
     <div class="pay-amt" id="payAmt"></div>
@@ -2579,7 +2772,7 @@ body.s-light .new-tag{color:#fff}
 </div>
 
 <!-- ==================== CHART ==================== -->
-</div>
+
 
 <!-- ==================== AUTH MODAL ==================== -->
 <div class="authwrap" id="authwrap" onclick="if(event.target===this)closeAuth()">
@@ -2589,7 +2782,7 @@ body.s-light .new-tag{color:#fff}
         <h3 id="m-title">Sign in</h3>
         <p id="m-sub">Welcome back.</p>
       </div>
-      <button class="x" onclick="closeAuth()" aria-label="Close">&times;</button>
+      <button class="x" onclick="closeAuth()" aria-label="Close">×</button>
     </div>
     <!-- phone step -->
     <div id="auth-email">
@@ -2597,12 +2790,10 @@ body.s-light .new-tag{color:#fff}
         <input type="text" id="m-name" placeholder="Your name" autocomplete="name">
       </div>
       <div class="field">
-        <input type="email" id="m-email" placeholder="you@example.com"
-               autocomplete="email" inputmode="email">
+        <input type="email" id="m-email" placeholder="you@example.com" autocomplete="email" inputmode="email">
       </div>
       <div class="field">
-        <input type="password" id="m-pass" placeholder="Password"
-               autocomplete="current-password">
+        <input type="password" id="m-pass" placeholder="Password" autocomplete="current-password">
       </div>
       <button class="btn btn-gold btn-block" id="m-go" onclick="submitAuth()">Sign in</button>
       <button class="lnk lnk-block" id="m-forgot" onclick="forgotPassword()">Forgot password?</button>
@@ -2743,6 +2934,23 @@ function revealScan(root){
 }
 
 revealScan();
+
+/* A shadow under the sticky bar, but only once there is something
+   behind it to cast onto. At the top of the page the bar and the
+   page are the same plane and an edge there looks drawn on. */
+(function(){
+  var nav = document.querySelector('.nav');
+  if(!nav) return;
+  var on = false;
+  function check(){
+    var should = window.scrollY > 8;
+    if(should === on) return;
+    on = should;
+    nav.classList.toggle('stuck', on);
+  }
+  window.addEventListener('scroll', check, { passive: true });
+  check();
+})();
 
 /* --- cursor glow on feature cards --- */
 document.querySelectorAll('#view-landing .fcard').forEach(card => {
@@ -5661,6 +5869,147 @@ function buildPublicModel(force){
       'Every open position with entry, stop and target, and the trade-by-trade journal behind the curve above.',
       'model');
   }
+}
+
+/* --- The record, on the free page ---
+   The strongest thing this site can show a stranger, and it was
+   sitting behind a login while the front page opened with
+   testimonials. It runs off the series already baked into this file,
+   so it costs no request and cannot disagree with the figures the
+   Long Term page quotes. --- */
+function drawRecord(){
+  var cv = document.getElementById('recCanvas');
+  if(!cv || typeof LT_CURVE === 'undefined' || LT_CURVE.length < 20) return;
+
+  var series = LT_CURVE;
+  var mult = series[series.length - 1] / series[0];
+  var years = (series.length - 1) / 52.18;
+
+  var fig = document.getElementById('recEnd');
+  if(fig) fig.textContent = pfMoney(series[series.length - 1]);
+  var gain = document.getElementById('recGain');
+  if(gain) gain.textContent = '+' + Math.round((mult - 1) * 100).toLocaleString('en-IN') +
+                              '% since January 2013';
+  var cagr = document.getElementById('recCagr');
+  if(cagr) cagr.textContent = '+' + ((Math.pow(mult, 1 / years) - 1) * 100).toFixed(1) + '%';
+
+  /* Nifty starts 43 weeks in; the gap is left as a gap. */
+  var bench = null;
+  if(typeof PF_BENCH !== 'undefined' && PF_BENCH.length){
+    bench = [];
+    for(var i = 0; i < series.length; i++){
+      var k = i - 43;
+      bench.push((k >= 0 && k < PF_BENCH.length) ? PF_BENCH[k] : null);
+    }
+  }
+
+  function draw(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = cv.clientWidth, h = cv.clientHeight;
+    if(!w || !h) return;
+    cv.width = w * dpr; cv.height = h * dpr;
+
+    var g = cv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+
+    var cs = getComputedStyle(document.body);
+    var line = (cs.getPropertyValue('--r70') || '').trim() || '#8B5CF6';
+    var dim  = (cs.getPropertyValue('--muted') || '').trim() || '#5A7099';
+    var soft = (cs.getPropertyValue('--line-soft') || '').trim() || '#152547';
+
+    var pf = series.map(function(v){ return v / series[0] * 100; });
+    var bm = null;
+    if(bench){
+      var base = null;
+      for(var b = 0; b < bench.length; b++) if(bench[b] != null){ base = bench[b]; break; }
+      if(base) bm = bench.map(function(v){ return v == null ? null : v / base * 100; });
+    }
+
+    /* Log scale. Over 35x a linear axis flattens the first decade
+       into a flat line and makes the last two years look like the
+       whole story. */
+    var all = pf.concat((bm || []).filter(function(x){ return x != null; }));
+    var lo = Math.log(Math.min.apply(null, all));
+    var hi = Math.log(Math.max.apply(null, all));
+    var span = (hi - lo) || 1;
+    var pad = 10;
+
+    var X = function(i){ return i / (pf.length - 1) * w; };
+    var Y = function(v){ return pad + (1 - (Math.log(v) - lo) / span) * (h - pad * 2); };
+
+    var seen = null;
+    g.font = '10px Inter, sans-serif';
+    for(var m = 0; m < pf.length; m++){
+      var d = new Date(LT_CURVE_START);
+      d.setDate(d.getDate() + m * 7);
+      var yr = d.getFullYear();
+      if(yr === seen) continue;
+      seen = yr;
+      if(yr % 3 !== 0) continue;
+      g.strokeStyle = soft; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(X(m), 0); g.lineTo(X(m), h - 14); g.stroke();
+      g.fillStyle = dim;
+      g.fillText(String(yr), X(m) + 4, h - 3);
+    }
+
+    function stroke(arr, colour, width, dash){
+      g.beginPath();
+      var pen = false;
+      for(var i = 0; i < arr.length; i++){
+        if(arr[i] == null){ pen = false; continue; }
+        if(pen) g.lineTo(X(i), Y(arr[i])); else g.moveTo(X(i), Y(arr[i]));
+        pen = true;
+      }
+      g.strokeStyle = colour; g.lineWidth = width;
+      g.setLineDash(dash || []); g.lineJoin = 'round'; g.stroke();
+      g.setLineDash([]);
+    }
+
+    var fill = g.createLinearGradient(0, 0, 0, h);
+    fill.addColorStop(0, line + '33');
+    fill.addColorStop(1, line + '00');
+    g.beginPath();
+    g.moveTo(X(0), Y(pf[0]));
+    for(var q = 1; q < pf.length; q++) g.lineTo(X(q), Y(pf[q]));
+    g.lineTo(X(pf.length - 1), h); g.lineTo(X(0), h); g.closePath();
+    g.fillStyle = fill; g.fill();
+
+    if(bm) stroke(bm, dim, 1.5, [4, 4]);
+    stroke(pf, line, 2.2);
+
+    cv.__pf = pf; cv.__bm = bm; cv.__w = w;
+  }
+
+  draw();
+  window.addEventListener('resize', draw);
+  var tog = document.getElementById('theme-tog');
+  if(tog) tog.addEventListener('click', function(){ setTimeout(draw, 60); });
+
+  /* The tooltip reads the money, not the index. */
+  var tip = document.getElementById('recTip');
+  cv.onmousemove = function(e){
+    if(!cv.__pf || !tip) return;
+    var r = cv.getBoundingClientRect();
+    var i = Math.round((e.clientX - r.left) / cv.__w * (cv.__pf.length - 1));
+    i = Math.max(0, Math.min(cv.__pf.length - 1, i));
+
+    var d = new Date(LT_CURVE_START);
+    d.setDate(d.getDate() + i * 7);
+
+    tip.style.display = 'block';
+    tip.style.left = Math.min(r.width - 160, Math.max(0, e.clientX - r.left + 12)) + 'px';
+    tip.style.top = '10px';
+    tip.innerHTML = '<b>' + d.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) +
+      '</b><br>' + pfMoney(LT_CURVE[i]);
+  };
+  cv.onmouseleave = function(){ if(tip) tip.style.display = 'none'; };
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', drawRecord);
+} else {
+  setTimeout(drawRecord, 0);
 }
 
 /* --- Nifty on the landing page ---
@@ -9868,5 +10217,6 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
