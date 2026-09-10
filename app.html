@@ -303,6 +303,9 @@ body.s-light #ltab-calls    { --page:#0A5F70; }
 body.s-light #ltab-ask      { --page:#236142; }
 body.s-light #ltab-overview { --page:#1D4ED8; }
 
+/* Deep enough to hold its own as a 3px line on a pale page. */
+body.s-light .rec-hero{ --curve:#5B21B6; }
+
 /* The eyebrow stops being grey text and becomes the page's mark. */
 .sec-head .sec-tag{color:var(--page,var(--brand));font-weight:600}
 .sec-head .sec-tag::before{
@@ -1425,6 +1428,7 @@ body.s-light .dash-scope th{background:#F7F9FC}
    argument, so it gets the room a photograph would get on a site
    that had one. */
 .rec-hero{
+  --curve:#A78BFA;
   position:relative;
   min-height:min(78vh,720px);
   display:flex;align-items:center;
@@ -1482,11 +1486,15 @@ body.s-light .dash-scope th{background:#F7F9FC}
 
 @media(max-width:1000px){
   .rec-hero{min-height:auto;padding:20px 0 44px}
+  /* The veil has to sit behind the words and get out of the way of
+     the line. Covering the whole panel washed the curve to nothing on
+     a phone, which is where most of this is read. */
   .rec-veil{
     background:linear-gradient(180deg,
-      var(--ink) 0%,
-      color-mix(in srgb,var(--ink) 88%,transparent) 55%,
-      color-mix(in srgb,var(--ink) 60%,transparent) 100%);
+      color-mix(in srgb,var(--ink) 92%,transparent) 0%,
+      color-mix(in srgb,var(--ink) 78%,transparent) 46%,
+      color-mix(in srgb,var(--ink) 20%,transparent) 78%,
+      transparent 100%);
   }
   .rec-grid{grid-template-columns:repeat(2,1fr);gap:22px}
 }
@@ -2396,7 +2404,7 @@ body.s-light .new-tag{color:#fff}
       <div><span>Ran past +50%</span><b>209</b></div>
     </div>
     <div class="rec-legend">
-      <span><i style="background:var(--r70)"></i>The book</span>
+      <span><i style="background:var(--curve)"></i>The book</span>
       <span><i style="background:var(--muted);opacity:.6"></i>Nifty 50</span>
     </div>
   </div></div><div class="wrap-x" id="hero-wrap">
@@ -6000,10 +6008,12 @@ function drawRecord(){
     if(!pf) return;
     var g = cv.getContext('2d');
     g.clearRect(0, 0, W, H);
-    g.globalAlpha = fade;
 
     var cs = getComputedStyle(document.body);
-    var line = (cs.getPropertyValue('--r70') || '').trim() || '#8B5CF6';
+    /* Its own token rather than borrowing a rank colour, so the
+       curve reads at full strength on both themes and cannot drift
+       when a palette is retuned. */
+    var line = (cs.getPropertyValue('--curve') || '').trim() || '#8B5CF6';
     var dim  = (cs.getPropertyValue('--muted') || '').trim() || '#5A7099';
     var soft = (cs.getPropertyValue('--line-soft') || '').trim() || '#152547';
     var text = (cs.getPropertyValue('--text') || '').trim() || '#E2E8F0';
@@ -6028,7 +6038,7 @@ function drawRecord(){
 
     /* fill */
     var fill = g.createLinearGradient(0, 0, 0, H);
-    fill.addColorStop(0, line + '3D');
+    fill.addColorStop(0, line + (document.body.classList.contains('s-light') ? '2E' : '3D'));
     fill.addColorStop(1, line + '00');
     g.beginPath();
     g.moveTo(X(0), Y(pf[0]));
@@ -6036,28 +6046,43 @@ function drawRecord(){
     g.lineTo(X(upto), H); g.lineTo(X(0), H); g.closePath();
     g.fillStyle = fill; g.fill();
 
-    /* the line, with a glow under it */
+    /* A glow works on a dark page and washes the line out on a pale
+       one: the blur spreads the colour until it reads as faded. The
+       light theme gets weight instead of light. */
+    var pale = document.body.classList.contains('s-light');
+
     g.beginPath();
     g.moveTo(X(0), Y(pf[0]));
     for(var r = 1; r <= upto; r++) g.lineTo(X(r), Y(pf[r]));
     g.strokeStyle = line;
     g.lineJoin = 'round'; g.lineCap = 'round';
-    g.shadowColor = line; g.shadowBlur = 18;
-    g.lineWidth = 2.6;
+    if(pale){
+      g.lineWidth = 3.4;
+    } else {
+      g.shadowColor = line; g.shadowBlur = 18;
+      g.lineWidth = 2.8;
+    }
     g.stroke();
     g.shadowBlur = 0;
 
     /* the head of the line, while it is still moving */
     if(progress < 1){
       g.beginPath();
-      g.arc(X(upto), Y(pf[upto]), 4.5, 0, Math.PI * 2);
+      g.arc(X(upto), Y(pf[upto]), 5, 0, Math.PI * 2);
       g.fillStyle = line;
-      g.shadowColor = line; g.shadowBlur = 16;
+      if(!document.body.classList.contains('s-light')){
+        g.shadowColor = line; g.shadowBlur = 16;
+      }
       g.fill();
       g.shadowBlur = 0;
     }
 
-    /* milestones, each appearing as the line reaches it */
+    /* Milestones, each appearing as the line reaches it. On a narrow
+       screen four labels across 390px run into one another —
+       "+55%2026" — so the labels are dropped and only the points are
+       marked. */
+    var room = W > 620;
+
     g.font = '600 11.5px Inter, sans-serif';
     marks.forEach(function(m){
       if(m.i > upto) return;
@@ -6069,6 +6094,7 @@ function drawRecord(){
       g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2);
       g.fillStyle = line; g.fill();
 
+      if(!room) return;
       var lbl = m.year + '  ' + m.label;
       var wid = g.measureText(lbl).width;
       var lx = Math.min(W - wid - 14, Math.max(8, x - wid / 2));
@@ -6085,9 +6111,13 @@ function drawRecord(){
 
      The money counts with the line, so the number and the shape land
      together rather than one arriving before the other. */
-  var DRAW = 2500, HOLD = 6000, FADE = 900;
-  var CYCLE = DRAW + HOLD + FADE;
-  var fade = 1;
+  /* No fade. Dimming the whole curve to nothing between passes meant
+     that for a twelfth of every cycle the line looked washed out —
+     and a still of the page taken in that moment looks like a weak
+     colour rather than a transition. It holds at full strength, then
+     the next pass simply redraws from the left. */
+  var DRAW = 2600, HOLD = 7400;
+  var CYCLE = DRAW + HOLD;
 
   function tick(now){
     if(!running) return;
@@ -6097,13 +6127,8 @@ function drawRecord(){
     if(t < DRAW){
       var p = t / DRAW;
       progress = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-      fade = 1;
-    } else if(t < DRAW + HOLD){
-      progress = 1;
-      fade = 1;
     } else {
       progress = 1;
-      fade = 1 - (t - DRAW - HOLD) / FADE;
     }
 
     /* Clamped. An index derived from a float should never be trusted
