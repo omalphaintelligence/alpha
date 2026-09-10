@@ -334,12 +334,22 @@ body.s-light /* ---- The record ----
    the light in the clip still reads. */
 .rec-shade{
   position:absolute;inset:0;pointer-events:none;
+  /* This clip is bright, and white type on a pale sky is unreadable.
+     The shade is heaviest across the top third where the words are,
+     opens over the middle so the hills keep their light, and closes
+     again at the foot so the curve has something to sit on. */
+  /* Measured against the clip rather than guessed. Its top 45% is
+     sky, running to 0.91 luminance where the sun sits, and white
+     type needs roughly 80% cover to clear 4.5:1 against that. Below
+     the horizon the hills are already dark, so the shade opens up
+     and lets them show. */
   background:
     linear-gradient(180deg,
-      rgba(8,7,14,.86) 0%,
-      rgba(8,7,14,.62) 34%,
-      rgba(8,7,14,.30) 58%,
-      rgba(8,7,14,.55) 100%);
+      rgba(10,9,18,.84) 0%,
+      rgba(10,9,18,.82) 40%,
+      rgba(10,9,18,.70) 58%,
+      rgba(10,9,18,.40) 72%,
+      rgba(10,9,18,.60) 100%);
 }
 #recCanvas{
   position:absolute;inset:0;width:100%;height:100%;
@@ -5980,8 +5990,10 @@ function drawRecord(){
   if(elCagr) elCagr.textContent = '+' + ((Math.pow(mult, 1 / yrs) - 1) * 100).toFixed(1) + '%';
 
   /* Warm, to belong to the light in the clip. */
-  var LINE = '#F5C77E';
-  var GLOW = '#F0B45C';
+  /* Picked out of the footage itself: the pale gold along the ridge
+     where the sun catches the grass. */
+  var LINE = '#FFD79A';
+  var GLOW = '#F5A63C';
 
   var W, H, pf, X, Y;
   var progress = 0, started = 0, running = false;
@@ -6002,7 +6014,9 @@ function drawRecord(){
 
     /* Low in the frame, across the dark part of the footage, so it
        never crosses the words. */
-    var top = H * 0.62, base = H * 0.93;
+    /* Low, across the foreground hillside, well clear of the words
+       and of the runners on the skyline. */
+    var top = H * 0.70, base = H * 0.95;
     X = function(i){ return i / (pf.length - 1) * W; };
     Y = function(v){ return base - (Math.log(v) - lo) / span * (base - top); };
 
@@ -6027,8 +6041,8 @@ function drawRecord(){
     /* A soft wash under the line, enough to lift it off the hillside
        without hiding what is behind. */
     var fill = g.createLinearGradient(0, H * 0.55, 0, H);
-    fill.addColorStop(0, 'rgba(245,199,126,0.20)');
-    fill.addColorStop(1, 'rgba(245,199,126,0)');
+    fill.addColorStop(0, 'rgba(255,215,154,0.16)');
+    fill.addColorStop(1, 'rgba(255,215,154,0)');
     g.beginPath();
     g.moveTo(X(0), H);
     g.lineTo(X(0), Y(pf[0]));
