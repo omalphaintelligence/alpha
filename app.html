@@ -1643,49 +1643,70 @@ body.s-light .dash-scope th{background:#F7F9FC}
 /* daily and weekly returns */
 .rb-figs{
   display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
-  margin-bottom:22px;
+  margin-bottom:26px;
 }
 .rb-figs > div{
-  display:flex;flex-direction:column;gap:5px;
-  padding:16px 18px;border-radius:12px;
+  display:flex;flex-direction:column;gap:6px;
+  padding:18px 20px;border-radius:13px;
   border:1px solid var(--line-soft);
   background:color-mix(in srgb,var(--panel) 62%,transparent);
 }
 .rb-figs span{font-size:11.5px;color:var(--muted)}
 .rb-figs b{
-  font-family:var(--fig);font-size:22px;font-weight:500;
-  letter-spacing:-.015em;font-variant-numeric:tabular-nums lining;
+  font-family:var(--fig);font-size:26px;font-weight:500;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums lining;
 }
 .rb-figs em{font-style:normal;font-size:11px;color:var(--muted);opacity:.8}
 
-.rb-block{margin-top:20px}
-.rb-cap{font-size:12px;color:var(--muted);margin-bottom:10px}
+.rb-block{margin-top:26px}
+.rb-cap{
+  font-size:12px;color:var(--muted);margin-bottom:12px;
+  display:flex;align-items:center;gap:14px;
+}
+.rb-key{display:flex;gap:12px;margin-left:auto;font-size:11px}
+.rb-key i{
+  display:inline-block;width:9px;height:9px;border-radius:2px;
+  margin-right:5px;vertical-align:-1px;
+}
+
+/* Taller, and with real gaps. The bars were two pixels wide in a
+   108px box, which read as a texture rather than as sessions. */
 .rb{
-  display:flex;align-items:stretch;gap:2px;height:108px;
-  padding:0 2px;border-radius:10px;
+  display:flex;align-items:stretch;gap:5px;
+  height:180px;padding:10px 12px;border-radius:12px;
   border:1px solid var(--line-soft);
   background:color-mix(in srgb,var(--panel) 48%,transparent);
 }
-.rb-slot{
-  flex:1;display:flex;flex-direction:column;min-width:0;
-  cursor:default;
-}
-/* A shared midline, so up and down are measured from the same place
-   rather than from the foot of the box. */
+.rb-slot{flex:1;display:flex;flex-direction:column;min-width:0;cursor:default}
 .rb-half{flex:1;display:flex;min-width:0}
-.rb-half.up{align-items:flex-end}
-.rb-half.dn{align-items:flex-start;border-top:1px solid var(--line-soft)}
-.rb-half i{
-  display:block;width:100%;border-radius:2px;
-  transition:opacity .15s var(--ease);
+.rb-half.t{align-items:flex-end}
+.rb-half.b{
+  align-items:flex-start;
+  border-top:1px solid color-mix(in srgb,var(--text) 16%,transparent);
 }
-.rb-slot:hover i{opacity:.6}
-.rb-note{margin:16px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+.rb-half i{
+  display:block;width:100%;min-height:3px;
+  transition:filter .15s var(--ease),transform .15s var(--ease);
+}
+.rb-slot.up .rb-half i{
+  background:linear-gradient(180deg,var(--tier-sb),color-mix(in srgb,var(--tier-sb) 62%,transparent));
+  border-radius:3px 3px 0 0;
+}
+.rb-slot.dn .rb-half i{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--red) 62%,transparent),var(--red));
+  border-radius:0 0 3px 3px;
+}
+.rb-slot:hover .rb-half i{filter:brightness(1.25)}
+
+.rb-note{margin:18px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
 .rb-empty{font-size:13px;color:var(--muted);padding:18px 0}
 
 @media(max-width:760px){
   .rb-figs{grid-template-columns:repeat(2,1fr)}
-  .rb{height:84px}
+  .rb{height:140px;gap:4px;padding:8px 10px}
+  .rb-figs b{font-size:23px}
+  .rb-key{width:100%;margin-left:0}
+  .rb-cap{flex-wrap:wrap;gap:8px}
 }
 
 /* newest arrivals — three colours, brightest first */
@@ -4182,25 +4203,25 @@ function weeklyReturns(curve, limit){
 
 /* Bars, zeroed on the middle, so a losing session reads as a losing
    session without having to find the number. */
-function returnBars(rows, accent){
+/* Green up, red down — the two colours this page already uses for
+   gain and loss everywhere else. Tinting a winning session with the
+   page's accent instead made it a decorative bar rather than a
+   profitable day. */
+function returnBars(rows){
   if(!rows.length) return '<div class="rb-empty">Not enough history yet.</div>';
 
   var peak = Math.max.apply(null, rows.map(function(r){ return Math.abs(r.pct); })) || 1;
 
   return '<div class="rb">' + rows.map(function(r){
-    var h = Math.max(2, Math.abs(r.pct) / peak * 100);
+    var h = Math.max(3, Math.abs(r.pct) / peak * 100);
     var up = r.pct >= 0;
     var when = r.date
       ? new Date(r.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' })
       : '';
-    return '<div class="rb-slot" title="' + (when ? when + ': ' : '') +
-      (up ? '+' : '') + r.pct.toFixed(2) + '%">' +
-      '<div class="rb-half up">' +
-        (up ? '<i style="height:' + h + '%;background:' + accent + '"></i>' : '') +
-      '</div>' +
-      '<div class="rb-half dn">' +
-        (!up ? '<i style="height:' + h + '%;background:var(--red)"></i>' : '') +
-      '</div>' +
+    return '<div class="rb-slot' + (up ? ' up' : ' dn') + '" title="' +
+      (when ? when + '  ' : '') + (up ? '+' : '') + r.pct.toFixed(2) + '%">' +
+      '<div class="rb-half t">' + (up ? '<i style="height:' + h + '%"></i>' : '') + '</div>' +
+      '<div class="rb-half b">' + (!up ? '<i style="height:' + h + '%"></i>' : '') + '</div>' +
     '</div>';
   }).join('') + '</div>';
 }
@@ -4211,8 +4232,11 @@ function sumPct(rows){
 }
 
 function renderRhythm(hist, curve, accent){
-  var daily = dailyReturns(hist, 30);
-  var weekly = weeklyReturns(curve || [], 26);
+  /* Twenty and sixteen rather than thirty and twenty-six. Fewer
+     bars, each wide enough to read — a row of two-pixel slivers is a
+     texture, not a chart. */
+  var daily = dailyReturns(hist, 20);
+  var weekly = weeklyReturns(curve || [], 16);
 
   if(!daily.length && !weekly.length) return '';
 
@@ -4244,15 +4268,19 @@ function renderRhythm(hist, curve, accent){
 
     (daily.length
       ? '<div class="rb-block">' +
-          '<div class="rb-cap">Daily, last ' + daily.length + ' sessions</div>' +
-          returnBars(daily, accent) +
+          '<div class="rb-cap">Daily, last ' + daily.length + ' sessions' +
+            '<span class="rb-key">' +
+              '<span><i style="background:var(--tier-sb)"></i>up</span>' +
+              '<span><i style="background:var(--red)"></i>down</span>' +
+            '</span></div>' +
+          returnBars(daily) +
         '</div>'
       : '') +
 
     (weekly.length
       ? '<div class="rb-block">' +
           '<div class="rb-cap">Weekly, last ' + weekly.length + ' weeks</div>' +
-          returnBars(weekly, accent) +
+          returnBars(weekly) +
         '</div>'
       : '') +
 
