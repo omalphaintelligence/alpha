@@ -1640,6 +1640,54 @@ body.s-light .dash-scope th{background:#F7F9FC}
 .mkt-rail .pulse-strip{border-radius:0 0 14px 14px;margin-top:0}
 @media(max-width:600px){ #mktCanvas{height:74px} }
 
+/* daily and weekly returns */
+.rb-figs{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  margin-bottom:22px;
+}
+.rb-figs > div{
+  display:flex;flex-direction:column;gap:5px;
+  padding:16px 18px;border-radius:12px;
+  border:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel) 62%,transparent);
+}
+.rb-figs span{font-size:11.5px;color:var(--muted)}
+.rb-figs b{
+  font-family:var(--fig);font-size:22px;font-weight:500;
+  letter-spacing:-.015em;font-variant-numeric:tabular-nums lining;
+}
+.rb-figs em{font-style:normal;font-size:11px;color:var(--muted);opacity:.8}
+
+.rb-block{margin-top:20px}
+.rb-cap{font-size:12px;color:var(--muted);margin-bottom:10px}
+.rb{
+  display:flex;align-items:stretch;gap:2px;height:108px;
+  padding:0 2px;border-radius:10px;
+  border:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel) 48%,transparent);
+}
+.rb-slot{
+  flex:1;display:flex;flex-direction:column;min-width:0;
+  cursor:default;
+}
+/* A shared midline, so up and down are measured from the same place
+   rather than from the foot of the box. */
+.rb-half{flex:1;display:flex;min-width:0}
+.rb-half.up{align-items:flex-end}
+.rb-half.dn{align-items:flex-start;border-top:1px solid var(--line-soft)}
+.rb-half i{
+  display:block;width:100%;border-radius:2px;
+  transition:opacity .15s var(--ease);
+}
+.rb-slot:hover i{opacity:.6}
+.rb-note{margin:16px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+.rb-empty{font-size:13px;color:var(--muted);padding:18px 0}
+
+@media(max-width:760px){
+  .rb-figs{grid-template-columns:repeat(2,1fr)}
+  .rb{height:84px}
+}
+
 /* newest arrivals — three colours, brightest first */
 .hold-flags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .tbl-new{
@@ -4078,6 +4126,142 @@ function paintBigBets(){
     'taken at its own level, on its own chart \u2014 nothing here is a price to buy at.</p>';
 }
 
+/* --- Daily and weekly returns ---
+   Two questions the pages could not answer: what did the book do
+   today, and what did it do this week. The equity curve answers
+   neither — it is thirteen years long and a single session is a
+   pixel on it.
+
+   Daily comes from consecutive snapshots of the open positions,
+   equal-weighted, which is how the commentary already computes it,
+   so the two can never disagree. Weekly comes off the same baked
+   curve the performance block draws. --- */
+
+function dailyReturns(hist, limit){
+  var byDay = {};
+  (hist || []).forEach(function(r){
+    if(!r || !r.as_of) return;
+    var k = String(r.as_of).slice(0, 10);
+    (byDay[k] = byDay[k] || []).push(r);
+  });
+
+  var days = Object.keys(byDay).sort();
+  var out = [];
+
+  for(var i = 1; i < days.length; i++){
+    var prev = {}, moves = [];
+    byDay[days[i - 1]].forEach(function(r){ prev[r.symbol] = r; });
+
+    byDay[days[i]].forEach(function(r){
+      var was = prev[r.symbol];
+      if(!was || !was.curr_price || !r.curr_price) return;
+      moves.push((r.curr_price - was.curr_price) / was.curr_price * 100);
+    });
+
+    /* A day where nothing overlaps tells us nothing, so it is left
+       out rather than recorded as a flat session. */
+    if(!moves.length) continue;
+
+    out.push({
+      date: days[i],
+      pct: moves.reduce(function(a, b){ return a + b; }, 0) / moves.length
+    });
+  }
+
+  return limit ? out.slice(-limit) : out;
+}
+
+function weeklyReturns(curve, limit){
+  var out = [];
+  for(var i = 1; i < curve.length; i++){
+    if(!curve[i - 1]) continue;
+    out.push({ i: i, pct: (curve[i] / curve[i - 1] - 1) * 100 });
+  }
+  return limit ? out.slice(-limit) : out;
+}
+
+/* Bars, zeroed on the middle, so a losing session reads as a losing
+   session without having to find the number. */
+function returnBars(rows, accent){
+  if(!rows.length) return '<div class="rb-empty">Not enough history yet.</div>';
+
+  var peak = Math.max.apply(null, rows.map(function(r){ return Math.abs(r.pct); })) || 1;
+
+  return '<div class="rb">' + rows.map(function(r){
+    var h = Math.max(2, Math.abs(r.pct) / peak * 100);
+    var up = r.pct >= 0;
+    var when = r.date
+      ? new Date(r.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' })
+      : '';
+    return '<div class="rb-slot" title="' + (when ? when + ': ' : '') +
+      (up ? '+' : '') + r.pct.toFixed(2) + '%">' +
+      '<div class="rb-half up">' +
+        (up ? '<i style="height:' + h + '%;background:' + accent + '"></i>' : '') +
+      '</div>' +
+      '<div class="rb-half dn">' +
+        (!up ? '<i style="height:' + h + '%;background:var(--red)"></i>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function sumPct(rows){
+  /* Compounded, not added. Four days of +1% is not +4%. */
+  return (rows.reduce(function(a, r){ return a * (1 + r.pct / 100); }, 1) - 1) * 100;
+}
+
+function renderRhythm(hist, curve, accent){
+  var daily = dailyReturns(hist, 30);
+  var weekly = weeklyReturns(curve || [], 26);
+
+  if(!daily.length && !weekly.length) return '';
+
+  var today = daily.length ? daily[daily.length - 1] : null;
+  var thisWeek = weekly.length ? weekly[weekly.length - 1] : null;
+  var last5 = daily.slice(-5);
+  var last4w = weekly.slice(-4);
+
+  function fig(v){
+    if(v == null) return '<span class="dim">\u2014</span>';
+    var c = v >= 0 ? accent : 'var(--red)';
+    return '<b style="color:' + c + '">' + (v >= 0 ? '+' : '') + v.toFixed(2) + '%</b>';
+  }
+
+  return '<div class="mp-sec">' +
+    '<div class="mp-sec-head"><div class="mp-sec-t">Day to day</div></div>' +
+
+    '<div class="rb-figs">' +
+      '<div><span>Latest session</span>' + fig(today ? today.pct : null) +
+        '<em>' + (today ? new Date(today.date).toLocaleDateString('en-IN',
+          { day:'numeric', month:'short' }) : '') + '</em></div>' +
+      '<div><span>Last five sessions</span>' + fig(last5.length ? sumPct(last5) : null) +
+        '<em>compounded</em></div>' +
+      '<div><span>Latest week</span>' + fig(thisWeek ? thisWeek.pct : null) +
+        '<em>week on week</em></div>' +
+      '<div><span>Last four weeks</span>' + fig(last4w.length ? sumPct(last4w) : null) +
+        '<em>compounded</em></div>' +
+    '</div>' +
+
+    (daily.length
+      ? '<div class="rb-block">' +
+          '<div class="rb-cap">Daily, last ' + daily.length + ' sessions</div>' +
+          returnBars(daily, accent) +
+        '</div>'
+      : '') +
+
+    (weekly.length
+      ? '<div class="rb-block">' +
+          '<div class="rb-cap">Weekly, last ' + weekly.length + ' weeks</div>' +
+          returnBars(weekly, accent) +
+        '</div>'
+      : '') +
+
+    '<p class="rb-note">Daily is the equal-weighted move of the open positions ' +
+    'between one close and the next. Weekly is the change in the account value ' +
+    'that drives the curve above.</p>' +
+  '</div>';
+}
+
 /* --- Long term book ---
    Same names as the Model Portfolio, different exit. There is no
    target here, so the two numbers that matter are the trailing stop
@@ -4860,6 +5044,7 @@ function paintLongTerm(){
         freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
       posBody +
     '</div>' +
+    renderRhythm(lt.history, typeof LT_CURVE !== 'undefined' ? LT_CURVE : [], LT_ACCENT) +
     (jnl.length
       ? '<div class="mp-sec">' +
           '<div class="mp-sec-head"><div class="mp-sec-t">Journal</div></div>' +
@@ -9729,6 +9914,8 @@ function renderMpTables(){
       freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
     posBody +
     '</div>' +
+    renderRhythm((D || {}).history, typeof PF_WEEKLY !== 'undefined' ? PF_WEEKLY : [],
+                 'var(--purple, #8b7fe0)') +
     '<div class="mp-sec"><div class="mp-sec-t">Trade journal</div>' +
       '<div class="scr-table" style="--seg:var(--r80)"><table class="tbl"><thead><tr><th>Symbol</th><th>Action</th>' +
         '<th class="r">Price</th><th class="r">P&L</th><th>Notes</th><th class="r">Date</th>' +
