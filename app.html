@@ -1641,6 +1641,13 @@ body.s-light .dash-scope th{background:#F7F9FC}
 @media(max-width:600px){ #mktCanvas{height:74px} }
 
 /* newest arrivals — three colours, brightest first */
+.hold-flags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.tbl-new{
+  margin-left:6px;padding:1px 5px;border-radius:4px;
+  font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  background:color-mix(in srgb,var(--tier-b) 22%,transparent);
+  color:var(--tier-b);
+}
 .new-tag{
   display:inline-flex;align-items:center;
   padding:3px 9px;border-radius:6px;
@@ -4166,11 +4173,19 @@ function buildLtNotes(){
         date: when, kind: 'in', hue: 'var(--tier-b)',
         title: e.symbol + ' added to the book',
         summary: 'taken at ' + pfMoney(e.price),
-        detail: '<p class="nd-p">A slot opened and this name met every entry ' +
-          'condition, so it took the place. It will be held with no target ' +
-          'until its stop is broken.</p>' +
-          '<div class="nd-facts"><div><span>Taken at</span><b>' +
-            pfMoney(e.price) + '</b></div></div>'
+        detail: (function(){
+          var m = ((SCR_DATA && SCR_DATA.tabs && SCR_DATA.tabs.ALL) || [])
+            .filter(function(x){ return x.symbol === e.symbol; })[0] || {};
+          return '<p class="nd-p">A slot opened and this name met every entry ' +
+            'condition, so it took the place. It will be held with no target ' +
+            'until its stop is broken.</p>' +
+            '<div class="nd-facts">' +
+              '<div><span>Taken on</span><b>' + fmtDate(when) + '</b></div>' +
+              '<div><span>Taken at</span><b>' + pfMoney(e.price) + '</b></div>' +
+              (m.rank != null ? '<div><span>RS rank</span><b>' + Math.round(m.rank) + '</b></div>' : '') +
+              (m.sector ? '<div><span>Sector</span><b>' + m.sector + '</b></div>' : '') +
+            '</div>';
+        })()
       });
     } else if(e.action === 'STOP RAISED'){
       notes.push({
@@ -4179,8 +4194,10 @@ function buildLtNotes(){
         summary: String(e.notes || '').trim(),
         detail: '<p class="nd-p">The trend moved up, so the stop moved with it. ' +
           'It never moves back down \u2014 once given, the level is kept.</p>' +
-          '<div class="nd-facts"><div><span>Now at</span><b>' +
-            pfMoney(e.price) + '</b></div></div>'
+          '<div class="nd-facts">' +
+            '<div><span>Raised on</span><b>' + fmtDate(when) + '</b></div>' +
+            '<div><span>Price then</span><b>' + pfMoney(e.price) + '</b></div>' +
+          '</div>'
       });
     } else {
       var pnl = +e.pnlPct || 0;
@@ -4189,15 +4206,34 @@ function buildLtNotes(){
         hue: pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)',
         title: e.symbol + ' closed ' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%',
         summary: 'stop taken out',
-        detail: '<p class="nd-p">Price broke the trailing stop, so the position ' +
-          'was closed. There was no target: the trade ran until the trend ' +
-          'stopped supporting it.</p>' +
-          '<div class="nd-facts">' +
-            '<div><span>Closed at</span><b>' + pfMoney(e.price) + '</b></div>' +
-            '<div><span>Result</span><b style="color:' +
-              (pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
-              (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</b></div>' +
-          '</div>'
+        detail: (function(){
+          /* How long it was held, worked out from the entry in the
+             same journal. A number without a duration beside it says
+             nothing about whether the rule is working. */
+          var held = null;
+          for(var q = 0; q < jnl.length; q++){
+            var x = jnl[q];
+            if(x.symbol === e.symbol && x.action === 'ENTRY' &&
+               String(x.date) < String(e.date)){
+              held = Math.round((new Date(when) - new Date(String(x.date).slice(0, 10)))
+                     / 86400000);
+              break;
+            }
+          }
+          return '<p class="nd-p">Price broke the trailing stop, so the position ' +
+            'was closed. There was no target: the trade ran until the trend ' +
+            'stopped supporting it.</p>' +
+            '<div class="nd-facts">' +
+              '<div><span>Closed on</span><b>' + fmtDate(when) + '</b></div>' +
+              '<div><span>Closed at</span><b>' + pfMoney(e.price) + '</b></div>' +
+              (held != null ? '<div><span>Held</span><b>' + held + ' days</b></div>' : '') +
+              '<div><span>Result</span><b style="color:' +
+                (pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)') + '">' +
+                (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</b></div>' +
+            '</div>' +
+            '<p class="nd-p nd-dim">The freed slot is filled from the queue, ' +
+            'top of the list first.</p>';
+        })()
       });
     }
   });
@@ -4681,6 +4717,15 @@ function paintLongTerm(){
   /* --- positions --- */
   var rows = sortLt(pos);
 
+  /* The newest arrivals are marked here as they are in the model
+     portfolio. Knowing a name went in three days ago rather than
+     four months changes how its number reads. */
+  var freshLt = newestThree(pos, function(p){
+    if(p.entryDate) return String(p.entryDate).slice(0, 10);
+    var d = new Date(Date.now() - (+p.daysHeld || 0) * 86400000);
+    return d.toISOString().slice(0, 10);
+  });
+
   var cards = rows.map(function(p){
     var pnl  = +p.pnlPct || 0;
     var room = +p.roomPct || 0;
@@ -4702,7 +4747,10 @@ function paintLongTerm(){
                 capChip(m.cat) + '</div>'
             : '') +
         '</div>' +
-        '<span class="hold-st">Trailing</span>' +
+        '<div class="hold-flags">' +
+          newBadge(freshLt[String(p.symbol).toUpperCase()], p.entryDate) +
+          '<span class="hold-st">Trailing</span>' +
+        '</div>' +
       '</div>' +
 
       '<div class="hold-main">' +
@@ -4741,7 +4789,9 @@ function paintLongTerm(){
         ';font-weight:700">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</td>' +
       '<td class="num r">' + pfMoney(p.currPrice) + '</td>' +
       '<td class="num r dim">' + pfMoney(p.entryPrice) + '</td>' +
-      '<td class="num r dim">' + (p.entryDate ? fmtDate(p.entryDate) : '\u2014') + '</td>' +
+      '<td class="num r dim">' + (p.entryDate ? fmtDate(p.entryDate) : '\u2014') +
+        (freshLt[String(p.symbol).toUpperCase()] != null ? ' <span class="tbl-new">new</span>' : '') +
+        '</td>' +
       '<td class="num r" style="color:var(--red)">' + pfMoney(p.stopLoss) + '</td>' +
       '<td class="num r"' + (room < 5 ? ' style="color:var(--tier-w);font-weight:700"' : '') + '>' +
         room.toFixed(1) + '%</td>' +
