@@ -1930,6 +1930,47 @@ body.s-light .new-tag{color:#fff}
 .ps-chg.u{color:var(--green)}
 .ps-chg.d{color:var(--red)}
 
+/* ---------- feature cards ----------
+   The grid, the card and the icon box. These were lost when an
+   earlier edit cut too wide a range out of this stylesheet; without
+   the icon rule the inline SVGs have no width of their own and each
+   one expands to fill the column. */
+.features{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:18px;margin-top:8px;
+}
+.fcard{
+  position:relative;overflow:hidden;
+  padding:30px 28px;border-radius:16px;
+  border:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel) 72%,transparent);
+  transition:transform .3s var(--ease),border-color .3s var(--ease);
+}
+.fcard-ico{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+  background:color-mix(in srgb,var(--hue,var(--brand)) 15%,transparent);
+  color:var(--hue,var(--brand));
+}
+/* The size and stroke also sit on the elements themselves. An svg
+   with only a viewBox and no width falls back to 300x150, so if this
+   rule ever fails to reach it — a stale stylesheet, a cascade quirk
+   on one browser — the icon does not merely look wrong, it blows out
+   to fifteen times its size and wrecks the section. It did exactly
+   that on iOS. */
+.fcard-ico svg{
+  width:22px;height:22px;
+  max-width:100%;max-height:100%;
+  fill:none;stroke:currentColor;
+  stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
+}
+.fcard-ico{overflow:hidden;flex:0 0 44px}
+.fcard h3{margin:0 0 10px;font-size:17px;font-weight:600;letter-spacing:-.012em}
+.fcard p{margin:0;font-size:14px;color:var(--muted);line-height:1.65}
+
+@media(max-width:960px){ .features{grid-template-columns:repeat(2,1fr)} }
+
 /* ---------- interactive lift ---------- */
 .fcard::after{
   content:'';position:absolute;inset:0;pointer-events:none;opacity:0;
@@ -2557,32 +2598,32 @@ body.s-light .new-tag{color:#fff}
       </div>
       <div class="features">
         <div class="fcard" style="--hue:var(--r99)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"></path></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"></path></svg></div>
           <h3>Scored, then ranked</h3>
           <p>Each name gets a composite score from price behaviour, trend structure and volume. The ranking is the output — you always see where a stock sits relative to everything else.</p>
         </div>
         <div class="fcard" style="--hue:var(--r90)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="M3 13.5 12 18l9-4.5"></path></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="M3 13.5 12 18l9-4.5"></path></svg></div>
           <h3>Three conviction tiers</h3>
           <p>Names sort into Strong Buy, Buy and Watch. The tier tells you how much of the engine's criteria a stock currently satisfies, so you can size your attention accordingly.</p>
         </div>
         <div class="fcard" style="--hue:var(--r85)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg></div>
           <h3>Rank history you can check</h3>
           <p>See how long a name has held its position and whether it's climbing or slipping. A stock that's been top-ranked for weeks reads very differently from one that appeared yesterday.</p>
         </div>
         <div class="fcard" style="--hue:var(--r80)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 3.5V12l6.2 5.8"></path></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 3.5V12l6.2 5.8"></path></svg></div>
           <h3>Sector rotation at a glance</h3>
           <p>A sector summary shows where the ranked names are clustering, so you can see which parts of the market money is actually rotating into.</p>
         </div>
         <div class="fcard" style="--hue:var(--r70)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6Z"></path><path d="M6 3.5v17M9.5 8.5h6M9.5 12h6"></path></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6Z"></path><path d="M6 3.5v17M9.5 8.5h6M9.5 12h6"></path></svg></div>
           <h3>A journal that stays honest</h3>
           <p>Log your entries and exits against the signals you acted on. Over time it tells you something no backtest can: how you actually traded the list.</p>
         </div>
         <div class="fcard" style="--hue:var(--r90)">
-          <div class="fcard-ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"></path><path d="M20 4v4h-4"></path><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"></path><path d="M4 20v-4h4"></path></svg></div>
+          <div class="fcard-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"></path><path d="M20 4v4h-4"></path><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"></path><path d="M4 20v-4h4"></path></svg></div>
           <h3>Same rules, every session</h3>
           <p>The engine doesn't get bored, doesn't chase headlines and doesn't change its mind after a bad week. Consistency is the whole point.</p>
         </div>
