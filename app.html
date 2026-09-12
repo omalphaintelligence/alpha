@@ -1687,9 +1687,12 @@ body.s-light .dash-scope th{background:#F7F9FC}
   pointer-events:none;
 }
 .rb-slot{
-  flex:1 1 0;min-width:0;max-width:26px;
+  /* No max width. Capping it left a dozen bars huddled at the left
+     of a wide pane with dead space beside them; letting them grow
+     means the chart always fills its box, whether it is showing one
+     session or a hundred and eighty. */
+  flex:1 1 0;min-width:0;
   display:flex;flex-direction:column;cursor:default;
-  margin:0 auto;
 }
 .rb-half{display:flex;min-width:0}
 .rb-half.t{align-items:flex-end}
@@ -1705,6 +1708,32 @@ body.s-light .dash-scope th{background:#F7F9FC}
 }
 .rb-slot:hover .rb-half i{filter:brightness(1.3)}
 
+/* The slider, sitting where the preset buttons were. */
+.rb-range{display:flex;align-items:center;gap:12px;margin-left:auto}
+.rb-slider{
+  -webkit-appearance:none;appearance:none;
+  width:clamp(120px,20vw,220px);height:4px;border-radius:2px;
+  background:var(--line);outline:none;cursor:pointer;
+}
+.rb-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--brand);cursor:pointer;
+  border:2px solid var(--panel);
+  box-shadow:0 1px 4px rgb(0 0 0 / .35);
+}
+.rb-slider::-moz-range-thumb{
+  width:16px;height:16px;border-radius:50%;
+  background:var(--brand);cursor:pointer;border:2px solid var(--panel);
+}
+.rb-out{
+  font-size:12.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;min-width:62px;
+}
+.rb-short{
+  margin-left:8px;font-size:11px;opacity:.75;font-style:italic;
+}
+
 .rb-note{margin:16px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
 .rb-empty{font-size:13px;color:var(--muted);padding:18px 0}
 
@@ -1712,7 +1741,9 @@ body.s-light .dash-scope th{background:#F7F9FC}
   .rb-figs{grid-template-columns:repeat(2,1fr)}
   .rb{height:92px}
   .rb-rows{gap:2px}
-  .rb-slot{max-width:18px}
+  .rb-range{width:100%;margin-left:0;margin-top:10px}
+  .rb-slider{flex:1;width:auto}
+  
   .rb-figs b{font-size:21px}
   .rb-key{width:100%;margin-left:0}
   .rb-cap{flex-wrap:wrap;gap:8px}
@@ -4259,18 +4290,37 @@ function sumPct(rows){
   return (rows.reduce(function(a, r){ return a * (1 + r.pct / 100); }, 1) - 1) * 100;
 }
 
-/* How far back the two charts look. Kept on the window so both
-   pages share the choice, and so it survives a repaint. */
+/* How far back the two charts look — any window from one day to a
+   hundred and eighty, not a handful of presets. Kept on the window
+   so both pages share the choice and it survives a repaint. */
 var RB_DAYS = 30;
-var RB_RANGES = [7, 14, 30, 60, 90, 180];
 
 function setRbDays(n){
+  n = Math.max(1, Math.min(180, Math.round(+n || 30)));
+  if(n === RB_DAYS) return;
   RB_DAYS = n;
+  repaintRhythm();
+}
+
+/* Dragging fires continuously, so the label updates on every step
+   while the charts are rebuilt on a short delay. Repainting the
+   whole page sixty times a second is what makes a slider feel
+   broken. */
+var RB_TIMER = null;
+function nudgeRbDays(n){
+  RB_DAYS = Math.max(1, Math.min(180, Math.round(+n || 30)));
+
+  var out = document.getElementById('rbOut');
+  if(out) out.textContent = RB_DAYS + (RB_DAYS === 1 ? ' day' : ' days');
+
+  clearTimeout(RB_TIMER);
+  RB_TIMER = setTimeout(repaintRhythm, 140);
+}
+
+function repaintRhythm(){
   if(typeof paintLongTerm === 'function' && document.querySelector('#ltBody .rb')) paintLongTerm();
-  if(typeof renderModel === 'function'){
-    var host = document.getElementById('mpGated');
-    if(host && host.querySelector('.rb')) buildPublicModel();
-  }
+  var host = document.getElementById('mpGated');
+  if(host && host.querySelector('.rb') && typeof buildPublicModel === 'function') buildPublicModel();
 }
 
 function renderRhythm(hist, curve, accent){
@@ -4294,10 +4344,13 @@ function renderRhythm(hist, curve, accent){
 
   return '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Day to day</div>' +
-      '<div class="perf-ctl">' + RB_RANGES.map(function(n){
-        return '<button class="perf-btn' + (n === RB_DAYS ? ' on' : '') +
-          '" onclick="setRbDays(' + n + ')">' + n + 'd</button>';
-      }).join('') + '</div>' +
+      '<div class="rb-range">' +
+        '<input id="rbSlider" class="rb-slider" type="range" min="1" max="180" step="1" ' +
+          'value="' + RB_DAYS + '" aria-label="Days to show" ' +
+          'oninput="nudgeRbDays(this.value)">' +
+        '<span class="rb-out" id="rbOut">' + RB_DAYS +
+          (RB_DAYS === 1 ? ' day' : ' days') + '</span>' +
+      '</div>' +
     '</div>' +
 
     '<div class="rb-figs">' +
@@ -4314,7 +4367,10 @@ function renderRhythm(hist, curve, accent){
 
     (daily.length
       ? '<div class="rb-block">' +
-          '<div class="rb-cap">Daily, last ' + daily.length + ' sessions' +
+          '<div class="rb-cap">Daily, last ' + daily.length + ' session' +
+            (daily.length === 1 ? '' : 's') +
+            (daily.length < RB_DAYS
+              ? ' <span class="rb-short">all the history there is</span>' : '') +
             '<span class="rb-key">' +
               '<span><i style="background:var(--tier-sb)"></i>up</span>' +
               '<span><i style="background:var(--red)"></i>down</span>' +
