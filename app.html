@@ -1642,25 +1642,25 @@ body.s-light .dash-scope th{background:#F7F9FC}
 
 /* daily and weekly returns */
 .rb-figs{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
-  margin-bottom:26px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  margin-bottom:22px;
 }
 .rb-figs > div{
-  display:flex;flex-direction:column;gap:6px;
-  padding:18px 20px;border-radius:13px;
+  display:flex;flex-direction:column;gap:5px;
+  padding:15px 17px;border-radius:12px;
   border:1px solid var(--line-soft);
   background:color-mix(in srgb,var(--panel) 62%,transparent);
 }
 .rb-figs span{font-size:11.5px;color:var(--muted)}
 .rb-figs b{
-  font-family:var(--fig);font-size:26px;font-weight:500;
+  font-family:var(--fig);font-size:24px;font-weight:500;
   letter-spacing:-.02em;font-variant-numeric:tabular-nums lining;
 }
 .rb-figs em{font-style:normal;font-size:11px;color:var(--muted);opacity:.8}
 
-.rb-block{margin-top:26px}
+.rb-block{margin-top:20px}
 .rb-cap{
-  font-size:12px;color:var(--muted);margin-bottom:12px;
+  font-size:12px;color:var(--muted);margin-bottom:10px;
   display:flex;align-items:center;gap:14px;
 }
 .rb-key{display:flex;gap:12px;margin-left:auto;font-size:11px}
@@ -1669,42 +1669,51 @@ body.s-light .dash-scope th{background:#F7F9FC}
   margin-right:5px;vertical-align:-1px;
 }
 
-/* Taller, and with real gaps. The bars were two pixels wide in a
-   108px box, which read as a texture rather than as sessions. */
+/* Shorter than before. The earlier pane was 180px tall and split in
+   half, so a run of green days filled the top strip and left the
+   bottom half empty — it read as a broken chart rather than a
+   winning month. The zero line now sits where the data puts it and
+   the box only needs to be as tall as it is. */
 .rb{
-  display:flex;align-items:stretch;gap:5px;
-  height:180px;padding:10px 12px;border-radius:12px;
+  position:relative;height:112px;
+  padding:8px 10px;border-radius:11px;
   border:1px solid var(--line-soft);
   background:color-mix(in srgb,var(--panel) 48%,transparent);
 }
-.rb-slot{flex:1;display:flex;flex-direction:column;min-width:0;cursor:default}
-.rb-half{flex:1;display:flex;min-width:0}
+.rb-rows{display:flex;align-items:stretch;gap:3px;height:100%}
+.rb-zero{
+  position:absolute;left:10px;right:10px;height:1px;
+  background:color-mix(in srgb,var(--text) 16%,transparent);
+  pointer-events:none;
+}
+.rb-slot{
+  flex:1 1 0;min-width:0;max-width:26px;
+  display:flex;flex-direction:column;cursor:default;
+  margin:0 auto;
+}
+.rb-half{display:flex;min-width:0}
 .rb-half.t{align-items:flex-end}
-.rb-half.b{
-  align-items:flex-start;
-  border-top:1px solid color-mix(in srgb,var(--text) 16%,transparent);
-}
-.rb-half i{
-  display:block;width:100%;min-height:3px;
-  transition:filter .15s var(--ease),transform .15s var(--ease);
-}
+.rb-half.b{align-items:flex-start}
+.rb-half i{display:block;width:100%;min-height:2px;transition:filter .15s var(--ease)}
 .rb-slot.up .rb-half i{
-  background:linear-gradient(180deg,var(--tier-sb),color-mix(in srgb,var(--tier-sb) 62%,transparent));
-  border-radius:3px 3px 0 0;
+  background:linear-gradient(180deg,var(--tier-sb),color-mix(in srgb,var(--tier-sb) 55%,transparent));
+  border-radius:2px 2px 0 0;
 }
 .rb-slot.dn .rb-half i{
-  background:linear-gradient(180deg,color-mix(in srgb,var(--red) 62%,transparent),var(--red));
-  border-radius:0 0 3px 3px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--red) 55%,transparent),var(--red));
+  border-radius:0 0 2px 2px;
 }
-.rb-slot:hover .rb-half i{filter:brightness(1.25)}
+.rb-slot:hover .rb-half i{filter:brightness(1.3)}
 
-.rb-note{margin:18px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+.rb-note{margin:16px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
 .rb-empty{font-size:13px;color:var(--muted);padding:18px 0}
 
 @media(max-width:760px){
   .rb-figs{grid-template-columns:repeat(2,1fr)}
-  .rb{height:140px;gap:4px;padding:8px 10px}
-  .rb-figs b{font-size:23px}
+  .rb{height:92px}
+  .rb-rows{gap:2px}
+  .rb-slot{max-width:18px}
+  .rb-figs b{font-size:21px}
   .rb-key{width:100%;margin-left:0}
   .rb-cap{flex-wrap:wrap;gap:8px}
 }
@@ -4204,39 +4213,71 @@ function weeklyReturns(curve, limit){
 /* Bars, zeroed on the middle, so a losing session reads as a losing
    session without having to find the number. */
 /* Green up, red down — the two colours this page already uses for
-   gain and loss everywhere else. Tinting a winning session with the
-   page's accent instead made it a decorative bar rather than a
-   profitable day. */
+   gain and loss everywhere else.
+
+   The zero line is placed where the data puts it, not down the
+   middle. An earlier version split the pane into equal halves, so a
+   run of winning sessions left the bottom half of the box empty and
+   the chart looked broken. */
 function returnBars(rows){
   if(!rows.length) return '<div class="rb-empty">Not enough history yet.</div>';
 
-  var peak = Math.max.apply(null, rows.map(function(r){ return Math.abs(r.pct); })) || 1;
+  var hi = 0, lo = 0;
+  rows.forEach(function(r){
+    if(r.pct > hi) hi = r.pct;
+    if(r.pct < lo) lo = r.pct;
+  });
+  var span = (hi - lo) || 1;
 
-  return '<div class="rb">' + rows.map(function(r){
-    var h = Math.max(3, Math.abs(r.pct) / peak * 100);
-    var up = r.pct >= 0;
-    var when = r.date
-      ? new Date(r.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' })
-      : '';
-    return '<div class="rb-slot' + (up ? ' up' : ' dn') + '" title="' +
-      (when ? when + '  ' : '') + (up ? '+' : '') + r.pct.toFixed(2) + '%">' +
-      '<div class="rb-half t">' + (up ? '<i style="height:' + h + '%"></i>' : '') + '</div>' +
-      '<div class="rb-half b">' + (!up ? '<i style="height:' + h + '%"></i>' : '') + '</div>' +
-    '</div>';
-  }).join('') + '</div>';
+  /* Share of the pane above the zero line. All gains and it sits at
+     the foot; all losses and it sits at the head. */
+  var upShare = Math.max(0, Math.min(100, hi / span * 100));
+
+  return '<div class="rb">' +
+    '<div class="rb-zero" style="top:' + upShare.toFixed(2) + '%"></div>' +
+    '<div class="rb-rows">' + rows.map(function(r){
+      var up = r.pct >= 0;
+      var h = Math.abs(r.pct) / span * 100;
+      var when = r.date
+        ? new Date(r.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' })
+        : '';
+      return '<div class="rb-slot' + (up ? ' up' : ' dn') + '" title="' +
+        (when ? when + '  ' : '') + (up ? '+' : '') + r.pct.toFixed(2) + '%">' +
+        '<div class="rb-half t" style="height:' + upShare.toFixed(2) + '%">' +
+          (up ? '<i style="height:' + (h / Math.max(upShare, 0.01) * 100).toFixed(2) + '%"></i>' : '') +
+        '</div>' +
+        '<div class="rb-half b" style="height:' + (100 - upShare).toFixed(2) + '%">' +
+          (!up ? '<i style="height:' + (h / Math.max(100 - upShare, 0.01) * 100).toFixed(2) + '%"></i>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>' +
+  '</div>';
 }
 
+/* Compounded, not added. Four days of +1% is not +4%. */
 function sumPct(rows){
-  /* Compounded, not added. Four days of +1% is not +4%. */
   return (rows.reduce(function(a, r){ return a * (1 + r.pct / 100); }, 1) - 1) * 100;
 }
 
+/* How far back the two charts look. Kept on the window so both
+   pages share the choice, and so it survives a repaint. */
+var RB_DAYS = 30;
+var RB_RANGES = [7, 14, 30, 60, 90, 180];
+
+function setRbDays(n){
+  RB_DAYS = n;
+  if(typeof paintLongTerm === 'function' && document.querySelector('#ltBody .rb')) paintLongTerm();
+  if(typeof renderModel === 'function'){
+    var host = document.getElementById('mpGated');
+    if(host && host.querySelector('.rb')) buildPublicModel();
+  }
+}
+
 function renderRhythm(hist, curve, accent){
-  /* Twenty and sixteen rather than thirty and twenty-six. Fewer
-     bars, each wide enough to read — a row of two-pixel slivers is a
-     texture, not a chart. */
-  var daily = dailyReturns(hist, 20);
-  var weekly = weeklyReturns(curve || [], 16);
+  var daily = dailyReturns(hist, RB_DAYS);
+  /* Roughly the same span in weeks, so the two charts describe the
+     same stretch of time rather than two unrelated ones. */
+  var weekly = weeklyReturns(curve || [], Math.max(4, Math.round(RB_DAYS / 5)));
 
   if(!daily.length && !weekly.length) return '';
 
@@ -4252,7 +4293,12 @@ function renderRhythm(hist, curve, accent){
   }
 
   return '<div class="mp-sec">' +
-    '<div class="mp-sec-head"><div class="mp-sec-t">Day to day</div></div>' +
+    '<div class="mp-sec-head"><div class="mp-sec-t">Day to day</div>' +
+      '<div class="perf-ctl">' + RB_RANGES.map(function(n){
+        return '<button class="perf-btn' + (n === RB_DAYS ? ' on' : '') +
+          '" onclick="setRbDays(' + n + ')">' + n + 'd</button>';
+      }).join('') + '</div>' +
+    '</div>' +
 
     '<div class="rb-figs">' +
       '<div><span>Latest session</span>' + fig(today ? today.pct : null) +
