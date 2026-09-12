@@ -1679,19 +1679,35 @@ body.s-light .dash-scope th{background:#F7F9FC}
   padding:8px 10px;border-radius:11px;
   border:1px solid var(--line-soft);
   background:color-mix(in srgb,var(--panel) 48%,transparent);
+  overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:thin;
 }
-.rb-rows{display:flex;align-items:stretch;gap:3px;height:100%}
+.rb::-webkit-scrollbar{height:6px}
+.rb::-webkit-scrollbar-track{background:transparent}
+.rb::-webkit-scrollbar-thumb{
+  background:color-mix(in srgb,var(--muted) 40%,transparent);
+  border-radius:3px;
+}
+.rb-rows{display:flex;align-items:stretch;gap:3px;height:100%;min-width:100%}
 .rb-zero{
-  position:absolute;left:10px;right:10px;height:1px;
+  /* Inside the scrolling area, so it runs the full length of the
+     bars rather than stopping at the edge of the visible pane. */
+  position:absolute;left:0;height:1px;
   background:color-mix(in srgb,var(--text) 16%,transparent);
   pointer-events:none;
 }
 .rb-slot{
-  /* No max width. Capping it left a dozen bars huddled at the left
-     of a wide pane with dead space beside them; letting them grow
-     means the chart always fills its box, whether it is showing one
-     session or a hundred and eighty. */
-  flex:1 1 0;min-width:0;
+  /* A fixed width. A session is a session: it should be the same
+     size whether the window is a week or six months. Asking for more
+     days gives more bars, not thinner ones — the pane scrolls when
+     they no longer fit, which is what a chart of a long period
+     should do.
+
+     Two earlier versions got this wrong in opposite directions: one
+     capped the width so a short window left dead space, the other
+     let bars stretch so the same day was fat at 7d and a sliver at
+     180d. */
+  flex:0 0 11px;
   display:flex;flex-direction:column;cursor:default;
 }
 .rb-half{display:flex;min-width:0}
@@ -1741,6 +1757,7 @@ body.s-light .dash-scope th{background:#F7F9FC}
   .rb-figs{grid-template-columns:repeat(2,1fr)}
   .rb{height:92px}
   .rb-rows{gap:2px}
+  .rb-slot{flex:0 0 9px}
   .rb-range{width:100%;margin-left:0;margin-top:10px}
   .rb-slider{flex:1;width:auto}
   
@@ -4264,8 +4281,13 @@ function returnBars(rows){
      the foot; all losses and it sits at the head. */
   var upShare = Math.max(0, Math.min(100, hi / span * 100));
 
+  /* 11px per bar plus the 3px gap, so the rule spans exactly the
+     run of bars however far it scrolls. */
+  var span_px = rows.length * 14;
+
   return '<div class="rb">' +
-    '<div class="rb-zero" style="top:' + upShare.toFixed(2) + '%"></div>' +
+    '<div class="rb-zero" style="top:' + upShare.toFixed(2) + '%;width:' +
+      Math.max(span_px, 100) + 'px;min-width:100%"></div>' +
     '<div class="rb-rows">' + rows.map(function(r){
       var up = r.pct >= 0;
       var h = Math.abs(r.pct) / span * 100;
@@ -4317,10 +4339,19 @@ function nudgeRbDays(n){
   RB_TIMER = setTimeout(repaintRhythm, 140);
 }
 
+/* Opens at the right-hand end, because the session that matters
+   most is the last one. */
+function scrollRhythmToEnd(){
+  document.querySelectorAll('.rb').forEach(function(el){
+    el.scrollLeft = el.scrollWidth;
+  });
+}
+
 function repaintRhythm(){
   if(typeof paintLongTerm === 'function' && document.querySelector('#ltBody .rb')) paintLongTerm();
   var host = document.getElementById('mpGated');
   if(host && host.querySelector('.rb') && typeof buildPublicModel === 'function') buildPublicModel();
+  setTimeout(scrollRhythmToEnd, 20);
 }
 
 function renderRhythm(hist, curve, accent){
@@ -4386,7 +4417,8 @@ function renderRhythm(hist, curve, accent){
         '</div>'
       : '') +
 
-    '<p class="rb-note">Daily is the equal-weighted move of the open positions ' +
+    '<p class="rb-note">Longer windows scroll; the newest sessions are on the ' +
+    'right. Daily is the equal-weighted move of the open positions ' +
     'between one close and the next. Weekly is the change in the account value ' +
     'that drives the curve above.</p>' +
   '</div>';
@@ -5187,6 +5219,7 @@ function paintLongTerm(){
 
   /* The canvas has to be in the document before it can be sized. */
   setTimeout(drawLtPerf, 20);
+  setTimeout(scrollRhythmToEnd, 30);
 }
 
 /* --- Ready to move ---
