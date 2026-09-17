@@ -1640,6 +1640,66 @@ body.s-light .dash-scope th{background:#F7F9FC}
 .mkt-rail .pulse-strip{border-radius:0 0 14px 14px;margin-top:0}
 @media(max-width:600px){ #mktCanvas{height:74px} }
 
+/* ---- The market switch, and what the US side looks like ----
+
+   The two books are the same engine on different exchanges, so the
+   layout stays put and the surface changes: a warmer, darker page
+   with a green accent instead of the cool blue India uses. Switching
+   should feel like walking into a different room of the same
+   building, not a different building. */
+.mkt-sw{
+  display:flex;gap:2px;flex-shrink:0;
+  border:1px solid var(--line-soft);border-radius:999px;padding:3px;
+}
+.mkt-sw button{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 15px;border-radius:999px;border:none;
+  background:none;cursor:pointer;
+  font-family:var(--sans);font-size:13px;font-weight:600;
+  letter-spacing:-.01em;color:var(--muted);
+  transition:color .18s var(--ease),background-color .18s var(--ease);
+}
+.mkt-sw button:hover{color:var(--text)}
+.mkt-sw button.on{
+  color:var(--on-fill);
+  background:var(--mkt,var(--brand));
+}
+.mkt-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:currentColor;opacity:.7;
+}
+.mkt-sw button[data-mkt="NSE"]{--mkt:var(--brand)}
+.mkt-sw button[data-mkt="US"]{--mkt:#1E9E6A}
+
+/* The US surface. Only tokens change — no layout is duplicated, so
+   anything built for one market works on the other the day it is
+   built. */
+body.mkt-us{
+  --brand:#1E9E6A;
+  --ink:#0A1410;
+  --panel:#0D1B15;
+  --panel-2:#12261D;
+  --line:#1C4133;
+  --line-soft:#143026;
+  --purple:#4FBF8B;
+}
+body.mkt-us.s-light{
+  --brand:#0E7A4F;
+  --ink:#E9EFEA;
+  --panel:#FFFFFF;
+  --panel-2:#F2F7F4;
+  --line:#BDD3C7;
+  --line-soft:#DCE8E1;
+  --purple:#0E7A4F;
+}
+/* The record video is an Indian hillside; it has no business
+   sitting behind the American book. */
+body.mkt-us #record{display:none!important}
+
+@media(max-width:900px){
+  .mkt-sw button{padding:6px 12px;font-size:12.5px}
+}
+
 /* daily and weekly returns */
 .rb-figs{
   display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
@@ -2605,6 +2665,12 @@ body.s-light .new-tag{color:#fff}
       <div class="zone-sw" id="zoneSw">
         <button class="zone-btn on" onclick="setZone('free')">Free Zone</button>
         <button class="zone-btn" onclick="setZone('member')">Member Zone</button>
+      </div>
+      <div class="mkt-sw" id="mktSw">
+        <button class="on" data-mkt="NSE" onclick="setMarket('NSE')">
+          <i class="mkt-dot"></i>India</button>
+        <button data-mkt="US" onclick="setMarket('US')">
+          <i class="mkt-dot"></i>US</button>
       </div>
       <nav class="ltabs" id="ltabs"></nav>
       <div class="nav-actions">
@@ -5983,6 +6049,47 @@ var SCR_SEG = 'ALL';
 var SCR_DATA = null;
 var feedPending = null;
 
+/* Which market the site is showing.
+
+   Both books live in the same tables, told apart by a market column
+   — that is what the column was put there for. Until now there was
+   only one market and nothing filtered; with two, an unfiltered
+   read returns Indian and American names in one list.
+
+   The dashboard block further down has had its own MARKET since the
+   old Apps Script days. This is the one the Supabase reads use, and
+   switching keeps the two in step. */
+var FEED_MARKET = (function(){
+  try { return localStorage.getItem('ai_market') === 'US' ? 'US' : 'NSE'; }
+  catch(e){ return 'NSE'; }
+})();
+
+function setMarket(m){
+  m = (m === 'US') ? 'US' : 'NSE';
+  if(m === FEED_MARKET) return;
+
+  FEED_MARKET = m;
+  try { localStorage.setItem('ai_market', m); } catch(e){}
+
+  /* The dashboard keeps its own copy. */
+  try { if(typeof MARKET !== 'undefined') MARKET = m; } catch(e){}
+
+  document.body.classList.toggle('mkt-us', m === 'US');
+
+  /* Everything cached belongs to the other market now. */
+  SCR_DATA = null;
+  feedPending = null;
+
+  paintMarketSwitch();
+  setLandingTab(LANDING_TAB, null);
+}
+
+function paintMarketSwitch(){
+  document.querySelectorAll('.mkt-sw button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.mkt === FEED_MARKET);
+  });
+}
+
 /* Both tabs read the same payload. Fetch it once, hand it to the
    dashboard renderers via D, and reuse it thereafter. */
 function ensureFeed(){
@@ -5993,23 +6100,23 @@ function ensureFeed(){
      against this account's plan, so what comes back IS what they are
      entitled to — the UI is not deciding. */
   feedPending = Promise.all([
-    db.from('screener_today').select('as_of, segment, symbol, rank, signal, sector, cat, price, ret3m, ret6m, ret12m, vol, is_new, fno'),
-    db.from('screener_teaser').select('segment, position, symbol, rank, signal, sector, total_rows').order('position'),
-    db.from('positions_today').select('as_of, symbol, status, entry_date, entry_price, curr_price, stop_loss, target, pnl_pct, days_held'),
-    db.from('mp_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(400),
-    db.from('waitlist_today').select('position, symbol, state, quality, price, pivot, dist_pivot, entry, stop_loss, target, capacity, held, free_slots').order('position'),
+    db.from('screener_today').select('as_of, segment, symbol, rank, signal, sector, cat, price, ret3m, ret6m, ret12m, vol, is_new, fno').eq('market', FEED_MARKET),
+    db.from('screener_teaser').select('segment, position, symbol, rank, signal, sector, total_rows').eq('market', FEED_MARKET).order('position'),
+    db.from('positions_today').select('as_of, symbol, status, entry_date, entry_price, curr_price, stop_loss, target, pnl_pct, days_held').eq('market', FEED_MARKET),
+    db.from('mp_journal').select('trade_date, symbol, action, price, pnl_pct, notes').eq('market', FEED_MARKET).order('trade_date', { ascending:false }).limit(400),
+    db.from('waitlist_today').select('position, symbol, state, quality, price, pivot, dist_pivot, entry, stop_loss, target, capacity, held, free_slots').eq('market', FEED_MARKET).order('position'),
     /* The retained days of the queue, so a name that turned up today
        can be told apart from one that has been waiting a fortnight. */
-    db.from('waitlist_rows').select('symbol, as_of').order('as_of', { ascending:true }).limit(2000),
-    db.from('mp_history').select('as_of, symbol, status, entry_price, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
-    db.from('lt_today').select('symbol, entry_date, entry_price, stop_loss, curr_price, pnl_pct, days_held, room_pct'),
-    db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').order('trade_date', { ascending:false }).limit(8000),
-    db.from('lt_waitlist').select('as_of, position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').order('position'),
-    db.from('lt_history').select('as_of, symbol, entry_price, stop_loss, curr_price, pnl_pct, days_held').order('as_of', { ascending:false }).limit(4000),
+    db.from('waitlist_rows').select('symbol, as_of').eq('market', FEED_MARKET).order('as_of', { ascending:true }).limit(2000),
+    db.from('mp_history').select('as_of, symbol, status, entry_price, curr_price, pnl_pct, days_held').eq('market', FEED_MARKET).order('as_of', { ascending:false }).limit(9000),
+    db.from('lt_today').select('symbol, entry_date, entry_price, stop_loss, curr_price, pnl_pct, days_held, room_pct').eq('market', FEED_MARKET),
+    db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').eq('market', FEED_MARKET).order('trade_date', { ascending:false }).limit(8000),
+    db.from('lt_waitlist').select('as_of, position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots').eq('market', FEED_MARKET).order('position'),
+    db.from('lt_history').select('as_of, symbol, entry_price, stop_loss, curr_price, pnl_pct, days_held').eq('market', FEED_MARKET).order('as_of', { ascending:false }).limit(9000),
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order'),
     db.from('sync_log').select('dataset, pushed_at, rows, as_of'),
-    db.from('mp_teaser_today').select('book, position, symbol, sector, pnl_pct, days_held').order('position'),
-    db.from('big_bets_today').select('position, symbol, company, sector, price, score, engine_rank, quality, newly_added, in_buy_range').order('position')
+    db.from('mp_teaser_today').select('book, position, symbol, sector, pnl_pct, days_held').eq('market', FEED_MARKET).order('position'),
+    db.from('big_bets_today').select('position, symbol, company, sector, price, score, engine_rank, quality, newly_added, in_buy_range').eq('market', FEED_MARKET).order('position')
   ]).then(function(res){
     var scr = res[0].data || [];
     var tea = res[1].data || [];
