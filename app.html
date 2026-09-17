@@ -6081,7 +6081,16 @@ function setMarket(m){
   feedPending = null;
 
   paintMarketSwitch();
-  setLandingTab(LANDING_TAB, null);
+
+  /* Re-open the same tab, and hand setLandingTab the button that
+     belongs to it. Passing null left every tab unhighlighted, so
+     after switching market the nav looked like nothing was open. */
+  var btn = null;
+  var tabs = ZONE_TABS[ZONE] || [];
+  var idx = tabs.findIndex ? tabs.findIndex(function(t){ return t[0] === LANDING_TAB; }) : -1;
+  if(idx >= 0) btn = document.querySelectorAll('#ltabs .ltab-btn')[idx] || null;
+
+  setLandingTab(LANDING_TAB, btn);
 }
 
 function paintMarketSwitch(){
