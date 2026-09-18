@@ -6148,7 +6148,25 @@ function paintMarketSwitch(){
   document.querySelectorAll('.mkt-sw button').forEach(function(b){
     b.classList.toggle('on', b.dataset.mkt === FEED_MARKET);
   });
+  document.body.classList.toggle('mkt-us', FEED_MARKET === 'US');
 }
+
+/* The stored market is read before anything is drawn, but the markup
+   ships with India marked as the active button and no US class on
+   the body. Without this the page comes back after a reload showing
+   American data under an Indian switch — which is exactly as
+   confusing as it sounds. */
+(function(){
+  function apply(){
+    paintMarketSwitch();
+    if(typeof paintMarketCopy === 'function') paintMarketCopy();
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', apply);
+  } else {
+    apply();
+  }
+})();
 
 /* Both tabs read the same payload. Fetch it once, hand it to the
    dashboard renderers via D, and reuse it thereafter. */
