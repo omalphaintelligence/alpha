@@ -1700,13 +1700,14 @@ body.mkt-us #record{display:none!important}
   .mkt-sw button{padding:6px 12px;font-size:12.5px}
 }
 
-.young{
-  padding:28px 30px;border-radius:14px;margin-bottom:18px;
+.soon{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;padding:26px 30px;border-radius:14px;margin-bottom:18px;
   border:1px dashed var(--line);
   background:color-mix(in srgb,var(--panel) 55%,transparent);
 }
-.young-t{font-family:var(--disp);font-size:18px;font-weight:600;margin-bottom:8px}
-.young-p{font-size:14px;color:var(--muted);line-height:1.65;max-width:62ch}
+.soon-t{font-family:var(--disp);font-size:19px;font-weight:600}
+.soon-s{font-size:13px;color:var(--muted);letter-spacing:.02em}
 
 /* daily and weekly returns */
 .rb-figs{
@@ -4498,17 +4499,17 @@ function renderRhythm(hist, curve, accent){
   '</div>';
 }
 
-/* A book with no backtest behind it says so, rather than borrowing
-   the other market's curve. */
-function ltYoungBook(){
-  return '<div class="young">' +
-    '<div class="young-t">This book is new.</div>' +
-    '<div class="young-p">The long record on the Indian side is a thirteen-year ' +
-    'backtest. Nothing equivalent has been run for the US, so rather than show ' +
-    'you someone else\'s curve, this page starts from the day the book was built ' +
-    'and fills in as it goes.</div>' +
+/* The curves are a backtest of the Indian book, baked into this
+   file. There is no American one, so the slot is marked and left
+   empty rather than filled with the other market's numbers. */
+function comingSoon(label){
+  return '<div class="soon">' +
+    '<div class="soon-t">' + label + '</div>' +
+    '<div class="soon-s">Coming soon</div>' +
   '</div>';
 }
+
+function ltYoungBook(){ return comingSoon('Curve'); }
 
 /* --- Long term book ---
    Same names as the Model Portfolio, different exit. There is no
@@ -5509,14 +5510,21 @@ function paintReady(){
   var rows = w.rows || [];
 
   if(!rows.length){
-    /* The server returns nothing both when the queue is genuinely
-       empty and when this account is not entitled to it. Those are
-       different situations and used to read the same. */
-    body.innerHTML = rtmTabs() + (canSeeModel()
-      ? '<div class="scr-load">Nothing clears the entry bar today.</div>'
-      : lockPanel('The waiting list',
-          'Every name that already clears the entry bar, ranked, with the levels each one would be taken at.',
-          'model'));
+    /* Empty reads three different ways and they are not the same
+       thing: the account may not be entitled to it, the queue may
+       genuinely be empty today, or — on the US book — the waiting
+       list is simply not built yet. Saying "nothing clears the entry
+       bar" for the third case is untrue. */
+    var us = (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
+
+    body.innerHTML = rtmTabs() + (
+      !canSeeModel()
+        ? lockPanel('The waiting list',
+            'Every name that already clears the entry bar, ranked, with the levels each one would be taken at.',
+            'model')
+        : us
+          ? comingSoon('Waiting list')
+          : '<div class="scr-load">Nothing clears the entry bar today.</div>');
     return;
   }
 
@@ -6108,6 +6116,12 @@ function setMarket(m){
 
   paintMarketSwitch();
   paintMarketCopy();
+
+  /* The performance block is built once and then left alone — right
+     when moving between tabs, wrong when the market changes, since
+     it would keep showing the other book's curve. */
+  var pub = document.getElementById('pub-model-body');
+  if(pub) pub.innerHTML = '';
 
   /* The hero ladder keeps its rows by symbol so a name can be seen
      to climb. That memory has to be thrown away when the market
@@ -9524,13 +9538,7 @@ function renderPeriodTable(){
    means anything on the American page, so it is replaced there. */
 function perfBlockForMarket(){
   if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
-    return '<div class="young">' +
-      '<div class="young-t">This book is new.</div>' +
-      '<div class="young-p">The curve on the Indian side runs from 2013 and is ' +
-      'a backtest. The US book has no such history yet: it starts from the day ' +
-      'it was built, and the day-to-day figures below are the real record so ' +
-      'far.</div>' +
-    '</div>';
+    return comingSoon('Curve');
   }
   return renderPerfBlock();
 }
