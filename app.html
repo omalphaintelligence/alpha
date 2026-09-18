@@ -1700,6 +1700,14 @@ body.mkt-us #record{display:none!important}
   .mkt-sw button{padding:6px 12px;font-size:12.5px}
 }
 
+.young{
+  padding:28px 30px;border-radius:14px;margin-bottom:18px;
+  border:1px dashed var(--line);
+  background:color-mix(in srgb,var(--panel) 55%,transparent);
+}
+.young-t{font-family:var(--disp);font-size:18px;font-weight:600;margin-bottom:8px}
+.young-p{font-size:14px;color:var(--muted);line-height:1.65;max-width:62ch}
+
 /* daily and weekly returns */
 .rb-figs{
   display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
@@ -2707,9 +2715,9 @@ body.s-light .new-tag{color:#fff}
     <div class="hero">
       <div class="hero-grid">
         <div>
-          <div class="eyebrow"><span class="livedot"></span>Updated after every NSE close</div>
+          <div class="eyebrow"><span class="livedot"></span><span id="heroClose">Updated after every NSE close</span></div>
           <h1>Know which stocks are <em>actually</em> moving.</h1>
-          <p class="lede">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
+          <p class="lede"><span id="heroScan">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
           <div class="hero-cta">
             <button class="btn btn-gold cta" id="cta-hero" data-guest="See plans" onclick="ctaClick(this)">See plans</button>
             <a class="btn btn-ghost" href="#how">See how it works</a>
@@ -4490,6 +4498,18 @@ function renderRhythm(hist, curve, accent){
   '</div>';
 }
 
+/* A book with no backtest behind it says so, rather than borrowing
+   the other market's curve. */
+function ltYoungBook(){
+  return '<div class="young">' +
+    '<div class="young-t">This book is new.</div>' +
+    '<div class="young-p">The long record on the Indian side is a thirteen-year ' +
+    'backtest. Nothing equivalent has been run for the US, so rather than show ' +
+    'you someone else\'s curve, this page starts from the day the book was built ' +
+    'and fills in as it goes.</div>' +
+  '</div>';
+}
+
 /* --- Long term book ---
    Same names as the Model Portfolio, different exit. There is no
    target here, so the two numbers that matter are the trailing stop
@@ -5264,8 +5284,14 @@ function paintLongTerm(){
     return;
   }
 
+  /* The thirteen-year curve is a backtest of the Indian book, baked
+     into this file. There is no American one — the US book starts
+     from the day it was built — so the performance block is left off
+     rather than showing Indian rupees on an American page. */
+  var showRecord = (typeof FEED_MARKET === 'undefined' || FEED_MARKET !== 'US');
+
   body.innerHTML = subTabs + freshLine('longterm') +
-    renderLtPerf(closed) +
+    (showRecord ? renderLtPerf(closed) : ltYoungBook()) +
     strip +
     '<div class="mp-sec">' +
       '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
@@ -6081,6 +6107,12 @@ function setMarket(m){
   feedPending = null;
 
   paintMarketSwitch();
+  paintMarketCopy();
+
+  /* The hero ladder keeps its rows by symbol so a name can be seen
+     to climb. That memory has to be thrown away when the market
+     changes, or the American page keeps showing Indian tickers. */
+  if(typeof resetLadder === 'function') resetLadder();
 
   /* Re-open the same tab, and hand setLandingTab the button that
      belongs to it. Passing null left every tab unhighlighted, so
@@ -6091,6 +6123,25 @@ function setMarket(m){
   if(idx >= 0) btn = document.querySelectorAll('#ltabs .ltab-btn')[idx] || null;
 
   setLandingTab(LANDING_TAB, btn);
+}
+
+/* The hero names the exchange it is talking about. */
+function paintMarketCopy(){
+  var us = (FEED_MARKET === 'US');
+
+  var close = document.getElementById('heroClose');
+  if(close) close.textContent = us
+    ? 'Updated after every US close'
+    : 'Updated after every NSE close';
+
+  var scan = document.getElementById('heroScan');
+  if(scan) scan.textContent = us
+    ? 'Alpha Intel scans the entire US universe every session and ranks ' +
+      "what's working right now. No noise, no tips, no opinions — just a " +
+      'ranked list of names showing genuine institutional demand, refreshed daily.'
+    : 'Alpha Intel scans the entire NSE universe every session and ranks ' +
+      "what's working right now. No noise, no tips, no opinions — just a " +
+      'ranked list of names showing genuine institutional demand, refreshed daily.';
 }
 
 function paintMarketSwitch(){
@@ -6505,7 +6556,7 @@ function buildPublicModel(force){
 
   if(force || !host.innerHTML.trim()){
     extendFromJournal();
-    host.innerHTML = renderPerfBlock();
+    host.innerHTML = perfBlockForMarket();
     setTimeout(function(){
       if(document.getElementById('perfCanvas')){ drawPerf(); paintPerfHeads(); }
     }, 20);
@@ -6840,8 +6891,11 @@ if(document.readyState === 'loading'){
       return '<div class="ps-item">' +
         '<span class="ps-sym">' + r.symbol + '</span>' +
         (r.price != null
-          ? '<span class="ps-px">\u20b9' +
-            Number(r.price).toLocaleString('en-IN', { maximumFractionDigits: 0 }) + '</span>'
+          ? '<span class="ps-px">' +
+            (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'
+              ? '$' + Number(r.price).toLocaleString('en-US', { maximumFractionDigits: 0 })
+              : '\u20b9' + Number(r.price).toLocaleString('en-IN', { maximumFractionDigits: 0 })) +
+            '</span>'
           : '') +
         (rank != null
           ? '<span class="ps-chg" style="color:' + hue + '">' + rank + '</span>'
@@ -6918,6 +6972,17 @@ var redrawHeroChart = function(){};
      and everything it passed slides down to make room. Rebuilding
      the list each time would just cut to the answer. */
   const live = new Map();
+
+  /* Emptied when the market changes: the rows are keyed by symbol
+     and deliberately kept between refreshes, which is what lets a
+     name be seen to climb — and what left Indian tickers sitting on
+     the American page. */
+  window.resetLadder = function(){
+    live.clear();
+    host.innerHTML = '';
+    board = null;
+    load();
+  };
 
   function render(rows){
     const seen = new Set();
@@ -8908,6 +8973,11 @@ function pfLotNow(){
 }
 
 function pfMoney(v){
+  /* Rupees on the Indian book, dollars on the American one. A single
+     hard-coded symbol put ₹ on US prices throughout. */
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
+    return '$' + Math.round(v).toLocaleString('en-US');
+  }
   return '\u20b9' + Math.round(v).toLocaleString('en-IN');
 }
 
@@ -9429,6 +9499,22 @@ function renderPeriodTable(){
     '<div style="font-size:12px;color:var(--muted);margin-top:10px">Drawdown is the worst peak-to-trough fall within each window, measured on weekly closes.</div>' +
     '</div>' +
   '</div>';
+}
+
+/* The performance block draws PF_WEEKLY and PF_BENCH — a backtest of
+   the Indian book and the Nifty, both baked into this file. Neither
+   means anything on the American page, so it is replaced there. */
+function perfBlockForMarket(){
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
+    return '<div class="young">' +
+      '<div class="young-t">This book is new.</div>' +
+      '<div class="young-p">The curve on the Indian side runs from 2013 and is ' +
+      'a backtest. The US book has no such history yet: it starts from the day ' +
+      'it was built, and the day-to-day figures below are the real record so ' +
+      'far.</div>' +
+    '</div>';
+  }
+  return renderPerfBlock();
 }
 
 function renderPerfBlock(){
