@@ -7,7 +7,7 @@
  * for when the network is genuinely unavailable.
  */
 
-var CACHE_VERSION = 'alpha-intel-v3';
+var CACHE_VERSION = 'alpha-intel-v4';
 
 var SHELL = [
   './app-manifest.json',
