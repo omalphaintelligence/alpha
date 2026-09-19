@@ -7391,8 +7391,14 @@ async function signOut(){
   rebuildTabs();
 }
 
-async function route(){
+/* The account the page was last built for. Supabase re-announces
+   SIGNED_IN every time the tab regains focus; comparing against this
+   is how that is told apart from someone actually signing in. */
+var ROUTED_UID = '';
+
+async function route(quiet){
   const { data:{ session } } = await db.auth.getSession();
+  ROUTED_UID = (session && session.user) ? session.user.id : '';
 
   if(!session){
     AUTH_STATE = 'out';
@@ -7418,6 +7424,11 @@ async function route(){
     if(AUTH_STATE === 'active' && !planDef(ACCOUNT_PLAN)) ACCOUNT_PLAN = 'full';
   }
 
+  /* A quiet check updates who has access and stops there. Tearing
+     the page down on every check is what made each return to the
+     tab reload everything. */
+  if(quiet) return;
+
   paintLandingState();
   /* Same page either way — only what sits inside the tabs changes. */
   rebuildTabs();
@@ -7432,8 +7443,63 @@ var lastAccessCheck = Date.now();
 async function recheckAccess(){
   var was = AUTH_STATE + '/' + ACCOUNT_PLAN;
   lastAccessCheck = Date.now();
-  await route();
-  if(AUTH_STATE + '/' + ACCOUNT_PLAN !== was) rebuildTabs();
+  await route(true);
+  if(AUTH_STATE + '/' + ACCOUNT_PLAN !== was){
+    paintLandingState();
+    rebuildTabs();
+  } else {
+    silentRefresh();
+  }
+}
+
+/* --- Background refresh ---
+   What is on screen stays on screen. New data is fetched behind it,
+   and the open tab is repainted in place only if something was
+   actually pushed since — no spinner, no blank page. */
+var SILENT_BUSY = false;
+var SILENT_EVERY_MS = 10 * 60 * 1000;
+
+function silentRefresh(){
+  if(SILENT_BUSY || !SCR_DATA || AUTH_STATE === 'out') return;
+  var age = Date.now() - new Date(SCR_DATA.updated).getTime();
+  if(age < SILENT_EVERY_MS) return;
+
+  SILENT_BUSY = true;
+  var old = SCR_DATA, mkt = FEED_MARKET;
+  var oldSync = JSON.stringify(old.sync || []);
+
+  /* ensureFeed only fetches when SCR_DATA is empty. Empty it just
+     long enough to start the fetch, then put the old data back so
+     anything that paints meanwhile still has it. */
+  SCR_DATA = null; feedPending = null;
+  var pending = ensureFeed();
+  SCR_DATA = old; D = old;
+
+  pending.then(function(fresh){
+    SILENT_BUSY = false;
+    if(FEED_MARKET !== mkt){
+      if(SCR_DATA === fresh){ SCR_DATA = null; }
+      return;
+    }
+    if(JSON.stringify(fresh.sync || []) === oldSync) return;
+    LT_SEG_CACHE = {};
+    repaintQuietly();
+  }).catch(function(){
+    SILENT_BUSY = false;
+    SCR_DATA = old; D = old;
+  });
+}
+
+/* The open tab, redrawn from data already in hand — the paint half
+   of each tab, never the build half that shows a loading state. */
+function repaintQuietly(){
+  var t = LANDING_TAB;
+  if(t === 'screener') paintScreenerSegment();
+  else if(t === 'model') buildPublicModel(true);
+  else if(t === 'longterm') loadLtBook(LT_BOOK).then(paintLongTerm).catch(function(){});
+  else if(t === 'bigbets') paintBigBets();
+  else if(t === 'ready'){ if(RTM_VIEW === 'longterm') paintLtQueue(); else paintReady(); }
+  else if(t === 'calls') paintCalls();
 }
 
 document.addEventListener('visibilitychange', function(){
@@ -7463,8 +7529,13 @@ async function refreshStatus(){ await route(); }
   finally { document.getElementById('boot').style.display = 'none'; }
 })();
 
-db.auth.onAuthStateChange(async (event) => {
+db.auth.onAuthStateChange(async (event, session) => {
   if(event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+
+  /* Same person, already on the page: this is the tab coming back
+     into focus, not a sign-in. Rebuilding here reloaded everything. */
+  if(event === 'SIGNED_IN' && session && session.user &&
+     session.user.id === ROUTED_UID && AUTH_STATE !== 'out') return;
 
   await route();
 
