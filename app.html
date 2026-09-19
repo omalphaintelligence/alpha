@@ -3776,8 +3776,12 @@ function buildPricing(){
 function openChart(symbol){
   if(!symbol) return;
   var sym = String(symbol).toUpperCase();
+  /* India needs the NSE prefix. US symbols go plain — TradingView
+     resolves AAPL, AMD etc. to the US listing on its own, so there
+     is no need to know NASDAQ vs NYSE. */
+  var pre = (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') ? '' : 'NSE%3A';
   window.open(
-    'https://www.tradingview.com/chart/?symbol=NSE%3A' + encodeURIComponent(sym) + '&interval=D',
+    'https://www.tradingview.com/chart/?symbol=' + pre + encodeURIComponent(sym) + '&interval=D',
     '_blank', 'noopener'
   );
 }
