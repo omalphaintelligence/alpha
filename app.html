@@ -4127,6 +4127,21 @@ function newestThree(rows, key){
   return rank;
 }
 
+/* Days held, counted from the entry date the same way the "Added"
+   badge counts it. The sheet's own figure only moves when the
+   evening job runs, so on a weekend it sits a day or two behind. */
+function heldDays(p){
+  if(p && p.entryDate){
+    var d = new Date(String(p.entryDate).slice(0, 10));
+    if(!isNaN(d.getTime())){
+      var today = new Date(); today.setHours(0,0,0,0);
+      d.setHours(0,0,0,0);
+      return Math.max(0, Math.round((today - d) / 86400000));
+    }
+  }
+  return +(p && p.daysHeld) || 0;
+}
+
 function newBadge(rankIdx, on){
   if(rankIdx == null) return '';
   var hue = NEW_HUES[rankIdx];
@@ -4560,7 +4575,7 @@ function toggleLtNote(i){
 }
 
 function buildLtNotes(){
-  var lt = (SCR_DATA && SCR_DATA.longTerm) || {};
+  var lt = ltCurrent();
   var hist = lt.history || [];
   var jnl = lt.journal || [];
   var notes = [];
@@ -5046,6 +5061,99 @@ function renderLtPerf(closed){
   '</div>';
 }
 
+/* --- Long term: one book per segment ---
+   All is the original book. The other seven come from their own
+   tables, one per segment, and are fetched only when opened. India
+   only — the US side has a single book. */
+var LT_BOOKS = [
+  ['ALL','All'], ['LC','Large'], ['MC','Mid'], ['SC','Small'],
+  ['FO','F&O'], ['ET','ETF'], ['LM','Large + mid'], ['MS','Mid + small']
+];
+var LT_BOOK = 'ALL';
+var LT_SEG_CACHE = {};
+
+function ltIsSegKey(b){
+  return b !== 'ALL' && !(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
+}
+function ltIsSeg(){ return ltIsSegKey(LT_BOOK); }
+
+function ltCurrent(){
+  if(!ltIsSeg()) return (SCR_DATA && SCR_DATA.longTerm) || {};
+  return LT_SEG_CACHE[FEED_MARKET + ':' + LT_BOOK] || {};
+}
+
+function ltFreshKey(){ return ltIsSeg() ? 'lt_' + LT_BOOK : 'longterm'; }
+
+function ltBookBar(){
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') return '';
+  return '<div class="seg-bar">' + LT_BOOKS.map(function(b){
+    return '<button class="seg-btn' + (b[0] === LT_BOOK ? ' on' : '') +
+      '" style="--hue:' + segMeta(b[0])[2] + '" onclick="setLtBook(\'' + b[0] + '\')">' +
+      b[1] + '</button>';
+  }).join('') + '</div>';
+}
+
+function setLtBook(b){
+  LT_BOOK = b;
+  LT_NOTES_OPEN = {};
+  var body = document.getElementById('ltBody');
+  if(body) body.innerHTML = ltBookBar() + '<div class="scr-load">Loading the book\u2026</div>';
+
+  ensureFeed()
+    .then(function(){ return loadLtBook(b); })
+    .then(function(){ if(LT_BOOK === b) paintLongTerm(); })
+    .catch(function(){
+      if(body && LT_BOOK === b) body.innerHTML = ltBookBar() +
+        '<div class="scr-load">Unavailable right now.</div>';
+    });
+}
+
+/* Same shape as SCR_DATA.longTerm, so paintLongTerm reads either. */
+function loadLtBook(b){
+  if(!ltIsSegKey(b)) return Promise.resolve(null);
+  var key = FEED_MARKET + ':' + b;
+  if(LT_SEG_CACHE[key]) return Promise.resolve(LT_SEG_CACHE[key]);
+
+  return Promise.all([
+    db.from('lt_seg_today').select('symbol, entry_date, entry_price, stop_loss, curr_price, pnl_pct, days_held, room_pct')
+      .eq('market', FEED_MARKET).eq('book', b),
+    db.from('lt_seg_journal').select('trade_date, symbol, action, price, pnl_pct, notes')
+      .eq('market', FEED_MARKET).eq('book', b).order('trade_date', { ascending:false }).limit(4000),
+    db.from('lt_seg_queue_today').select('as_of, position, symbol, state, price, stop_loss, room_pct, capacity, held, free_slots')
+      .eq('market', FEED_MARKET).eq('book', b).order('position'),
+    db.from('lt_seg_positions').select('as_of, symbol, entry_price, stop_loss, curr_price, pnl_pct, days_held')
+      .eq('market', FEED_MARKET).eq('book', b).order('as_of', { ascending:false }).limit(9000)
+  ]).then(function(res){
+    res.forEach(function(r){ if(r.error) throw r.error; });
+    var ltp = res[0].data || [], ltj = res[1].data || [],
+        ltw = res[2].data || [], lth = res[3].data || [];
+
+    var out = {
+      capacity:  ltw.length ? ltw[0].capacity   : 30,
+      held:      ltp.length,
+      freeSlots: ltw.length ? ltw[0].free_slots : null,
+      positions: ltp.map(function(p){
+        return { symbol:p.symbol, entryDate:p.entry_date,
+                 entryPrice:p.entry_price, stopLoss:p.stop_loss,
+                 currPrice:p.curr_price, pnlPct:p.pnl_pct,
+                 daysHeld:p.days_held, roomPct:p.room_pct };
+      }),
+      journal: ltj.map(function(j){
+        return { date:j.trade_date, symbol:j.symbol, action:j.action,
+                 price:j.price, pnlPct:j.pnl_pct, notes:j.notes };
+      }),
+      queue: ltw.map(function(r){
+        return { pos:r.position, symbol:r.symbol, state:r.state,
+                 price:r.price, stopLoss:r.stop_loss, roomPct:r.room_pct,
+                 since:r.as_of };
+      }),
+      history: lth
+    };
+    LT_SEG_CACHE[key] = out;
+    return out;
+  });
+}
+
 function buildLongTerm(){
   var body = document.getElementById('ltBody');
   if(!body) return;
@@ -5065,6 +5173,7 @@ function buildLongTerm(){
 
   body.innerHTML = '<div class="scr-load">Loading the book\u2026</div>';
   ensureFeed()
+    .then(function(){ return loadLtBook(LT_BOOK); })
     .then(paintLongTerm)
     .catch(function(){ body.innerHTML = '<div class="scr-load">Unavailable right now.</div>'; });
 }
@@ -5076,7 +5185,7 @@ function sortLt(rows){
       case 'symbol': return String(p.symbol || '');
       case 'pnl':    return +p.pnlPct || 0;
       case 'room':   return +p.roomPct || 0;
-      case 'held':   return +p.daysHeld || 0;
+      case 'held':   return heldDays(p);
       case 'price':  return +p.currPrice || 0;
       case 'stop':   return +p.stopLoss || 0;
       default:       return 0;
@@ -5093,13 +5202,13 @@ function paintLongTerm(){
   var body = document.getElementById('ltBody');
   if(!body) return;
 
-  var lt = (SCR_DATA && SCR_DATA.longTerm) || {};
+  var lt = ltCurrent();
   var pos = lt.positions || [];
   var jnl = lt.journal || [];
 
   if(!pos.length){
     body.innerHTML = canSeeModel()
-      ? '<div class="scr-load">The long term book is empty today.</div>'
+      ? ltBookBar() + '<div class="scr-load">The long term book is empty today.</div>'
       : lockPanel('The long term book', 'Positions held on a trailing stop, with no target.', 'model');
     return;
   }
@@ -5209,7 +5318,7 @@ function paintLongTerm(){
       '<div class="hold-stats">' +
         '<div><span>Entry</span><b>' + pfMoney(p.entryPrice) + '</b></div>' +
         '<div><span>Taken</span><b>' + (p.entryDate ? fmtDate(p.entryDate) : '\u2014') + '</b></div>' +
-        '<div><span>Held</span><b>' + (p.daysHeld || 0) + 'd</b></div>' +
+        '<div><span>Held</span><b>' + heldDays(p) + 'd</b></div>' +
         (m.rank != null ? '<div><span>RS rank</span><b>' + Math.round(m.rank) + '</b></div>' : '') +
       '</div>' +
     '</div>';
@@ -5232,7 +5341,7 @@ function paintLongTerm(){
       '<td class="num r" style="color:var(--red)">' + pfMoney(p.stopLoss) + '</td>' +
       '<td class="num r"' + (room < 5 ? ' style="color:var(--tier-w);font-weight:700"' : '') + '>' +
         room.toFixed(1) + '%</td>' +
-      '<td class="num r dim">' + (p.daysHeld || 0) + 'd</td>' +
+      '<td class="num r dim">' + heldDays(p) + 'd</td>' +
     '</tr>';
   }).join('');
 
@@ -5285,7 +5394,7 @@ function paintLongTerm(){
   '</div>';
 
   if(LT_TAB === 'commentary'){
-    body.innerHTML = subTabs + renderLtNotes();
+    body.innerHTML = subTabs + ltBookBar() + renderLtNotes();
     return;
   }
 
@@ -5293,9 +5402,9 @@ function paintLongTerm(){
      into this file. There is no American one — the US book starts
      from the day it was built — so the performance block is left off
      rather than showing Indian rupees on an American page. */
-  var showRecord = (typeof FEED_MARKET === 'undefined' || FEED_MARKET !== 'US');
+  var showRecord = (typeof FEED_MARKET === 'undefined' || FEED_MARKET !== 'US') && !ltIsSeg();
 
-  body.innerHTML = subTabs + freshLine('longterm') +
+  body.innerHTML = subTabs + ltBookBar() + freshLine(ltFreshKey()) +
     (showRecord ? renderLtPerf(closed) : ltYoungBook()) +
     strip +
     '<div class="mp-sec">' +
@@ -5303,7 +5412,7 @@ function paintLongTerm(){
         freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
       posBody +
     '</div>' +
-    renderRhythm(lt.history, typeof LT_CURVE !== 'undefined' ? LT_CURVE : [], LT_ACCENT) +
+    renderRhythm(lt.history, (showRecord && typeof LT_CURVE !== 'undefined') ? LT_CURVE : [], LT_ACCENT) +
     (jnl.length
       ? '<div class="mp-sec">' +
           '<div class="mp-sec-head"><div class="mp-sec-t">Journal</div></div>' +
@@ -9465,7 +9574,7 @@ function renderRecoveryStrip(){
     : 'not yet back to that high';
   const nowTxt = d.nowDD > -0.5
     ? '<b style="color:var(--green)">at an all-time high</b>'
-    : '<b>' + d.nowDD.toFixed(1) + '%</b> below its high';
+    : '<b>' + Math.abs(d.nowDD).toFixed(1) + '%</b> below its high';
 
   return '<div class="dd-strip">' +
     '<span class="dd-k">' + d.dd.toFixed(1) + '%</span>' +
@@ -9793,7 +9902,7 @@ function sortPositions(pos, meta){
       case 'symbol': return String(p.symbol || '');
       case 'sector': return String(m.sector || '\uffff');   /* blanks last */
       case 'pnl':    return +p.pnlPct || 0;
-      case 'held':   return +p.daysHeld || 0;
+      case 'held':   return heldDays(p);
       case 'rank':   return m.rank != null ? +m.rank : -1;
       case 'ret3m':  return m.ret3m != null ? +m.ret3m : -9999;
       case 'price':  return +p.currPrice || 0;
@@ -10209,7 +10318,7 @@ function renderMpTables(){
             pct(Math.abs(toTarget)) + '</b></div>' : '') +
         (toStop != null
           ? '<div><span>Risk left</span><b>' + pct(-Math.abs(toStop)) + '</b></div>' : '') +
-        '<div><span>Held</span><b>' + (p.daysHeld || 0) + 'd</b></div>' +
+        '<div><span>Held</span><b>' + heldDays(p) + 'd</b></div>' +
       '</div>' +
 
     '</div>';
@@ -10242,7 +10351,7 @@ function renderMpTables(){
         (rank2 != null ? rank2 : '\u2014') + '</span></td>' +
       '<td class="num r" style="color:' + pctHue(m2.ret3m) + '">' + pct(m2.ret3m) + '</td>' +
       '<td>' + sectorChip(m2.sector) + '</td>' +
-      '<td class="num r dim">' + (p.daysHeld || 0) + 'd</td></tr>';
+      '<td class="num r dim">' + heldDays(p) + 'd</td></tr>';
   }).join('');
 
   var posBody = !pos.length
