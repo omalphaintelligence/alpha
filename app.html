@@ -2573,6 +2573,7 @@ body.s-light .new-tag{color:#fff}
 .dash-scope .perf-legend i{display:inline-block;width:9px;height:9px;border-radius:8px;margin-right:6px}
 .dash-scope .perf-canvas-wrap{position:relative}
 .dash-scope #perfCanvas,
+.dash-scope #ltSegCanvas,
 .dash-scope #ltPerfCanvas{width:100%;height:250px;display:block;cursor:crosshair}
 .dash-scope .perf-tip{display:none;position:absolute;background:var(--text);color:var(--bg);
   padding:6px 9px;border-radius:10px;font-size:10.5px;
@@ -2641,6 +2642,7 @@ body.s-light .new-tag{color:#fff}
 
 .dash-scope .perf-tops{grid-template-columns:1fr;gap:10px}
   .dash-scope #perfCanvas,
+  .dash-scope #ltSegCanvas,
   .dash-scope #ltPerfCanvas{height:200px}
 
   /* Written for a desktop dashboard: four stat cards across and a
@@ -3193,6 +3195,7 @@ function setAppTheme(name, persist){
   if(persist !== false){ try{ localStorage.setItem('ai_th', name); }catch(e){} }
   if(typeof redrawHeroChart === 'function') redrawHeroChart();
   if(typeof drawPerf === 'function' && document.getElementById('perfCanvas')) drawPerf();
+  if(typeof drawLtSegPerf === 'function' && document.getElementById('ltSegCanvas')) drawLtSegPerf();
 }
 
 function currentTheme(){
@@ -4553,6 +4556,12 @@ var LT_SEG_YEARS_OPEN = false;
 
 function ltSegHasCurve(k){ return !!LT_SEG_CURVE[k]; }
 
+/* The canvas is sized from its own box, so a window resize has to
+   redraw it or the line keeps the old width. */
+window.addEventListener('resize', function(){
+  if(document.getElementById('ltSegCanvas')) drawLtSegPerf();
+});
+
 function ltSegDateAt(i){
   var d = new Date(LT_SEG_START);
   d.setDate(d.getDate() + i * 7);
@@ -4725,9 +4734,7 @@ function renderLtSegPerf(key){
 
     '<div class="perf-foot">A 21-year run of this book on the ' + name.toLowerCase() +
       ' pool, reconstructed from entry and exit prices. The line moves when a trade closes, ' +
-      'so it does not show what open positions were doing in between \u2014 the real falls, ' +
-      '2008 above all, were deeper than the figure above. Segments use today\u2019s cap ' +
-      'classification applied backwards, on names that still trade. ' +
+      'so it does not show what open positions were doing in between. ' +
       'Past performance does not guarantee future returns.</div>' +
   '</div>';
 }
