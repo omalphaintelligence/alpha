@@ -121,6 +121,21 @@ body.s-light{
   --brand:#2563EB; --aura-1:rgba(37,99,235,.13); --aura-2:rgba(37,99,235,.08);
 }
 
+/* ---- Segment hues ----
+   Eight books, eight colours, and the same colour has to carry the
+   tab, the curve and the table header, so it is a variable rather
+   than a literal. The two sets are not one palette lightened: a mint
+   that reads clearly on near-black disappears on white, so the light
+   set is a darker, more saturated family chosen against white panels. */
+body.s-dark,body.s-navy,body.s-green,body.s-saffron{
+  --seg-all:#F2B441; --seg-lc:#4ED8A0; --seg-mc:#3EC9D6; --seg-sc:#A97CF0;
+  --seg-fo:#FF8A5B;  --seg-et:#6E8BFF; --seg-lm:#E36FA8; --seg-ms:#8FD14F;
+}
+body.s-light{
+  --seg-all:#9E6200; --seg-lc:#0F7A53; --seg-mc:#0B6A93; --seg-sc:#6B3FC4;
+  --seg-fo:#C2410C;  --seg-et:#1E40AF; --seg-lm:#A61E69; --seg-ms:#4D7C0F;
+}
+
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 
@@ -3173,7 +3188,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const THEMES = ['navy','light'];
 
 function setAppTheme(name, persist){
-  if(THEMES.indexOf(name) === -1) name = 'navy';
+  if(THEMES.indexOf(name) === -1) name = 'light';
   document.body.className = 's-' + name;
 
   document.querySelectorAll('.dash-scope').forEach(function(el){
@@ -3195,11 +3210,15 @@ function setAppTheme(name, persist){
   if(persist !== false){ try{ localStorage.setItem('ai_th', name); }catch(e){} }
   if(typeof redrawHeroChart === 'function') redrawHeroChart();
   if(typeof drawPerf === 'function' && document.getElementById('perfCanvas')) drawPerf();
-  if(typeof drawLtSegPerf === 'function' && document.getElementById('ltSegCanvas')) drawLtSegPerf();
+  if(typeof refreshSegHues === 'function') refreshSegHues();
+  /* The segment block writes its colours into the cards and the
+     legend as inline styles, so it is repainted whole rather than
+     just redrawn. */
+  if(typeof paintLongTerm === 'function' && document.getElementById('ltSegCanvas')) paintLongTerm();
 }
 
 function currentTheme(){
-  try{ return localStorage.getItem('ai_th') || 'navy'; }catch(e){ return 'navy'; }
+  try{ return localStorage.getItem('ai_th') || 'light'; }catch(e){ return 'light'; }
 }
 
 function toggleTheme(){
@@ -4698,7 +4717,7 @@ function renderLtSegPerf(key){
   var st = ltSegStats(key);
   if(!st) return ltYoungBook();
 
-  var hue   = segMeta(key)[2];
+  var hue   = segHue(key);
   var name  = segMeta(key)[1];
   var pct   = function(x){ return (x >= 0 ? '+' : '') + x.toFixed(1) + '%'; };
   var col   = st.totalPct >= 0 ? hue : 'var(--red)';
@@ -4837,7 +4856,7 @@ function drawLtSegPerf(){
 
   var themeEl = (typeof dashRoot === 'function' && dashRoot()) || document.body;
   var cs    = getComputedStyle(themeEl);
-  var hue   = segMeta(LT_BOOK)[2];
+  var hue   = segHue(LT_BOOK);
   var muted = cs.getPropertyValue('--muted').trim() || '#7E8AA0';
   var bcol  = cs.getPropertyValue('--line').trim()  || '#1C2534';
   var bLabel = (typeof PF_BENCH_LABEL !== 'undefined') ? PF_BENCH_LABEL : 'Nifty 50';
@@ -5530,7 +5549,7 @@ function ltBookBar(){
   if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') return '';
   return '<div class="seg-bar">' + LT_BOOKS.map(function(b){
     return '<button class="seg-btn' + (b[0] === LT_BOOK ? ' on' : '') +
-      '" style="--hue:' + segMeta(b[0])[2] + '" onclick="setLtBook(\'' + b[0] + '\')">' +
+      '" style="--hue:' + segHue(b[0]) + '" onclick="setLtBook(\'' + b[0] + '\')">' +
       b[1] + '</button>';
   }).join('') + '</div>';
 }
@@ -6918,6 +6937,40 @@ function segMeta(key){
   return SEG_LIST.filter(function(x){ return x[0] === key; })[0] || SEG_LIST[0];
 }
 
+/* The colour a segment is wearing right now. It lives in CSS so the
+   two themes can carry different values, and it is read back here
+   because the canvas needs a real colour, not a var() reference. */
+var SEG_HUE_VAR = {
+  ALL:'--seg-all', LC:'--seg-lc', MC:'--seg-mc', SC:'--seg-sc',
+  FO:'--seg-fo',   ET:'--seg-et', LM:'--seg-lm', MS:'--seg-ms'
+};
+
+function segHue(key){
+  var v = getComputedStyle(document.body).getPropertyValue(SEG_HUE_VAR[key] || '--seg-all').trim();
+  return v || segMeta(key)[2];
+}
+
+/* Hues are written onto elements as inline --hue when they are
+   built, so a theme switch has to walk back over them. Cheaper and
+   less disruptive than re-rendering the whole tab, which would drop
+   scroll position and any open filter. */
+function refreshSegHues(){
+  var bar = document.querySelectorAll('#segBar .seg-btn');
+  if(typeof SEG_LIST !== 'undefined'){
+    SEG_LIST.forEach(function(x, i){
+      if(bar[i]) bar[i].style.setProperty('--hue', segHue(x[0]));
+    });
+  }
+  var lt = document.querySelectorAll('#ltBody .seg-bar .seg-btn');
+  if(typeof LT_BOOKS !== 'undefined'){
+    LT_BOOKS.forEach(function(b, i){
+      if(lt[i]) lt[i].style.setProperty('--hue', segHue(b[0]));
+    });
+  }
+  var top = document.querySelector('.scr-top');
+  if(top && typeof SCR_SEG !== 'undefined') top.style.setProperty('--hue', segHue(SCR_SEG));
+}
+
 function buildScreenerTab(){
   var body = document.getElementById('scrBody');
   var bar  = document.getElementById('segBar');
@@ -6933,7 +6986,7 @@ function buildScreenerTab(){
   bar.innerHTML = SEG_LIST.map(function(x){
     var open = canSeeSegment(x[0]);
     return '<button class="seg-btn' + (x[0] === SCR_SEG ? ' on' : '') + (open ? '' : ' seg-locked') +
-           '" style="--hue:' + x[2] + '" onclick="setScrSeg(\'' + x[0] + '\')">' +
+           '" style="--hue:' + segHue(x[0]) + '" onclick="setScrSeg(\'' + x[0] + '\')">' +
            x[1] + (open ? '' : ' <span class="seg-lk">\u{1F512}</span>') + '</button>';
   }).join('');
 
@@ -7068,7 +7121,7 @@ function paintScreenerSegment(){
   var wa = rows.filter(function(x){ return x.signal === 'WATCH'; }).length;
 
   var head = freshLine('screener') +
-    '<div class="scr-top" style="--hue:' + meta[2] + '">' +
+    '<div class="scr-top" style="--hue:' + segHue(SCR_SEG) + '">' +
       '<div><div class="scr-title">' + meta[1] + '</div>' +
         '<div class="scr-sub">' + rows.length.toLocaleString() + ' ranked' +
         (stamp ? ' \u00b7 ' + stamp : '') + '</div></div>' +
