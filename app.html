@@ -1400,25 +1400,32 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 /* top holdings on the free page */
 .th-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .th-card{
-  position:relative;padding:22px 24px;border-radius:16px;
-  border:1px solid var(--line-soft);
+  position:relative;overflow:hidden;padding:22px 24px;border-radius:16px;
+  border:1px solid color-mix(in srgb,var(--sec) 28%,var(--line-soft));
   background:color-mix(in srgb,var(--panel) 78%,transparent);
   transition:transform .25s var(--ease),border-color .25s var(--ease);
 }
 .th-card::before{
-  content:'';position:absolute;left:24px;right:24px;top:0;height:2px;
-  border-radius:0 0 2px 2px;background:var(--sec);
+  content:'';position:absolute;left:0;right:0;top:0;height:4px;
+  background:var(--sec);z-index:2;
 }
+.th-card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--sec) 14%,transparent),transparent 65%);
+}
+.th-card > *{position:relative;z-index:1}
 .th-card:hover{
   transform:translateY(-3px);
-  border-color:color-mix(in srgb,var(--sec) 45%,transparent);
+  border-color:color-mix(in srgb,var(--sec) 55%,transparent);
 }
 .th-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 .th-sym{
   font-family:var(--name);font-size:20px;font-weight:600;letter-spacing:.01em;
-  background:none;border:none;padding:0;cursor:pointer;color:var(--text);
+  background:none;border:none;padding:0;cursor:pointer;color:var(--sec);
 }
-.th-sym:hover{color:var(--brand)}
+.th-sym.as-link{color:var(--sec)}
+.th-sym:hover{filter:brightness(1.15)}
+.th-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--sec);margin-right:9px;vertical-align:middle}
 .th-pnl{
   font-family:var(--fig);font-size:34px;font-weight:600;
   letter-spacing:-.02em;line-height:1;
@@ -2791,7 +2798,7 @@ body.s-light .new-tag{color:#fff}
       <div class="sec-head">
         <div class="sec-tag">In the book right now</div>
         <h2>Positions the engine is <em>holding today</em>.</h2>
-        <p>Live from the Model Portfolio. Entry, stop and target are what a subscription opens.</p>
+        <p>Live from the Long Term book. Entry and stop are what a subscription opens.</p>
       </div>
       <div id="topHoldingsBody"></div>
     </div>
@@ -4185,29 +4192,64 @@ function buildTopHoldings(){
 
   sec.style.display = 'none';
 
-  ensureFeed().then(function(data){
-    var rows = ((data && data.teaserHoldings) || [])
-      .filter(function(r){ return r && r.book === 'model' && r.symbol; });
+  /* One colour per card, so six names read as six names. */
+  var TH_HUES = ['#2F6BFF','#12A37A','#E07A1F','#8B5CF6','#E0457B','#0EA5B7'];
+
+  /* Long Term (All) book. Visitors cannot read lt_today, so a public
+     function hands back symbol, P&L and entry date only. A subscriber
+     already has the full book in the feed, used as the fallback. */
+  var viaRpc = db.rpc('lt_teaser_today', { p_market: FEED_MARKET })
+    .then(function(r){ return (r && r.data) || []; })
+    .catch(function(){ return []; });
+
+  Promise.all([viaRpc, ensureFeed().catch(function(){ return null; })]).then(function(res){
+    var data = res[1];
+    var rows = res[0].map(function(r){
+      return { symbol:r.symbol, pnl:+r.pnl_pct || 0,
+               entryDate:r.entry_date, daysHeld:r.days_held };
+    });
+
+    if(!rows.length && data && data.longTerm && data.longTerm.positions){
+      rows = data.longTerm.positions.map(function(p){
+        return { symbol:p.symbol, pnl:+p.pnlPct || 0,
+                 entryDate:p.entryDate, daysHeld:p.daysHeld };
+      });
+    }
+
+    rows = rows.filter(function(r){ return r && r.symbol; })
+      .sort(function(a, b){ return b.pnl - a.pnl; })
+      .slice(0, 6);
     if(!rows.length) return;
 
+    /* Sector, where the screener already knows it. */
+    var secOf = {};
+    if(data && data.tabs){
+      Object.keys(data.tabs).forEach(function(k){
+        (data.tabs[k] || []).forEach(function(t){
+          if(t && t.symbol && t.sector && !secOf[t.symbol]) secOf[t.symbol] = t.sector;
+        });
+      });
+    }
+
     sec.style.display = '';
-    box.innerHTML = '<div class="th-grid">' + rows.map(function(r){
-      var pnl = +r.pnl_pct || 0;
+    box.innerHTML = '<div class="th-grid">' + rows.map(function(r, i){
+      var pnl = r.pnl;
       var hue = pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)';
-      var shue = sectorHue(r.sector);
+      var shue = TH_HUES[i % TH_HUES.length];
+      var sector = secOf[r.symbol];
       return '<div class="th-card" style="--sec:' + shue + '">' +
         '<div class="th-top">' +
           '<button class="th-sym as-link" onclick="openChart(\'' + r.symbol + '\')">' +
-            r.symbol + '</button>' +
-          (r.sector && r.sector !== 'Other' ? sectorChip(r.sector) : '') +
+            '<span class="th-dot"></span>' + r.symbol + '</button>' +
+          (sector && sector !== 'Other' ? sectorChip(sector) : '') +
         '</div>' +
         '<div class="th-pnl" style="color:' + hue + '">' +
           (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</div>' +
-        '<div class="th-held">held ' + (r.days_held || 0) + ' days</div>' +
+        '<div class="th-held">held ' + heldDays(r) + ' days</div>' +
       '</div>';
     }).join('') + '</div>' +
-    '<p class="th-note">Six of the open positions, best first. The rest of the book, ' +
-    'and the levels behind every one of them, sit behind the plan.</p>';
+    '<p class="th-note">Six of the open positions in the Long Term book, best first. ' +
+    'The rest of the book, and the levels behind every one of them, sit behind the plan.</p>';
 
     revealScan(sec);
   }).catch(function(){});
