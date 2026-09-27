@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&amp;family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Syne:wght@500;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&amp;family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 
 <!-- ============================================================
      PART 1 — SHELL STYLES (landing page, auth modal, gate views)
@@ -2243,14 +2243,14 @@ body.s-light .new-tag{color:#fff}
   }
 }
 /* ---------- Pure Portfolio ----------
-   Deliberately its own world: pine green and brass, Syne for
-   figures and headings, IBM Plex Sans for everything else. Same
+   Deliberately its own world: pine green and brass, Manrope
+   throughout. Same
    look in light and dark themes. */
 .pure-scope{
   --pu-pine:#0F3D2E; --pu-deep:#0A2C21; --pu-line:#1F5A45;
   --pu-brass:#F2B632; --pu-mint:#5CF0A5; --pu-coral:#FF6B5A;
   --pu-paper:#EAF7EF; --pu-mute:#9CC4B1;
-  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  font-family:'Manrope',system-ui,sans-serif;
   background:var(--pu-pine); color:var(--pu-paper);
   border-radius:20px; padding:18px 18px 14px; margin-top:12px;
   font-variant-numeric:tabular-nums;
@@ -2260,8 +2260,8 @@ body.s-light .new-tag{color:#fff}
 .pu-dn{color:var(--pu-coral)!important}
 .pu-dim{color:var(--pu-mute)}
 
-.pu-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-.pu-brand{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em;color:var(--pu-brass)}
+.pu-top{display:flex;align-items:center;justify-content:space-between;gap:14px 12px;flex-wrap:wrap;margin-bottom:22px}
+.pu-brand{font-family:'Manrope',sans-serif;font-weight:800;font-size:21px;letter-spacing:-.02em;color:var(--pu-brass)}
 .pu-brand span{color:var(--pu-paper);font-weight:500;margin-left:6px}
 .pu-tabs{display:inline-flex;background:var(--pu-deep);border-radius:10px;padding:3px}
 .pu-tabs button{border:0;background:transparent;color:var(--pu-mute);font-size:13.5px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer}
@@ -2270,26 +2270,31 @@ body.s-light .new-tag{color:#fff}
 
 .pu-acct{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .pu-val small,.pu-facts small,.pu-stats small{display:block;font-size:11.5px;color:var(--pu-mute);margin-bottom:3px}
-.pu-val b{font-family:'Syne',sans-serif;font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.pu-val b{font-family:'Manrope',sans-serif;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 .pu-facts{display:flex;gap:18px;flex-wrap:wrap}
 .pu-facts span{font-size:14.5px;font-weight:600}
 .pu-facts i{font-style:normal;opacity:.8;font-weight:500}
-.pu-split{height:8px;border-radius:4px;background:var(--pu-mint);overflow:hidden;margin:14px 0 7px}
+.pu-split{height:8px;border-radius:4px;background:var(--pu-mint);overflow:hidden;margin:18px 0 8px}
 .pu-split i{display:block;height:100%;background:var(--pu-brass)}
-.pu-splitkey{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--pu-mute)}
+.pu-splitkey{display:flex;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;font-size:12.5px;color:var(--pu-mute)}
 .pu-splitkey em{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .k-in{background:var(--pu-brass)} .k-cash{background:var(--pu-mint)}
 
-.pu-stats{display:grid;grid-template-columns:repeat(5,1fr);margin:16px 0 0;border-top:1px solid var(--pu-line);border-bottom:1px solid var(--pu-line)}
-.pu-stats>div{padding:12px 10px 12px 0}
-.pu-stats>div+div{padding-left:12px;border-left:1px solid var(--pu-line)}
-.pu-stats b{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--pu-paper)}
-.pu-stats p{margin:3px 0 0;font-size:11px;color:var(--pu-mute);line-height:1.35}
+.pu-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:20px 0 0}
+.pu-stats>div{padding:12px 12px 11px;border-radius:12px}
+.pu-stats small{color:inherit!important;opacity:.8}
+.pu-stats b{display:block;font-family:'Manrope',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.01em;color:inherit}
+.pu-stats p{margin:3px 0 0;font-size:11px;line-height:1.35;opacity:.85}
+.pu-stats .t-real{background:#2F80FF;color:#fff}
+.pu-stats .t-unreal{background:#8B5CF6;color:#fff}
+.pu-stats .t-risk{background:#FF6B5A;color:#fff}
+.pu-stats .t-lock{background:#5CF0A5;color:#0A2C21}
+.pu-stats .t-chg{background:#EAF7EF;color:#0A2C21}
 .pu-rule{font-size:12.5px;color:var(--pu-mute);line-height:1.6;margin:10px 0 0;max-width:72ch}
 
 .pu-sec{margin-top:22px}
-.pu-sec h4{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin:0 0 8px;color:var(--pu-paper)}
-.pu-sec h4 span{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;color:var(--pu-deep);background:var(--pu-brass);border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:2px}
+.pu-sec h4{font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;margin:0 0 8px;color:var(--pu-paper)}
+.pu-sec h4 span{font-family:'Manrope',sans-serif;font-size:12px;font-weight:600;color:var(--pu-deep);background:var(--pu-brass);border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:2px}
 .pu-curve{width:100%;height:140px;display:block}
 .pu-line{fill:none;stroke:var(--pu-brass);stroke-width:2.5}
 .pu-capline{stroke:var(--pu-mute);stroke-opacity:.6;stroke-dasharray:5 5}
@@ -2316,7 +2321,7 @@ body.s-light .new-tag{color:#fff}
 .pu-filt button.on{background:var(--pu-brass);border-color:var(--pu-brass);color:var(--pu-deep)}
 .pu-filt button.on span{color:var(--pu-deep)}
 .pu-feed{margin-top:4px}
-.pu-daycap{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--pu-brass);margin:18px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--pu-line)}
+.pu-daycap{font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;color:var(--pu-brass);margin:18px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--pu-line)}
 .pu-note{display:grid;grid-template-columns:84px 1fr;gap:12px;padding:11px 0;border-bottom:1px dashed var(--pu-line)}
 .pu-kind{font-size:11.5px;font-weight:700;align-self:start;text-align:center;padding:3px 0;border-radius:5px}
 .k-buy .pu-kind{background:#2F80FF;color:#fff}
@@ -2332,18 +2337,15 @@ body.s-light .new-tag{color:#fff}
   display:flex;align-items:center;justify-content:space-between;width:100%;
   margin-top:10px;padding:11px 16px;border-radius:12px;cursor:pointer;
   border:2px solid #F2B632;background:transparent;color:#F2B632;
-  font-family:'Syne',sans-serif;font-weight:700;font-size:15px;
+  font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;
 }
-.pure-entry small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:12px;opacity:.75}
+.pure-entry small{font-family:'Manrope',sans-serif;font-weight:500;font-size:12px;opacity:.75}
 .pure-entry.on{background:#0F3D2E;color:#F2B632;border-color:#0F3D2E}
 .s-light .pure-entry:not(.on){border-color:#0F3D2E;color:#0F3D2E}
 
 @media(max-width:720px){
   .pu-stats{grid-template-columns:repeat(2,1fr)}
-  .pu-stats>div{padding:10px 8px 10px 0;border-bottom:1px solid var(--pu-line)}
-  .pu-stats>div+div{border-left:0;padding-left:0}
-  .pu-stats>div:nth-child(even){padding-left:12px;border-left:1px solid var(--pu-line)}
-  .pu-stats>div:last-child{border-bottom:0}
+  .pu-stats .t-chg{grid-column:1 / -1}
 }
 @media(max-width:480px){
   .pure-scope{padding:14px 12px 12px;border-radius:16px}
@@ -5274,7 +5276,7 @@ function loadLtBook(b){
    A broker-style account inside Long Term: Mid + small names,
    sized by risk to the stop, with holdings, tradebook, funds
    ledger and charges. Its own tables (pure_*), and its own look:
-   pine and brass, Syne and IBM Plex Sans, nothing shared with
+   pine and brass, Manrope throughout, nothing shared with
    the rest of the site on purpose.
    ============================================================ */
 var PURE_HUE = '#F2B632';
@@ -5371,16 +5373,17 @@ function paintPure(body){
       '<span><em class="k-cash"></em>Spare cash ' + pureInr(cash) + ' (' + cashPct.toFixed(0) + '%), not at risk</span>' +
     '</div>';
 
-  var stat = function(l, v, s, cls){
-    return '<div><small>' + l + '</small><b class="' + (cls || '') + '">' + v + '</b><p>' + s + '</p></div>';
+  /* Each figure has its own tile colour, so they read apart at a glance. */
+  var stat = function(tile, l, v, s){
+    return '<div class="' + tile + '"><small>' + l + '</small><b>' + v + '</b><p>' + s + '</p></div>';
   };
   var stats =
     '<div class="pu-stats">' +
-      stat('Realised', pureSigned(last.realised), 'closed trades', pureCls(last.realised)) +
-      stat('Unrealised', pureSigned(last.unrealised), (last.positions || 0) + ' open positions', pureCls(last.unrealised)) +
-      stat('Open risk', pureInr(last.open_risk), (+last.open_risk_pct || 0).toFixed(2) + '% of account if every stop hits', 'pu-dn') +
-      stat('Locked in', pureInr(last.locked), 'stops above cost', 'pu-up') +
-      stat('Charges', pureInr(last.charges), 'taxes and fees paid') +
+      stat('t-real', 'Realised', pureSigned(last.realised), 'closed trades') +
+      stat('t-unreal', 'Unrealised', pureSigned(last.unrealised), (last.positions || 0) + ' open positions') +
+      stat('t-risk', 'Open risk', pureInr(last.open_risk), (+last.open_risk_pct || 0).toFixed(2) + '% of account if every stop hits') +
+      stat('t-lock', 'Locked in', pureInr(last.locked), 'stops above cost') +
+      stat('t-chg', 'Charges', pureInr(last.charges), 'taxes and fees paid') +
     '</div>' +
     '<p class="pu-rule">Every new position risks ' + (+last.risk_pct || 0) + '% of the account down to its stop. ' +
     'No stock takes more than ' + (+last.max_pos_pct || 0) + '% of the account, and a name whose stop sits more than ' +
