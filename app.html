@@ -420,7 +420,7 @@ body.s-light /* ---- The record ----
    force on someone who asked for none. */
 @media(prefers-reduced-motion:reduce){
   .rec-video{display:none}
-
+  .rec-scene{background:#0B0A12 url(ridge-poster.jpg) center/cover}
 }
 
 /* locked sample table */
@@ -1400,32 +1400,25 @@ body.s-dark .zone-btn.on,body.s-saffron .zone-btn.on{color:#0A0D14}
 /* top holdings on the free page */
 .th-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .th-card{
-  position:relative;overflow:hidden;padding:22px 24px;border-radius:16px;
-  border:1px solid color-mix(in srgb,var(--sec) 28%,var(--line-soft));
+  position:relative;padding:22px 24px;border-radius:16px;
+  border:1px solid var(--line-soft);
   background:color-mix(in srgb,var(--panel) 78%,transparent);
   transition:transform .25s var(--ease),border-color .25s var(--ease);
 }
 .th-card::before{
-  content:'';position:absolute;left:0;right:0;top:0;height:4px;
-  background:var(--sec);z-index:2;
+  content:'';position:absolute;left:24px;right:24px;top:0;height:2px;
+  border-radius:0 0 2px 2px;background:var(--sec);
 }
-.th-card::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--sec) 14%,transparent),transparent 65%);
-}
-.th-card > *{position:relative;z-index:1}
 .th-card:hover{
   transform:translateY(-3px);
-  border-color:color-mix(in srgb,var(--sec) 55%,transparent);
+  border-color:color-mix(in srgb,var(--sec) 45%,transparent);
 }
 .th-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 .th-sym{
   font-family:var(--name);font-size:20px;font-weight:600;letter-spacing:.01em;
-  background:none;border:none;padding:0;cursor:pointer;color:var(--sec);
+  background:none;border:none;padding:0;cursor:pointer;color:var(--text);
 }
-.th-sym.as-link{color:var(--sec)}
-.th-sym:hover{filter:brightness(1.15)}
-.th-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--sec);margin-right:9px;vertical-align:middle}
+.th-sym:hover{color:var(--brand)}
 .th-pnl{
   font-family:var(--fig);font-size:34px;font-weight:600;
   letter-spacing:-.02em;line-height:1;
@@ -2249,6 +2242,46 @@ body.s-light .new-tag{color:#fff}
     padding-bottom:env(safe-area-inset-bottom);
   }
 }
+/* ---------- Pure Portfolio ---------- */
+.pure-hero{
+  display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end;
+  padding:24px 26px;margin:6px 0 14px;border-radius:18px;
+  border:1px solid var(--line-soft);background:var(--panel);
+  box-shadow:inset 5px 0 0 #FF9F1C;
+}
+.ph-l{font-size:11.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ph-v{
+  font-family:var(--disp);font-size:46px;font-weight:600;letter-spacing:-.02em;
+  line-height:1.05;margin:8px 0 8px;font-variant-numeric:tabular-nums lining;
+}
+.ph-s{font-size:13px;color:var(--muted)}
+.ph-cap{text-align:right}
+.ph-cv{font-family:var(--disp);font-size:25px;font-weight:600;margin:8px 0 6px;font-variant-numeric:tabular-nums lining}
+.pure-split{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--line-soft);margin:4px 0 9px}
+.pure-split i{display:block;height:100%}
+.pure-legend{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:18px}
+.pure-legend b{color:var(--text)}
+.pure-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.pure-chip{display:inline-block;padding:2px 9px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.06em}
+.pure-buy{background:#1E88E5;color:#fff}
+.pure-sell{background:#FF6D00;color:#fff}
+.pure-total td{font-weight:700;border-top:2px solid var(--line-soft)}
+.pure-curve{width:100%;height:160px;display:block;color:var(--muted)}
+.pure-feed{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.pure-note{
+  display:grid;grid-template-columns:64px 1fr;gap:14px;padding:15px 18px;
+  border:1px solid var(--line-soft);border-left:5px solid var(--n);border-radius:12px;background:var(--panel);
+}
+.pn-date{font-family:var(--disp);font-size:15px;font-weight:600;color:var(--muted);padding-top:1px}
+.pn-kind{font-size:10.5px;font-weight:700;letter-spacing:.14em;color:var(--n);margin-bottom:4px}
+.pn-title{font-weight:600;font-size:15px;margin-bottom:5px}
+.pn-body{font-size:13.5px;color:var(--muted);line-height:1.6}
+@media(max-width:560px){
+  .pure-hero{grid-template-columns:1fr;padding:20px}
+  .ph-cap{text-align:left}
+  .ph-v{font-size:34px}
+  .pure-note{grid-template-columns:1fr;gap:4px}
+}
 </style>
 
 <!-- ============================================================
@@ -2702,6 +2735,10 @@ body.s-light .new-tag{color:#fff}
   </header>
 
   <div class="rec-scene" id="record">
+  <video id="recVideo" class="rec-video" autoplay="" muted="" loop="" playsinline="" preload="metadata" poster="ridge-poster.jpg" aria-hidden="true">
+    <source src="ridge-small.mp4" type="video/mp4" media="(max-width:820px)">
+    <source src="ridge.mp4" type="video/mp4">
+  </video>
   <div class="rec-shade"></div>
   <canvas id="recCanvas" aria-hidden="true"></canvas>
   <div class="wrap-x rec-sky">
@@ -2794,7 +2831,7 @@ body.s-light .new-tag{color:#fff}
       <div class="sec-head">
         <div class="sec-tag">In the book right now</div>
         <h2>Positions the engine is <em>holding today</em>.</h2>
-        <p>Live from the Long Term book. Entry and stop are what a subscription opens.</p>
+        <p>Live from the Model Portfolio. Entry, stop and target are what a subscription opens.</p>
       </div>
       <div id="topHoldingsBody"></div>
     </div>
@@ -4188,64 +4225,29 @@ function buildTopHoldings(){
 
   sec.style.display = 'none';
 
-  /* One colour per card, so six names read as six names. */
-  var TH_HUES = ['#2F6BFF','#12A37A','#E07A1F','#8B5CF6','#E0457B','#0EA5B7'];
-
-  /* Long Term (All) book. Visitors cannot read lt_today, so a public
-     function hands back symbol, P&L and entry date only. A subscriber
-     already has the full book in the feed, used as the fallback. */
-  var viaRpc = db.rpc('lt_teaser_today', { p_market: FEED_MARKET })
-    .then(function(r){ return (r && r.data) || []; })
-    .catch(function(){ return []; });
-
-  Promise.all([viaRpc, ensureFeed().catch(function(){ return null; })]).then(function(res){
-    var data = res[1];
-    var rows = res[0].map(function(r){
-      return { symbol:r.symbol, pnl:+r.pnl_pct || 0,
-               entryDate:r.entry_date, daysHeld:r.days_held };
-    });
-
-    if(!rows.length && data && data.longTerm && data.longTerm.positions){
-      rows = data.longTerm.positions.map(function(p){
-        return { symbol:p.symbol, pnl:+p.pnlPct || 0,
-                 entryDate:p.entryDate, daysHeld:p.daysHeld };
-      });
-    }
-
-    rows = rows.filter(function(r){ return r && r.symbol; })
-      .sort(function(a, b){ return b.pnl - a.pnl; })
-      .slice(0, 6);
+  ensureFeed().then(function(data){
+    var rows = ((data && data.teaserHoldings) || [])
+      .filter(function(r){ return r && r.book === 'model' && r.symbol; });
     if(!rows.length) return;
 
-    /* Sector, where the screener already knows it. */
-    var secOf = {};
-    if(data && data.tabs){
-      Object.keys(data.tabs).forEach(function(k){
-        (data.tabs[k] || []).forEach(function(t){
-          if(t && t.symbol && t.sector && !secOf[t.symbol]) secOf[t.symbol] = t.sector;
-        });
-      });
-    }
-
     sec.style.display = '';
-    box.innerHTML = '<div class="th-grid">' + rows.map(function(r, i){
-      var pnl = r.pnl;
+    box.innerHTML = '<div class="th-grid">' + rows.map(function(r){
+      var pnl = +r.pnl_pct || 0;
       var hue = pnl >= 0 ? 'var(--tier-sb)' : 'var(--red)';
-      var shue = TH_HUES[i % TH_HUES.length];
-      var sector = secOf[r.symbol];
+      var shue = sectorHue(r.sector);
       return '<div class="th-card" style="--sec:' + shue + '">' +
         '<div class="th-top">' +
           '<button class="th-sym as-link" onclick="openChart(\'' + r.symbol + '\')">' +
-            '<span class="th-dot"></span>' + r.symbol + '</button>' +
-          (sector && sector !== 'Other' ? sectorChip(sector) : '') +
+            r.symbol + '</button>' +
+          (r.sector && r.sector !== 'Other' ? sectorChip(r.sector) : '') +
         '</div>' +
         '<div class="th-pnl" style="color:' + hue + '">' +
           (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '%</div>' +
-        '<div class="th-held">held ' + heldDays(r) + ' days</div>' +
+        '<div class="th-held">held ' + (r.days_held || 0) + ' days</div>' +
       '</div>';
     }).join('') + '</div>' +
-    '<p class="th-note">Six of the open positions in the Long Term book, best first. ' +
-    'The rest of the book, and the levels behind every one of them, sit behind the plan.</p>';
+    '<p class="th-note">Six of the open positions, best first. The rest of the book, ' +
+    'and the levels behind every one of them, sit behind the plan.</p>';
 
     revealScan(sec);
   }).catch(function(){});
@@ -5105,21 +5107,14 @@ function renderLtPerf(closed){
    only — the US side has a single book. */
 var LT_BOOKS = [
   ['ALL','All'], ['LC','Large'], ['MC','Mid'], ['SC','Small'],
-  ['FO','F&O'], ['ET','ETF'], ['LM','Large + mid'], ['MS','Mid + small']
+  ['FO','F&O'], ['ET','ETF'], ['LM','Large + mid'], ['MS','Mid + small'],
+  ['PURE','Pure']
 ];
 var LT_BOOK = 'ALL';
 var LT_SEG_CACHE = {};
 
-/* The US sheet has no F&O, Large + mid or Mid + small tabs, so its
-   bar shows only the books that exist there. */
-var LT_US_BOOKS = ['ALL','LC','MC','SC','ET'];
-function ltBooksFor(){
-  var us = (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
-  return us ? LT_BOOKS.filter(function(b){ return LT_US_BOOKS.indexOf(b[0]) !== -1; }) : LT_BOOKS;
-}
-
 function ltIsSegKey(b){
-  return b !== 'ALL' && ltBooksFor().some(function(x){ return x[0] === b; });
+  return b !== 'ALL' && b !== 'PURE' && !(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
 }
 function ltIsSeg(){ return ltIsSegKey(LT_BOOK); }
 
@@ -5128,16 +5123,13 @@ function ltCurrent(){
   return LT_SEG_CACHE[FEED_MARKET + ':' + LT_BOOK] || {};
 }
 
-function ltFreshKey(){
-  if(!ltIsSeg()) return 'longterm';
-  return 'lt_' + LT_BOOK + (FEED_MARKET === 'US' ? '_us' : '');
-}
+function ltFreshKey(){ return ltIsSeg() ? 'lt_' + LT_BOOK : 'longterm'; }
 
 function ltBookBar(){
-  var current = ltIsSeg() ? LT_BOOK : 'ALL';
-  return '<div class="seg-bar">' + ltBooksFor().map(function(b){
-    return '<button class="seg-btn' + (b[0] === current ? ' on' : '') +
-      '" style="--hue:' + segMeta(b[0])[2] + '" onclick="setLtBook(\'' + b[0] + '\')">' +
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') return '';
+  return '<div class="seg-bar">' + LT_BOOKS.map(function(b){
+    return '<button class="seg-btn' + (b[0] === LT_BOOK ? ' on' : '') +
+      '" style="--hue:' + (b[0] === 'PURE' ? PURE_HUE : segMeta(b[0])[2]) + '" onclick="setLtBook(\'' + b[0] + '\')">' +
       b[1] + '</button>';
   }).join('') + '</div>';
 }
@@ -5159,6 +5151,7 @@ function setLtBook(b){
 
 /* Same shape as SCR_DATA.longTerm, so paintLongTerm reads either. */
 function loadLtBook(b){
+  if(b === 'PURE') return loadPure();
   if(!ltIsSegKey(b)) return Promise.resolve(null);
   var key = FEED_MARKET + ':' + b;
   if(LT_SEG_CACHE[key]) return Promise.resolve(LT_SEG_CACHE[key]);
@@ -5201,6 +5194,278 @@ function loadLtBook(b){
     LT_SEG_CACHE[key] = out;
     return out;
   });
+}
+
+/* ============================================================
+   PURE PORTFOLIO
+   A broker-style account inside Long Term: Mid + small names,
+   sized by risk to the stop, with holdings, tradebook, funds
+   ledger and charges. Its own tables (pure_*), its own look.
+   ============================================================ */
+var PURE_HUE = '#FF9F1C';
+var PURE_CACHE = null;
+var PURE_CM = 'all';
+
+function loadPure(){
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') return Promise.resolve(null);
+  if(PURE_CACHE) return Promise.resolve(PURE_CACHE);
+  return Promise.all([
+    db.from('pure_daily').select('*').order('as_of', { ascending:true }).limit(2000),
+    db.from('pure_holdings_today').select('*'),
+    db.from('pure_trades').select('*').order('trade_date', { ascending:false }).limit(1000),
+    db.from('pure_ledger').select('*').order('line_no', { ascending:false }).limit(1000),
+    db.from('pure_notes').select('*').order('note_date', { ascending:false }).limit(600),
+    db.from('pure_queue_today').select('*').order('position')
+  ]).then(function(res){
+    res.forEach(function(r){ if(r.error) throw r.error; });
+    PURE_CACHE = {
+      daily: res[0].data || [], holdings: res[1].data || [], trades: res[2].data || [],
+      ledger: res[3].data || [], notes: res[4].data || [], queue: res[5].data || []
+    };
+    return PURE_CACHE;
+  });
+}
+
+function pureInr(v, dp){
+  var n = +v || 0;
+  return (n < 0 ? '\u2212' : '') + '\u20b9' + Math.abs(n).toLocaleString('en-IN', {
+    minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0 });
+}
+function pureSigned(v){ return ((+v || 0) >= 0 ? '+' : '') + pureInr(v); }
+function pureHue(v){ return (+v || 0) >= 0 ? 'var(--tier-sb)' : 'var(--red)'; }
+function purePct(v, dp){ var n = +v || 0; return (n >= 0 ? '+' : '') + n.toFixed(dp == null ? 2 : dp) + '%'; }
+
+function setPureCm(f){ PURE_CM = f; paintLongTerm(); }
+
+function pureSubTabs(){
+  return '<div class="cm-sub">' +
+    '<button class="' + (LT_TAB === 'book' ? 'on' : '') + '" onclick="setLtTab(\'book\')">Long Term</button>' +
+    '<button class="' + (LT_TAB === 'commentary' ? 'on' : '') + '" onclick="setLtTab(\'commentary\')">Commentary</button>' +
+  '</div>';
+}
+
+function paintPure(body){
+  var d = PURE_CACHE || {};
+  var daily = d.daily || [];
+  var last = daily[daily.length - 1];
+
+  if(!last){
+    body.innerHTML = pureSubTabs() + ltBookBar() +
+      '<div class="scr-load">The Pure account opens after its first evening run.</div>';
+    return;
+  }
+  if(LT_TAB === 'commentary'){
+    body.innerHTML = pureSubTabs() + ltBookBar() + renderPureNotes(d.notes || []);
+    return;
+  }
+
+  var acct = +last.account_value || 0, cap = +last.capital || 0;
+  var cash = +last.cash || 0, hv = +last.holdings_value || 0;
+  var prev = daily.length > 1 ? daily[daily.length - 2] : null;
+  var dayPct = prev && +prev.account_value ? (acct - prev.account_value) / prev.account_value * 100 : null;
+  var gain = acct - cap, gainPct = cap ? gain / cap * 100 : 0;
+  var inPct = acct ? hv / acct * 100 : 0, cashPct = acct ? cash / acct * 100 : 0;
+
+  var hero =
+    '<div class="pure-hero">' +
+      '<div>' +
+        '<div class="ph-l">Account value</div>' +
+        '<div class="ph-v">' + pureInr(acct) + '</div>' +
+        '<div class="ph-s"><b style="color:' + pureHue(gain) + '">' + pureSigned(gain) +
+          ' (' + purePct(gainPct) + ')</b> since start' +
+          (dayPct != null ? ' \u00b7 <b style="color:' + pureHue(dayPct) + '">' + purePct(dayPct) + '</b> today' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="ph-cap">' +
+        '<div class="ph-l">Capital</div>' +
+        '<div class="ph-cv">' + pureInr(cap) + '</div>' +
+        '<div class="ph-s">money put into the account</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="pure-split">' +
+      '<i style="width:' + inPct.toFixed(2) + '%;background:' + PURE_HUE + '"></i>' +
+      '<i style="width:' + cashPct.toFixed(2) + '%;background:var(--tier-sb)"></i>' +
+    '</div>' +
+    '<div class="pure-legend">' +
+      '<span><i class="pure-dot" style="background:' + PURE_HUE + '"></i>In stocks <b>' + pureInr(hv) +
+        '</b> \u00b7 ' + inPct.toFixed(0) + '%</span>' +
+      '<span><i class="pure-dot" style="background:var(--tier-sb)"></i>Spare cash <b>' + pureInr(cash) +
+        '</b> \u00b7 ' + cashPct.toFixed(0) + '% \u2014 safe, not at risk</span>' +
+    '</div>';
+
+  var card = function(l, v, s, c){
+    return '<div class="sc-cell"><div class="sc-l">' + l + '</div>' +
+      '<div class="sc-v"' + (c ? ' style="color:' + c + '"' : '') + '>' + v + '</div>' +
+      '<div class="sc-s">' + s + '</div></div>';
+  };
+  var strip =
+    '<div class="scorecard">' +
+      card('Realised P&amp;L', pureSigned(last.realised), 'from closed trades', pureHue(last.realised)) +
+      card('Unrealised P&amp;L', pureSigned(last.unrealised), 'on ' + (last.positions || 0) + ' open positions', pureHue(last.unrealised)) +
+      card('Open risk', pureInr(last.open_risk), (+last.open_risk_pct || 0).toFixed(2) + '% of account if every stop hits', 'var(--red)') +
+      card('Locked in', pureInr(last.locked), 'stops already above cost', 'var(--tier-sb)') +
+      card('Charges paid', pureInr(last.charges), 'taxes and fees on every trade') +
+    '</div>' +
+    '<p class="sc-note">Each new position risks ' + (+last.risk_pct || 0) + '% of the account down to its stop. ' +
+    'No stock takes more than ' + (+last.max_pos_pct || 0) + '% of the account. A name whose stop sits more than ' +
+    (+last.max_stop_pct || 0) + '% below price is skipped. When cash runs out, names wait \u2014 nothing is borrowed.</p>';
+
+  /* --- account curve --- */
+  var curve = '';
+  if(daily.length >= 2){
+    var W = 1000, H = 160, P = 8;
+    var vals = daily.map(function(r){ return +r.account_value || 0; });
+    var lo = Math.min.apply(null, vals.concat([cap])), hi = Math.max.apply(null, vals.concat([cap]));
+    if(hi === lo) hi = lo + 1;
+    var x = function(i){ return P + i * (W - 2 * P) / (vals.length - 1); };
+    var y = function(v){ return H - P - (v - lo) / (hi - lo) * (H - 2 * P); };
+    var pts = vals.map(function(v, i){ return x(i).toFixed(1) + ',' + y(v).toFixed(1); }).join(' ');
+    curve = '<div class="mp-sec"><div class="mp-sec-head"><div class="mp-sec-t">Account value</div></div>' +
+      '<svg class="pure-curve" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+        '<line x1="0" x2="' + W + '" y1="' + y(cap).toFixed(1) + '" y2="' + y(cap).toFixed(1) +
+          '" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="6 6" vector-effect="non-scaling-stroke"/>' +
+        '<polyline points="' + pts + '" fill="none" stroke="' + PURE_HUE + '" stroke-width="2.5" vector-effect="non-scaling-stroke"/>' +
+      '</svg>' +
+      '<div class="pure-legend" style="margin:6px 0 0">' +
+        '<span>' + fmtDate(daily[0].as_of) + '</span><span>dashed line = capital</span>' +
+        '<span>' + fmtDate(last.as_of) + '</span></div>' +
+    '</div>';
+  }
+
+  /* --- holdings, broker style --- */
+  var hold = (d.holdings || []).slice().sort(function(a, b){ return (+b.value || 0) - (+a.value || 0); });
+  var tInv = 0, tVal = 0, tStop = 0;
+  var hRows = hold.map(function(h){
+    tInv += +h.invested || 0; tVal += +h.value || 0; tStop += +h.stop_pnl || 0;
+    var sp = +h.stop_pnl || 0;
+    return '<tr>' +
+      '<td><button class="tkr as-link" onclick="openChart(\'' + h.symbol + '\')">' + h.symbol + '</button></td>' +
+      '<td class="num r">' + (h.qty || 0) + '</td>' +
+      '<td class="num r">' + pureInr(h.avg_price, 2) + '</td>' +
+      '<td class="num r">' + pureInr(h.ltp, 2) + '</td>' +
+      '<td class="num r">' + pureInr(h.value) + '</td>' +
+      '<td class="num r" style="color:' + pureHue(h.pnl) + ';font-weight:700">' + pureSigned(h.pnl) + '</td>' +
+      '<td class="num r" style="color:' + pureHue(h.pnl_pct) + '">' + purePct(h.pnl_pct) + '</td>' +
+      '<td class="num r" style="color:var(--red)">' + pureInr(h.stop_loss, 2) + '</td>' +
+      '<td class="num r" style="color:' + pureHue(sp) + ';font-weight:600">' + pureSigned(sp) +
+        '<span class="dim"> ' + (sp < 0 ? 'risk' : 'locked') + '</span></td>' +
+      '<td class="num r dim">' + (acct ? ((+h.value || 0) / acct * 100).toFixed(1) : '0.0') + '%</td>' +
+      '<td class="num r dim">' + (h.days_held || 0) + 'd</td>' +
+    '</tr>';
+  }).join('');
+
+  var holdings = '<div class="mp-sec"><div class="mp-sec-head"><div class="mp-sec-t">Holdings' +
+      freshLine('pure') + '</div></div>' +
+    (hold.length
+      ? '<div class="scr-table" style="--seg:' + PURE_HUE + '"><table class="tbl"><thead><tr>' +
+          '<th>Instrument</th><th class="r">Qty</th><th class="r">Avg. cost</th><th class="r">LTP</th>' +
+          '<th class="r">Cur. value</th><th class="r">P&amp;L</th><th class="r">Net chg.</th>' +
+          '<th class="r">Trailing stop</th><th class="r">If stop hits</th><th class="r">Of account</th>' +
+          '<th class="r">Held</th></tr></thead><tbody>' + hRows + '</tbody>' +
+          '<tfoot><tr class="pure-total"><td>Total</td><td></td><td class="num r">' + pureInr(tInv) + '</td><td></td>' +
+            '<td class="num r">' + pureInr(tVal) + '</td>' +
+            '<td class="num r" style="color:' + pureHue(tVal - tInv) + '">' + pureSigned(tVal - tInv) + '</td>' +
+            '<td class="num r" style="color:' + pureHue(tVal - tInv) + '">' + purePct(tInv ? (tVal - tInv) / tInv * 100 : 0) + '</td>' +
+            '<td></td><td class="num r" style="color:' + pureHue(tStop) + '">' + pureSigned(tStop) + '</td>' +
+            '<td class="num r">' + inPct.toFixed(1) + '%</td><td></td></tr></tfoot></table></div>'
+      : '<div class="scr-load">No holdings \u2014 the whole account is in cash.</div>') +
+  '</div>';
+
+  /* --- waiting --- */
+  var q = d.queue || [];
+  var queue = q.length
+    ? '<div class="mp-sec"><div class="mp-sec-head"><div class="mp-sec-t">Waiting</div></div>' +
+        '<div class="scr-table" style="--seg:' + PURE_HUE + '"><table class="tbl"><thead><tr>' +
+        '<th>Instrument</th><th class="r">Price</th><th class="r">Trailing stop</th>' +
+        '<th class="r">Stop distance</th><th class="r">Planned qty</th><th>Why not bought</th>' +
+        '</tr></thead><tbody>' + q.map(function(r){
+          return '<tr><td><button class="tkr as-link" onclick="openChart(\'' + r.symbol + '\')">' + r.symbol + '</button></td>' +
+            '<td class="num r">' + pureInr(r.price, 2) + '</td>' +
+            '<td class="num r" style="color:var(--red)">' + pureInr(r.stop_loss, 2) + '</td>' +
+            '<td class="num r">' + (+r.stop_dist || 0).toFixed(1) + '%</td>' +
+            '<td class="num r">' + (r.qty || '\u2014') + '</td>' +
+            '<td class="dim" style="white-space:normal">' + (r.reason || '') + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>'
+    : '';
+
+  /* --- tradebook --- */
+  var tr = d.trades || [];
+  var trades = tr.length
+    ? '<div class="mp-sec"><div class="mp-sec-head"><div class="mp-sec-t">Tradebook</div></div>' +
+        '<div class="scr-table" style="--seg:' + PURE_HUE + '"><table class="tbl"><thead><tr>' +
+        '<th>Date</th><th>Instrument</th><th>Type</th><th class="r">Qty</th><th class="r">Price</th>' +
+        '<th class="r">Value</th><th class="r">Charges</th><th class="r">P&amp;L</th></tr></thead><tbody>' +
+        tr.slice(0, 300).map(function(t){
+          var sell = t.side === 'SELL';
+          return '<tr><td class="num dim">' + fmtDate(t.trade_date) + '</td>' +
+            '<td><button class="tkr as-link" onclick="openChart(\'' + t.symbol + '\')">' + t.symbol + '</button></td>' +
+            '<td><span class="pure-chip ' + (sell ? 'pure-sell' : 'pure-buy') + '">' + t.side + '</span></td>' +
+            '<td class="num r">' + (t.qty || 0) + '</td>' +
+            '<td class="num r">' + pureInr(t.price, 2) + '</td>' +
+            '<td class="num r">' + pureInr(t.value) + '</td>' +
+            '<td class="num r dim">' + pureInr(t.charges, 2) + '</td>' +
+            '<td class="num r">' + (sell
+              ? '<b style="color:' + pureHue(t.pnl) + '">' + pureSigned(t.pnl) + '</b> <span class="dim">' + purePct(t.pnl_pct, 1) + '</span>'
+              : '<span class="dim">\u2014</span>') + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>'
+    : '';
+
+  /* --- funds ledger --- */
+  var lg = d.ledger || [];
+  var ledger = lg.length
+    ? '<div class="mp-sec"><div class="mp-sec-head"><div class="mp-sec-t">Funds ledger</div></div>' +
+        '<div class="scr-table" style="--seg:' + PURE_HUE + '"><table class="tbl"><thead><tr>' +
+        '<th>Date</th><th>Particulars</th><th class="r">Debit</th><th class="r">Credit</th>' +
+        '<th class="r">Balance</th></tr></thead><tbody>' +
+        lg.slice(0, 300).map(function(l){
+          return '<tr><td class="num dim">' + fmtDate(l.entry_date) + '</td>' +
+            '<td>' + (l.particulars || '') + '</td>' +
+            '<td class="num r" style="color:var(--red)">' + (+l.debit ? pureInr(l.debit, 2) : '') + '</td>' +
+            '<td class="num r" style="color:var(--tier-sb)">' + (+l.credit ? pureInr(l.credit, 2) : '') + '</td>' +
+            '<td class="num r"><b>' + pureInr(l.balance, 2) + '</b></td></tr>';
+        }).join('') + '</tbody></table></div></div>'
+    : '';
+
+  body.innerHTML = pureSubTabs() + ltBookBar() + hero + strip + curve + holdings + queue + trades + ledger;
+}
+
+var PURE_KINDS = {
+  buy:   ['Bought',    '#1E88E5'],
+  sell:  ['Sold',      '#FF6D00'],
+  free:  ['Risk-free', 'var(--tier-sb)'],
+  day:   ['Account',   PURE_HUE],
+  funds: ['Funds',     'var(--r70)']
+};
+var PURE_CM_TABS = [['all','All'], ['buy','Bought'], ['sell','Sold'], ['free','Risk-free'], ['day','Daily'], ['funds','Funds']];
+
+function renderPureNotes(all){
+  var counts = { all: all.length };
+  all.forEach(function(n){ counts[n.kind] = (counts[n.kind] || 0) + 1; });
+  var list = PURE_CM === 'all' ? all : all.filter(function(n){ return n.kind === PURE_CM; });
+
+  var filters = '<div class="cm-filters">' + PURE_CM_TABS.map(function(t){
+    return '<button class="cm-filter' + (PURE_CM === t[0] ? ' on' : '') + '" onclick="setPureCm(\'' + t[0] + '\')">' +
+      t[1] + (counts[t[0]] ? ' <span class="dim">' + counts[t[0]] + '</span>' : '') + '</button>';
+  }).join('') + '</div>';
+
+  if(!list.length) return filters + '<div class="scr-load">Nothing here yet.</div>';
+
+  var order = { funds: 0, sell: 1, buy: 2, free: 3, day: 4 };
+  list = list.slice().sort(function(a, b){
+    var c = String(b.note_date).localeCompare(String(a.note_date));
+    return c || ((order[a.kind] || 9) - (order[b.kind] || 9));
+  });
+
+  return filters + '<div class="pure-feed">' + list.slice(0, 200).map(function(n){
+    var k = PURE_KINDS[n.kind] || ['Note', 'var(--muted)'];
+    var when = new Date(n.note_date).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+    return '<div class="pure-note" style="--n:' + k[1] + '">' +
+      '<div class="pn-date">' + when + '</div>' +
+      '<div><div class="pn-kind">' + k[0].toUpperCase() + '</div>' +
+        '<div class="pn-title">' + n.title + '</div>' +
+        '<div class="pn-body">' + (n.body || '') + '</div></div>' +
+    '</div>';
+  }).join('') + '</div>';
 }
 
 function buildLongTerm(){
@@ -5250,6 +5515,11 @@ function sortLt(rows){
 function paintLongTerm(){
   var body = document.getElementById('ltBody');
   if(!body) return;
+
+  if(LT_BOOK === 'PURE'){
+    if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){ LT_BOOK = 'ALL'; }
+    else { paintPure(body); return; }
+  }
 
   var lt = ltCurrent();
   var pos = lt.positions || [];
@@ -7532,6 +7802,7 @@ function silentRefresh(){
     }
     if(JSON.stringify(fresh.sync || []) === oldSync) return;
     LT_SEG_CACHE = {};
+    PURE_CACHE = null;
     repaintQuietly();
   }).catch(function(){
     SILENT_BUSY = false;
