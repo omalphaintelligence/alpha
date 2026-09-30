@@ -2312,6 +2312,11 @@ body.s-light .new-tag{color:#fff}
 .pure-scope .pu-t tbody tr:hover td.pu-dn{color:var(--pu-coral)!important}
 .pure-scope .pu-t tbody tr:hover td.pu-dim{color:var(--pu-mute)}
 .pu-livenote{font-size:12px;color:var(--pu-mute);margin:-2px 0 8px}
+.pu-t th{cursor:pointer;user-select:none;-webkit-user-select:none}
+.pu-t th:hover{color:var(--pu-paper)}
+.pu-t th.pu-asc,.pu-t th.pu-desc{color:var(--pu-brass)}
+.pu-t th.pu-asc::after{content:' \25B2';font-size:9px}
+.pu-t th.pu-desc::after{content:' \25BC';font-size:9px}
 .pu-t tfoot td{font-weight:700;border-top:2px solid var(--pu-line);border-bottom:0}
 .pu-sym button{border:0;background:none;padding:0;color:var(--pu-brass);font-weight:700;font-size:13px;cursor:pointer;letter-spacing:.02em}
 .pu-side{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11.5px;font-weight:700}
@@ -5316,6 +5321,50 @@ function pureDay(d){ return new Date(d).toLocaleDateString('en-IN', { day:'numer
 
 function setPureCm(f){ PURE_CM = f; paintLongTerm(); }
 
+/* Click a column heading to sort; click again to flip. The choice is
+   kept per table, so a live repaint doesn't undo it. */
+var PURE_SORT = {};
+function pureCellVal(td){
+  var dv = td.getAttribute('data-v');
+  if(dv != null) return dv;
+  var t = td.textContent.replace(/\u2212/g, '-').replace(/[\u20b9,%\s]/g, '');
+  var m = t.match(/^[+-]?\d+(\.\d+)?/);
+  return m ? parseFloat(m[0]) : td.textContent.trim().toLowerCase();
+}
+function pureSortApply(table){
+  var st = PURE_SORT[table.getAttribute('data-tbl')];
+  var ths = table.querySelectorAll('thead th');
+  ths.forEach(function(th, i){
+    th.classList.remove('pu-asc', 'pu-desc');
+    if(st && st.col === i) th.classList.add(st.dir > 0 ? 'pu-asc' : 'pu-desc');
+  });
+  if(!st) return;
+  var tb = table.tBodies[0];
+  var rows = Array.prototype.slice.call(tb.rows);
+  rows.sort(function(a, b){
+    var x = pureCellVal(a.cells[st.col]), y = pureCellVal(b.cells[st.col]);
+    if(typeof x === 'number' && typeof y === 'number') return (x - y) * st.dir;
+    return String(x).localeCompare(String(y)) * st.dir;
+  });
+  rows.forEach(function(r){ tb.appendChild(r); });
+}
+function pureSortWire(root){
+  root.querySelectorAll('.pu-t[data-tbl]').forEach(function(table){
+    var key = table.getAttribute('data-tbl');
+    table.querySelectorAll('thead th').forEach(function(th, i){
+      th.addEventListener('click', function(){
+        var st = PURE_SORT[key];
+        /* numbers start high-to-low, words A-to-Z */
+        var first = pureCellVal(table.tBodies[0].rows[0] ? table.tBodies[0].rows[0].cells[i] : th);
+        PURE_SORT[key] = (st && st.col === i) ? { col: i, dir: -st.dir }
+                                              : { col: i, dir: typeof first === 'number' ? -1 : 1 };
+        pureSortApply(table);
+      });
+    });
+    pureSortApply(table);
+  });
+}
+
 /* symbol → latest price from the screener rows already on the page */
 function pureLiveMap(){
   var out = {};
@@ -5469,7 +5518,7 @@ function paintPure(body){
     (liveHits ? '<p class="pu-livenote">LTP is live for ' + liveHits + ' of ' + hold.length +
       ', refreshed every 15 minutes in market hours. Stops update after the evening run.</p>' : '') +
     (hold.length
-      ? '<div class="pu-tw"><table class="pu-t"><thead><tr>' +
+      ? '<div class="pu-tw"><table class="pu-t" data-tbl="hold"><thead><tr>' +
           '<th>Instrument</th><th>Qty</th><th>Avg. cost</th><th>LTP</th><th>Cur. value</th>' +
           '<th>P&amp;L</th><th>Net chg.</th><th>Trailing stop</th><th>If stop hits</th>' +
           '<th>Of account</th><th>Held</th></tr></thead><tbody>' + hRows + '</tbody>' +
@@ -5485,7 +5534,7 @@ function paintPure(body){
   var q = d.queue || [];
   var queue = q.length
     ? '<section class="pu-sec"><h4>Waiting <span>' + q.length + '</span></h4>' +
-        '<div class="pu-tw"><table class="pu-t"><thead><tr>' +
+        '<div class="pu-tw"><table class="pu-t" data-tbl="queue"><thead><tr>' +
         '<th>Instrument</th><th>Price</th><th>Trailing stop</th><th>Stop distance</th>' +
         '<th>Planned qty</th><th class="pu-l">Why not bought</th></tr></thead><tbody>' +
         q.map(function(r){
@@ -5500,12 +5549,12 @@ function paintPure(body){
   var tr = d.trades || [];
   var trades = tr.length
     ? '<section class="pu-sec"><h4>Tradebook</h4>' +
-        '<div class="pu-tw"><table class="pu-t"><thead><tr>' +
+        '<div class="pu-tw"><table class="pu-t" data-tbl="trades"><thead><tr>' +
         '<th class="pu-l">Date</th><th>Instrument</th><th>Type</th><th>Qty</th><th>Price</th>' +
         '<th>Value</th><th>Charges</th><th>P&amp;L</th></tr></thead><tbody>' +
         tr.slice(0, 300).map(function(t){
           var sell = t.side === 'SELL';
-          return '<tr><td class="pu-l pu-dim">' + pureDay(t.trade_date) + '</td>' +
+          return '<tr><td class="pu-l pu-dim" data-v="' + t.trade_date + '">' + pureDay(t.trade_date) + '</td>' +
             '<td class="pu-sym"><button onclick="openChart(\'' + t.symbol + '\')">' + t.symbol + '</button></td>' +
             '<td><span class="pu-side ' + (sell ? 'sell' : 'buy') + '">' + (sell ? 'Sell' : 'Buy') + '</span></td>' +
             '<td>' + (t.qty || 0) + '</td><td>' + pureInr(t.price, 2) + '</td>' +
@@ -5519,11 +5568,11 @@ function paintPure(body){
   var lg = d.ledger || [];
   var ledger = lg.length
     ? '<section class="pu-sec"><h4>Funds ledger</h4>' +
-        '<div class="pu-tw"><table class="pu-t"><thead><tr>' +
+        '<div class="pu-tw"><table class="pu-t" data-tbl="ledger"><thead><tr>' +
         '<th class="pu-l">Date</th><th class="pu-l">Particulars</th><th>Debit</th><th>Credit</th>' +
         '<th>Balance</th></tr></thead><tbody>' +
         lg.slice(0, 300).map(function(l){
-          return '<tr><td class="pu-l pu-dim">' + pureDay(l.entry_date) + '</td>' +
+          return '<tr><td class="pu-l pu-dim" data-v="' + l.entry_date + '-' + String(l.line_no).padStart(6, '0') + '">' + pureDay(l.entry_date) + '</td>' +
             '<td class="pu-l">' + (l.particulars || '') + '</td>' +
             '<td class="pu-dn">' + (+l.debit ? pureInr(l.debit, 2) : '') + '</td>' +
             '<td class="pu-up">' + (+l.credit ? pureInr(l.credit, 2) : '') + '</td>' +
@@ -5534,6 +5583,7 @@ function paintPure(body){
   body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
     acctLine + stats + curve + holdings + queue + trades + ledger +
     '<div class="pu-stamp">' + freshLine('pure') + '</div></div>';
+  pureSortWire(body);
 }
 
 var PURE_KINDS = {
