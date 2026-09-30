@@ -2306,6 +2306,12 @@ body.s-light .new-tag{color:#fff}
 .pu-t tbody tr:last-child td{border-bottom:0}
 .pu-t .pu-l,.pu-t th:first-child,.pu-t td:first-child{text-align:left}
 .pu-t td i{font-style:normal;font-size:11px;color:var(--pu-mute)}
+.pure-scope .pu-t tbody tr:hover td,
+.dash-scope .pure-scope .pu-t tbody tr:hover td{background:#164B38!important;color:var(--pu-paper)}
+.pure-scope .pu-t tbody tr:hover td.pu-up{color:var(--pu-mint)!important}
+.pure-scope .pu-t tbody tr:hover td.pu-dn{color:var(--pu-coral)!important}
+.pure-scope .pu-t tbody tr:hover td.pu-dim{color:var(--pu-mute)}
+.pu-livenote{font-size:12px;color:var(--pu-mute);margin:-2px 0 8px}
 .pu-t tfoot td{font-weight:700;border-top:2px solid var(--pu-line);border-bottom:0}
 .pu-sym button{border:0;background:none;padding:0;color:var(--pu-brass);font-weight:700;font-size:13px;cursor:pointer;letter-spacing:.02em}
 .pu-side{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11.5px;font-weight:700}
@@ -5310,6 +5316,21 @@ function pureDay(d){ return new Date(d).toLocaleDateString('en-IN', { day:'numer
 
 function setPureCm(f){ PURE_CM = f; paintLongTerm(); }
 
+/* symbol → latest price from the screener rows already on the page */
+function pureLiveMap(){
+  var out = {};
+  try{
+    var tabs = (typeof D !== 'undefined' && D.tabs) || {};
+    Object.keys(tabs).forEach(function(k){
+      (tabs[k] || []).forEach(function(r){
+        var p = +r.price;
+        if(r && r.symbol && p > 0) out[r.symbol] = p;
+      });
+    });
+  }catch(e){}
+  return out;
+}
+
 /* The account's own switch. Not the site's underline tabs. */
 function pureTabs(){
   return '<div class="pu-tabs">' +
@@ -5341,10 +5362,29 @@ function paintPure(body){
     return;
   }
 
-  var acct = +last.account_value || 0, cap = +last.capital || 0;
-  var cash = +last.cash || 0, hv = +last.holdings_value || 0;
-  var prev = daily.length > 1 ? daily[daily.length - 2] : null;
-  var dayPct = prev && +prev.account_value ? (acct - prev.account_value) / prev.account_value * 100 : null;
+  /* Live prices: the screener rows are re-pushed every 15 minutes in
+     market hours. Holdings found there are re-valued at that price;
+     the rest keep last evening's close. Stops, cash and realised P&L
+     only change in the evening run. */
+  var live = pureLiveMap(), liveHits = 0;
+  var hold = (d.holdings || []).map(function(h){
+    var px = live[h.symbol];
+    if(!(px > 0)) return h;
+    liveHits++;
+    var q = +h.qty || 0, inv = +h.invested || 0, val = q * px;
+    return Object.assign({}, h, { ltp: px, value: val, pnl: val - inv,
+                                  pnl_pct: inv ? (val - inv) / inv * 100 : 0 });
+  });
+  var cap = +last.capital || 0, cash = +last.cash || 0;
+  var hv = hold.length ? hold.reduce(function(a, h){ return a + (+h.value || 0); }, 0) : (+last.holdings_value || 0);
+  var unreal = hold.length ? hold.reduce(function(a, h){ return a + (+h.pnl || 0); }, 0) : (+last.unrealised || 0);
+  var acct = cash + hv;
+  /* "Today" = against last evening's account value. */
+  var dayPct = +last.account_value ? (acct - last.account_value) / last.account_value * 100 : null;
+  if(!liveHits){
+    var prev = daily.length > 1 ? daily[daily.length - 2] : null;
+    dayPct = prev && +prev.account_value ? (acct - prev.account_value) / prev.account_value * 100 : null;
+  }
   var gain = acct - cap, gainPct = cap ? gain / cap * 100 : 0;
   var inPct = acct ? hv / acct * 100 : 0, cashPct = acct ? cash / acct * 100 : 0;
 
@@ -5375,7 +5415,7 @@ function paintPure(body){
   var stats =
     '<div class="pu-stats">' +
       stat('t-real', 'Realised', pureSigned(last.realised), 'closed trades') +
-      stat('t-unreal', 'Unrealised', pureSigned(last.unrealised), (last.positions || 0) + ' open positions') +
+      stat('t-unreal', 'Unrealised', pureSigned(unreal), (hold.length || last.positions || 0) + ' open positions' + (liveHits ? ', live' : '')) +
       stat('t-risk', 'Open risk', pureInr(last.open_risk), (+last.open_risk_pct || 0).toFixed(2) + '% of account if every stop hits') +
       stat('t-lock', 'Locked in', pureInr(last.locked), 'stops above cost') +
       stat('t-chg', 'Charges', pureInr(last.charges), 'taxes and fees paid') +
@@ -5405,7 +5445,7 @@ function paintPure(body){
   }
 
   /* --- holdings --- */
-  var hold = (d.holdings || []).slice().sort(function(a, b){ return (+b.value || 0) - (+a.value || 0); });
+  hold = hold.slice().sort(function(a, b){ return (+b.value || 0) - (+a.value || 0); });
   var tInv = 0, tVal = 0, tStop = 0;
   var hRows = hold.map(function(h){
     tInv += +h.invested || 0; tVal += +h.value || 0; tStop += +h.stop_pnl || 0;
@@ -5426,6 +5466,8 @@ function paintPure(body){
   }).join('');
 
   var holdings = '<section class="pu-sec"><h4>Holdings <span>' + hold.length + '</span></h4>' +
+    (liveHits ? '<p class="pu-livenote">LTP is live for ' + liveHits + ' of ' + hold.length +
+      ', refreshed every 15 minutes in market hours. Stops update after the evening run.</p>' : '') +
     (hold.length
       ? '<div class="pu-tw"><table class="pu-t"><thead><tr>' +
           '<th>Instrument</th><th>Qty</th><th>Avg. cost</th><th>LTP</th><th>Cur. value</th>' +
