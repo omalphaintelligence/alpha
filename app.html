@@ -5203,7 +5203,13 @@ function ltCurrent(){
 function ltFreshKey(){ return ltIsSeg() ? 'lt_' + LT_BOOK : 'longterm'; }
 
 function ltBookBar(){
-  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') return '';
+  /* The US side has one Long Term book plus its own Pure account. */
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
+    return '<div class="seg-bar"><button class="seg-btn' + (LT_BOOK !== 'PURE' ? ' on' : '') +
+      '" onclick="setLtBook(\'ALL\')">Long Term</button></div>' +
+      '<button class="pure-entry' + (LT_BOOK === 'PURE' ? ' on' : '') + '" onclick="setLtBook(\'PURE\')">' +
+      'Pure Portfolio<small>risk-sized account, Mid + small</small></button>';
+  }
   /* Pure is an account, not a segment book, so it sits on its own
      line under the segment pills rather than among them. */
   return '<div class="seg-bar">' + LT_BOOKS.filter(function(b){ return b[0] !== 'PURE'; }).map(function(b){
@@ -5286,32 +5292,35 @@ function loadLtBook(b){
    the rest of the site on purpose.
    ============================================================ */
 var PURE_HUE = '#F2B632';
-var PURE_CACHE = null;
+var PURE_CACHE = {};   /* one account per market: { NSE: …, US: … } */
 var PURE_CM = 'all';
 
+function pureMkt(){ return (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') ? 'US' : 'NSE'; }
+function pureTbl(t){ return (pureMkt() === 'US' ? 'pure_us_' : 'pure_') + t; }
+
 function loadPure(){
-  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') return Promise.resolve(null);
-  if(PURE_CACHE) return Promise.resolve(PURE_CACHE);
+  var mkt = pureMkt();
+  if(PURE_CACHE[mkt]) return Promise.resolve(PURE_CACHE[mkt]);
   return Promise.all([
-    db.from('pure_daily').select('*').order('as_of', { ascending:true }).limit(2000),
-    db.from('pure_holdings_today').select('*'),
-    db.from('pure_trades').select('*').order('trade_date', { ascending:false }).limit(1000),
-    db.from('pure_ledger').select('*').order('line_no', { ascending:false }).limit(1000),
-    db.from('pure_notes').select('*').order('note_date', { ascending:false }).limit(600),
-    db.from('pure_queue_today').select('*').order('position')
+    db.from(pureTbl('daily')).select('*').order('as_of', { ascending:true }).limit(2000),
+    db.from(pureTbl('holdings_today')).select('*'),
+    db.from(pureTbl('trades')).select('*').order('trade_date', { ascending:false }).limit(1000),
+    db.from(pureTbl('ledger')).select('*').order('line_no', { ascending:false }).limit(1000),
+    db.from(pureTbl('notes')).select('*').order('note_date', { ascending:false }).limit(600),
+    db.from(pureTbl('queue_today')).select('*').order('position')
   ]).then(function(res){
     res.forEach(function(r){ if(r.error) throw r.error; });
-    PURE_CACHE = {
+    PURE_CACHE[mkt] = {
       daily: res[0].data || [], holdings: res[1].data || [], trades: res[2].data || [],
       ledger: res[3].data || [], notes: res[4].data || [], queue: res[5].data || []
     };
-    return PURE_CACHE;
+    return PURE_CACHE[mkt];
   });
 }
 
 function pureInr(v, dp){
-  var n = +v || 0;
-  return (n < 0 ? '-' : '') + '\u20b9' + Math.abs(n).toLocaleString('en-IN', {
+  var n = +v || 0, us = pureMkt() === 'US';
+  return (n < 0 ? '-' : '') + (us ? '$' : '\u20b9') + Math.abs(n).toLocaleString(us ? 'en-US' : 'en-IN', {
     minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0 });
 }
 function pureSigned(v){ return ((+v || 0) >= 0 ? '+' : '') + pureInr(v); }
@@ -5396,7 +5405,7 @@ function pureHead(last){
 }
 
 function paintPure(body){
-  var d = PURE_CACHE || {};
+  var d = PURE_CACHE[pureMkt()] || {};
   var daily = d.daily || [];
   var last = daily[daily.length - 1];
 
@@ -5582,7 +5591,7 @@ function paintPure(body){
 
   body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
     acctLine + stats + curve + holdings + queue + trades + ledger +
-    '<div class="pu-stamp">' + freshLine('pure') + '</div></div>';
+    '<div class="pu-stamp">' + freshLine(pureMkt() === 'US' ? 'pure_us' : 'pure') + '</div></div>';
   pureSortWire(body);
 }
 
@@ -5680,10 +5689,7 @@ function paintLongTerm(){
   var body = document.getElementById('ltBody');
   if(!body) return;
 
-  if(LT_BOOK === 'PURE'){
-    if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){ LT_BOOK = 'ALL'; }
-    else { paintPure(body); return; }
-  }
+  if(LT_BOOK === 'PURE'){ paintPure(body); return; }
 
   var lt = ltCurrent();
   var pos = lt.positions || [];
@@ -7966,7 +7972,7 @@ function silentRefresh(){
     }
     if(JSON.stringify(fresh.sync || []) === oldSync) return;
     LT_SEG_CACHE = {};
-    PURE_CACHE = null;
+    PURE_CACHE = {};
     repaintQuietly();
   }).catch(function(){
     SILENT_BUSY = false;
