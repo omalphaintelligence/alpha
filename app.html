@@ -3281,6 +3281,32 @@ const SUPABASE_URL = 'https://eoioyfgsqfkqyflmflhj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZNhYfnxJo__rFy8eLkINyw_VpeYw3Rr';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ---------- Free access outside India ----------
+   The intl-guest edge function checks the visitor's country from
+   their IP. Outside India it returns a session for one shared guest
+   account on the Complete plan, and the page then runs exactly as it
+   does for a paying member. In India nothing changes. */
+var INTL_GUEST_EMAIL = 'guest.intl@alphaintel.app';
+var GUEST_BOOTING = false;
+var SIGNING_OUT = false;
+
+function isIntlGuest(){ return ACCOUNT_EMAIL === INTL_GUEST_EMAIL; }
+
+async function maybeIntlGuest(){
+  try{
+    var got = await db.auth.getSession();
+    if(got && got.data && got.data.session) return;
+    /* A guest who chose "Sign in" stays signed out for this visit. */
+    if(sessionStorage.getItem('ai_no_guest') === '1') return;
+    var res = await db.functions.invoke('intl-guest');
+    var d = res && res.data;
+    if(!d || !d.guest || !d.access_token) return;
+    GUEST_BOOTING = true;
+    await db.auth.setSession({ access_token: d.access_token, refresh_token: d.refresh_token });
+  }catch(e){ console.warn('intl guest', e); }
+  finally{ GUEST_BOOTING = false; }
+}
+
 /* ============================================================
    THEME — one key ('ai_th') drives the shell and the dashboard,
    so a choice made on the landing page carries into the screener.
@@ -3535,6 +3561,7 @@ const DOUGLAS = [
    ============================================================ */
 var ZONE = 'free';
 var ACCOUNT_PLAN = '';
+var ACCOUNT_ADMIN = false;
 
 var PLANS = [
   { key:'core',  name:'Screener Core',   price:499,
@@ -3740,6 +3767,12 @@ function payRef(planKey, cycKey){
 }
 
 function startCheckout(key){
+  if(isIntlGuest()){
+    /* Payments belong to a person, not the shared guest account. */
+    setPendingPlan(key);
+    signOut().then(function(){ openAuth('signup'); });
+    return;
+  }
   setPendingPlan('');
   var plan = planDef(key);
   var cyc  = BILLING.filter(function(c){ return c.key === BILL_CYCLE; })[0] || BILLING[0];
@@ -5307,12 +5340,16 @@ function loadPure(){
     db.from(pureTbl('trades')).select('*').order('trade_date', { ascending:false }).limit(1000),
     db.from(pureTbl('ledger')).select('*').order('line_no', { ascending:false }).limit(1000),
     db.from(pureTbl('notes')).select('*').order('note_date', { ascending:false }).limit(600),
-    db.from(pureTbl('queue_today')).select('*').order('position')
+    db.from(pureTbl('queue_today')).select('*').order('position'),
+    pureIsOwner()
+      ? db.from('my_holdings').select('*').eq('market', mkt)
+      : Promise.resolve({ data: [] })
   ]).then(function(res){
     res.forEach(function(r){ if(r.error) throw r.error; });
     PURE_CACHE[mkt] = {
       daily: res[0].data || [], holdings: res[1].data || [], trades: res[2].data || [],
-      ledger: res[3].data || [], notes: res[4].data || [], queue: res[5].data || []
+      ledger: res[3].data || [], notes: res[4].data || [], queue: res[5].data || [],
+      mine: res[6].data || []
     };
     return PURE_CACHE[mkt];
   });
@@ -5392,8 +5429,11 @@ function pureLiveMap(){
 /* The account's own switch. Not the site's underline tabs. */
 function pureTabs(){
   return '<div class="pu-tabs">' +
-    '<button class="' + (LT_TAB !== 'commentary' ? 'on' : '') + '" onclick="setLtTab(\'book\')">Account</button>' +
+    '<button class="' + (LT_TAB !== 'commentary' && LT_TAB !== 'mirror' ? 'on' : '') + '" onclick="setLtTab(\'book\')">Account</button>' +
     '<button class="' + (LT_TAB === 'commentary' ? 'on' : '') + '" onclick="setLtTab(\'commentary\')">Commentary</button>' +
+    (pureIsOwner()
+      ? '<button class="' + (LT_TAB === 'mirror' ? 'on' : '') + '" onclick="setLtTab(\'mirror\')">Mirror</button>'
+      : '') +
   '</div>';
 }
 
@@ -5417,6 +5457,12 @@ function paintPure(body){
   if(LT_TAB === 'commentary'){
     body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
       renderPureNotes(d.notes || []) + '</div>';
+    return;
+  }
+  if(LT_TAB === 'mirror' && pureIsOwner()){
+    body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
+      renderPureMirror(d, last) + '</div>';
+    pureSortWire(body);
     return;
   }
 
@@ -5593,6 +5639,215 @@ function paintPure(body){
     acctLine + stats + curve + holdings + queue + trades + ledger +
     '<div class="pu-stamp">' + freshLine(pureMkt() === 'US' ? 'pure_us' : 'pure') + '</div></div>';
   pureSortWire(body);
+}
+
+/* ---------- Mirror: your real account against Pure ----------
+   Only the owner's login sees this. Pure's weights are scaled to the
+   size of your account, so "prescribed quantity" means the same share
+   of your money that Pure puts in that stock. Every line says what to
+   do to get back in line, sized so your risk matches Pure's. */
+/* Set from profiles.is_admin when the page routes. No email in the
+   page; the database decides who the owner is. */
+function pureIsOwner(){ return ACCOUNT_ADMIN === true; }
+
+function pureQ(x){
+  var m = pureMkt() === 'US' ? 10000 : 1;      /* US: fractions to 4 places; NSE: whole shares */
+  return Math.floor(((+x || 0) + 1e-9) * m) / m;
+}
+function pureQs(x){
+  var n = +x || 0;
+  return pureMkt() === 'US' ? String(Math.round(n * 10000) / 10000) : String(Math.round(n));
+}
+
+function renderPureMirror(d, last){
+  var mine = (d.mine || []);
+  var mkt = pureMkt();
+  if(!mine.length){
+    return '<div class="pu-empty">Your holdings aren\u2019t in yet. Fill the <b>MY_HOLDINGS</b> tab in the ' +
+      (mkt === 'US' ? 'US' : 'India') + ' sheet \u2014 Symbol, Qty, Avg price, and a CASH row \u2014 and it shows up here.</div>';
+  }
+
+  var live = pureLiveMap();
+  var riskPct = +last.risk_pct || 0.75;
+  var maxPos = +last.max_pos_pct || 10;
+
+  /* Pure, marked to the live price */
+  var pMap = {}, pVal = 0;
+  (d.holdings || []).forEach(function(h){
+    var px = live[h.symbol] > 0 ? live[h.symbol] : (+h.ltp || +h.avg_price || 0);
+    var v = (+h.qty || 0) * px;
+    pMap[h.symbol] = { qty: +h.qty || 0, avg: +h.avg_price || 0, stop: +h.stop_loss || 0, px: px, val: v };
+    pVal += v;
+  });
+  var pCash = +last.cash || 0, pEq = pCash + pVal;
+
+  /* You */
+  var yCash = 0, yMap = {}, yVal = 0;
+  mine.forEach(function(r){
+    if(r.symbol === 'CASH'){ yCash = +r.qty || 0; return; }
+    var px = live[r.symbol] > 0 ? live[r.symbol]
+           : (pMap[r.symbol] ? pMap[r.symbol].px : (+r.avg_price || 0));
+    var v = (+r.qty || 0) * px;
+    yMap[r.symbol] = { qty: +r.qty || 0, avg: +r.avg_price || 0, px: px, val: v,
+                       livePx: live[r.symbol] > 0 || !!pMap[r.symbol] };
+    yVal += v;
+  });
+  var yEq = yCash + yVal;
+  if(!(yEq > 0)) return '<div class="pu-empty">Your account adds up to zero \u2014 check MY_HOLDINGS.</div>';
+
+  var lastSell = {};
+  (d.trades || []).forEach(function(t){
+    if(t.side === 'SELL' && !lastSell[t.symbol]) lastSell[t.symbol] = t;   /* trades come newest first */
+  });
+
+  var syms = Object.keys(pMap).concat(Object.keys(yMap).filter(function(s){ return !pMap[s]; }));
+  var rows = [], acts = [], drift = 0, yRisk = 0, pRisk = 0;
+
+  syms.forEach(function(sym){
+    var P = pMap[sym], Y = yMap[sym];
+    var px = (Y && Y.px) || (P && P.px) || 0;
+    var pW = P ? P.val / pEq : 0, yW = Y ? Y.val / yEq : 0;
+    drift += Math.abs(yW - pW);
+    var tQty = (P && px > 0) ? pureQ(pW * yEq / px) : 0;
+    var yQty = Y ? Y.qty : 0;
+    var diff = yQty - tQty;
+    var tol = Math.max(tQty * 0.10, mkt === 'US' ? 0.0001 : 1);
+    var stop = P ? P.stop : 0;
+    var status = 'ok', act = null;
+
+    if(P) pRisk += Math.max(0, P.qty * (P.avg - P.stop));
+    var yr = (Y && stop) ? Y.qty * (Y.avg - stop) : 0;
+    if(yr > 0) yRisk += yr;
+
+    if(P && !Y){
+      if(px <= stop){
+        status = 'skip';
+        act = { k:'k-day', t:'Skip ' + sym + ' for now',
+          b:'Pure holds it, but at ' + pureInr(px, 2) + ' it is already below Pure\u2019s stop ' + pureInr(stop, 2) +
+            '. Pure will most likely sell it at today\u2019s close. Don\u2019t buy.' };
+      } else {
+        var riskQ = pureQ(riskPct / 100 * yEq / (px - stop));
+        var capQ = pureQ(maxPos / 100 * yEq / px);
+        var buyQ = Math.min(tQty, riskQ, capQ);
+        var cost = buyQ * px, ext = P.avg > 0 ? (px / P.avg - 1) * 100 : 0;
+        var loss = buyQ * (px - stop);
+        status = 'missing';
+        act = { k:'k-buy', t:'Buy ' + pureQs(buyQ) + ' ' + sym,
+          b:(ext > 5 ? 'Pure bought at ' + pureInr(P.avg, 2) + '; it is now ' + ext.toFixed(1) + '% higher. ' : '') +
+            'Pure keeps ' + (pW * 100).toFixed(1) + '% of its account here \u2014 ' + pureQs(tQty) + ' shares (' +
+            pureInr(tQty * px) + ') on yours. ' +
+            (buyQ < tQty - tol
+              ? 'From today\u2019s price that would risk more than ' + riskPct + '% of your account, so buy ' +
+                pureQs(buyQ) + ' (' + pureInr(cost) + ') instead. '
+              : '') +
+            'At ' + pureInr(px, 2) + ', stop ' + pureInr(stop, 2) + ' (' + ((px - stop) / px * 100).toFixed(1) +
+            '% below) \u2014 if hit you lose ' + pureInr(loss) + ', ' + (loss / yEq * 100).toFixed(2) + '% of your account.' +
+            (cost > yCash ? ' Spare cash is only ' + pureInr(yCash) + ': fund it from the sells and trims below first.' : '') };
+      }
+    } else if(Y && !P){
+      var ls = lastSell[sym];
+      status = 'extra';
+      act = { k:'k-sell', t:'Sell ' + pureQs(yQty) + ' ' + sym,
+        b: ls ? 'Pure sold it on ' + pureDay(ls.trade_date) + ' at ' + pureInr(ls.price, 2) +
+                ' (closed below its trailing stop). To match, sell all ' + pureQs(yQty) + ' (about ' + pureInr(Y.val) + ').'
+              : 'Not in Pure. To match, sell all ' + pureQs(yQty) + ' (about ' + pureInr(Y.val) + '). ' +
+                'If you keep it, it has no Pure stop to lean on \u2014 set your own.' };
+    } else if(P && Y){
+      if(px <= stop){
+        status = 'exit';
+        act = { k:'k-sell', t:'Exit ' + sym,
+          b:'At ' + pureInr(px, 2) + ' it is below Pure\u2019s stop ' + pureInr(stop, 2) +
+            '. Pure sells on today\u2019s close \u2014 sell your ' + pureQs(yQty) + ' near the close.' };
+      } else if(diff < -tol){
+        var addQ = pureQ(-diff);
+        var newRisk = (yQty * Math.max(0, Y.avg - stop)) + addQ * (px - stop);
+        status = 'short';
+        act = { k:'k-buy', t:'Add ' + pureQs(addQ) + ' ' + sym,
+          b:'You hold ' + pureQs(yQty) + '; Pure\u2019s weight on your account is ' + pureQs(tQty) + '. Add ' + pureQs(addQ) +
+            ' (about ' + pureInr(addQ * px) + '). After that, a hit on the stop ' + pureInr(stop, 2) + ' costs ' +
+            pureInr(newRisk) + ' (' + (newRisk / yEq * 100).toFixed(2) + '% of your account)' +
+            (newRisk / yEq * 100 > riskPct * 1.5 ? ' \u2014 more than Pure takes, so add fewer.' : '.') };
+      } else if(diff > tol){
+        var trimQ = pureQ(diff);
+        status = 'over';
+        act = { k:'k-day', t:'Trim ' + pureQs(trimQ) + ' ' + sym,
+          b:'You hold ' + pureQs(yQty) + '; Pure\u2019s weight on your account is ' + pureQs(tQty) + '. Sell ' + pureQs(trimQ) +
+            ' (about ' + pureInr(trimQ * px) + ') to match.' };
+      }
+      /* Same stock, different buy price: same stop, different risk */
+      if(!act && Y.avg > stop){
+        var yrPct = yr / yEq * 100;
+        if(yrPct > riskPct * 1.33){
+          var keepQ = pureQ(riskPct / 100 * yEq / (Y.avg - stop));
+          status = 'risk';
+          act = { k:'k-day', t:'More risk than Pure in ' + sym,
+            b:'Your average ' + pureInr(Y.avg, 2) + ' vs Pure\u2019s ' + pureInr(P.avg, 2) + '. At the stop ' + pureInr(stop, 2) +
+              ' you would lose ' + pureInr(yr) + ' \u2014 ' + yrPct.toFixed(2) + '% of your account against Pure\u2019s ' + riskPct +
+              '%. Holding ' + pureQs(keepQ) + ' (sell ' + pureQs(Math.max(0, yQty - keepQ)) + ') brings it back in line.' };
+        }
+      }
+      if(!act && Y.avg > 0 && Y.avg <= stop){
+        act = { k:'k-free', t:sym + ' is risk-free for you',
+          b:'Your average ' + pureInr(Y.avg, 2) + ' is under the stop ' + pureInr(stop, 2) + '. If it is hit you still keep ' +
+            pureInr(yQty * (stop - Y.avg)) + '.' };
+      }
+    }
+    if(act) acts.push(act);
+    rows.push({ sym:sym, tQty:tQty, yQty:yQty, diff:diff, yAvg:Y ? Y.avg : 0, pAvg:P ? P.avg : 0,
+                stop:stop, px:px, yr:yr, status:status });
+  });
+
+  var align = Math.max(0, 100 - (drift + Math.abs(yCash / yEq - pCash / pEq)) / 2 * 100);
+  var order = { 'k-sell':0, 'k-buy':1, 'k-day':2, 'k-free':3 };
+  acts.sort(function(a, b){ return order[a.k] - order[b.k]; });
+
+  var stat = function(tile, l, v, s){
+    return '<div class="' + tile + '"><small>' + l + '</small><b>' + v + '</b><p>' + s + '</p></div>';
+  };
+  var head =
+    '<div class="pu-stats">' +
+      stat('t-real', 'Your account', pureInr(yEq), pureInr(yCash) + ' spare (' + (yCash / yEq * 100).toFixed(0) + '%)') +
+      stat('t-unreal', 'In line with Pure', align.toFixed(0) + '%', 'by weight, cash included') +
+      stat('t-risk', 'Your open risk', pureInr(yRisk), (yRisk / yEq * 100).toFixed(2) + '% if every Pure stop hits') +
+      stat('t-lock', 'Pure\u2019s open risk', ((pRisk / pEq) * 100).toFixed(2) + '%', 'the level to aim for') +
+      stat('t-chg', 'To do', String(acts.filter(function(a){ return a.k !== 'k-free'; }).length), 'actions below') +
+    '</div>';
+
+  var chip = {
+    ok:['In line','pu-up'], missing:['Missing','pu-dn'], extra:['Not in Pure','pu-dn'], exit:['Below stop','pu-dn'],
+    short:['Under','pu-dim'], over:['Over','pu-dim'], risk:['More risk','pu-dn'], skip:['Below stop','pu-dim']
+  };
+  rows.sort(function(a, b){ return (a.status === 'ok') - (b.status === 'ok'); });
+  var table = '<section class="pu-sec"><h4>Side by side <span>' + rows.length + '</span></h4>' +
+    '<div class="pu-tw"><table class="pu-t" data-tbl="mirror"><thead><tr>' +
+    '<th>Instrument</th><th>Status</th><th>Pure qty for you</th><th>Your qty</th><th>Difference</th>' +
+    '<th>Your avg</th><th>Pure avg</th><th>Trailing stop</th><th>Your loss if stop hits</th></tr></thead><tbody>' +
+    rows.map(function(r){
+      var c = chip[r.status] || chip.ok;
+      return '<tr><td class="pu-sym"><button onclick="openChart(\'' + r.sym + '\')">' + r.sym + '</button></td>' +
+        '<td class="pu-l ' + c[1] + '">' + c[0] + '</td>' +
+        '<td>' + (r.tQty ? pureQs(r.tQty) : '-') + '</td>' +
+        '<td>' + (r.yQty ? pureQs(r.yQty) : '-') + '</td>' +
+        '<td class="' + (Math.abs(r.diff) < 1e-9 ? '' : (r.diff > 0 ? 'pu-up' : 'pu-dn')) + '">' +
+          (r.diff > 0 ? '+' : '') + pureQs(r.diff) + '</td>' +
+        '<td>' + (r.yAvg ? pureInr(r.yAvg, 2) : '-') + '</td>' +
+        '<td>' + (r.pAvg ? pureInr(r.pAvg, 2) : '-') + '</td>' +
+        '<td>' + (r.stop ? pureInr(r.stop, 2) : '-') + '</td>' +
+        '<td class="' + (r.yr > 0 ? 'pu-dn' : '') + '">' + (r.yr > 0 ? pureInr(-r.yr) + ' <i>' + (r.yr / yEq * 100).toFixed(2) + '%</i>' : '-') + '</td></tr>';
+    }).join('') + '</tbody></table></div></section>';
+
+  var feed = '<section class="pu-sec"><h4>What to do <span>' + acts.length + '</span></h4>' +
+    (acts.length
+      ? '<div class="pu-feed">' + acts.map(function(a){
+          var lab = { 'k-sell':'Sell', 'k-buy':'Buy', 'k-day':'Adjust', 'k-free':'Fine' }[a.k];
+          return '<div class="pu-note ' + a.k + '"><div class="pu-kind">' + lab + '</div>' +
+            '<div><div class="pu-ntitle">' + a.t + '</div><div class="pu-nbody">' + a.b + '</div></div></div>';
+        }).join('') + '</div>'
+      : '<div class="pu-empty">Your account matches Pure. Nothing to do.</div>') +
+    '<p class="pu-rule">Prices are live in market hours. Pure exits on a close below the trailing stop, so judge stops near the close, not on an intraday dip. Updated holdings from the sheet show up as soon as you edit MY_HOLDINGS.</p>' +
+    '</section>';
+
+  return head + feed + table;
 }
 
 var PURE_KINDS = {
@@ -6451,14 +6706,16 @@ function paintLandingState(){
   if(guest)  guest.style.display = signedIn ? 'none' : 'flex';
   if(member){
     member.style.display = signedIn ? 'inline-flex' : 'none';
-    member.textContent = 'Sign out';
-    member.onclick = signOut;
+    member.textContent = isIntlGuest() ? 'Member sign in' : 'Sign out';
+    member.onclick = isIntlGuest()
+      ? async function(){ await signOut(); openAuth('signin'); }
+      : signOut;
   }
 
   const who = document.getElementById('nav-who');
   if(who){
     who.style.display = signedIn ? 'inline' : 'none';
-    who.textContent = ACCOUNT_EMAIL;
+    who.textContent = isIntlGuest() ? 'Free access outside India' : ACCOUNT_EMAIL;
   }
 
   document.querySelectorAll('.cta').forEach(function(b){
@@ -7873,9 +8130,14 @@ document.addEventListener('keydown', function(e){
 });
 
 async function signOut(){
-  await db.auth.signOut();
+  SIGNING_OUT = true;
+  if(isIntlGuest()) sessionStorage.setItem('ai_no_guest', '1');
+  /* Local only: a guest must not end every other visitor's session. */
+  try { await db.auth.signOut({ scope: 'local' }); } finally { SIGNING_OUT = false; }
   AUTH_STATE = 'out';
   ACCOUNT_EMAIL = '';
+  ACCOUNT_ADMIN = false;
+  PURE_CACHE = {};   /* drop any admin-only data held in memory */
   paintLandingState();
   rebuildTabs();
 }
@@ -7889,11 +8151,18 @@ async function route(quiet){
   const { data:{ session } } = await db.auth.getSession();
   ROUTED_UID = (session && session.user) ? session.user.id : '';
 
+  ACCOUNT_ADMIN = false;
   if(!session){
     AUTH_STATE = 'out';
     ACCOUNT_EMAIL = '';
     ACCOUNT_PLAN = '';
   } else {
+    /* Separate, forgiving read: if the column isn't there yet, or the
+       read fails, the member simply isn't admin — access is untouched. */
+    try {
+      var adm = await db.from('profiles').select('is_admin').eq('id', session.user.id).single();
+      ACCOUNT_ADMIN = !!(adm && !adm.error && adm.data && adm.data.is_admin === true);
+    } catch(e){ ACCOUNT_ADMIN = false; }
     ACCOUNT_EMAIL = session.user.email || '';
     const { data: profile } = await db
       .from('profiles')
@@ -8014,13 +8283,17 @@ async function refreshStatus(){ await route(); }
   buildVoices();
   buildTopHoldings();
   buildVoices();
-  try { await route(); }
+  try { await maybeIntlGuest(); await route(); }
   catch(e){ console.error(e); show('view-landing'); }
   finally { document.getElementById('boot').style.display = 'none'; }
 })();
 
 db.auth.onAuthStateChange(async (event, session) => {
   if(event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+  if(GUEST_BOOTING) return;
+  if(event === 'SIGNED_OUT' && !SIGNING_OUT && isIntlGuest()){
+    await maybeIntlGuest();
+  }
 
   /* Same person, already on the page: this is the tab coming back
      into focus, not a sign-in. Rebuilding here reloaded everything. */
