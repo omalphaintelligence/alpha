@@ -2241,57 +2241,6 @@ body.s-light .new-tag{color:#fff}
     padding-bottom:env(safe-area-inset-bottom);
   }
 }
- /* ---------- Long Term book skins ----------
-   The site's own colour tokens are re-pointed inside the panel, so
-   every existing piece (tables, cards, notes, chart) takes the book's
-   colours without its own rule. Same in light and dark themes. */
-.lt-skin{
-  --ink:var(--sk-bg); --panel:var(--sk-deep); --panel-2:var(--sk-deep);
-  --line:var(--sk-line); --line-soft:var(--sk-line);
-  --text:#F1F4FA; --muted:var(--sk-mute);
-  --brand:var(--sk-acc); --seg:var(--sk-acc); --r70:var(--sk-acc); --curve:var(--sk-acc);
-  --tier-sb:#5CF0A5; --tier-b:#9BF3C4; --tier-w:#FFC94D; --green:#5CF0A5; --red:#FF7A6B;
-  --gold:#FFC94D; --on-fill:#0B0F18;
-  --name:'Manrope',system-ui,sans-serif; --fig:'Manrope',system-ui,sans-serif; --disp:'Manrope',system-ui,sans-serif;
-  font-family:'Manrope',system-ui,sans-serif;
-  background:var(--sk-bg); color:var(--text);
-  border-radius:20px; padding:18px 18px 14px; margin-top:12px;
-  font-variant-numeric:tabular-nums;
-}
-.lt-skin .mp-sec-t{color:var(--text);font-family:'Manrope',sans-serif;font-weight:800}
-.lt-skin .scr-table{background:var(--sk-deep);border-color:var(--sk-line);border-top:2px solid var(--sk-acc);border-radius:12px}
-.lt-skin .scr-table .tbl th{background:var(--sk-deep);color:var(--sk-mute);border-bottom:2px solid var(--sk-acc)}
-.lt-skin .tbl td{color:var(--text);border-bottom-color:var(--sk-line)}
-.lt-skin .tbl tbody tr:hover td{background:color-mix(in srgb,var(--sk-acc) 14%,var(--sk-deep))!important;color:var(--text)}
-.lt-skin .tkr{color:var(--sk-acc)}
-.lt-skin .dim{color:var(--sk-mute)}
-/* the summary strip becomes five colour tiles, like Pure */
-.lt-skin .scorecard{gap:8px;background:none;border:0;border-radius:0;overflow:visible}
-.lt-skin .sc-cell{border-radius:12px;padding:14px 14px 12px}
-.lt-skin .sc-cell .sc-l,.lt-skin .sc-cell .sc-s,.lt-skin .sc-cell .sc-of{color:inherit;opacity:.82}
-.lt-skin .sc-cell .sc-v{color:inherit!important;font-weight:800}
-.lt-skin .sc-cell:nth-child(1){background:#2F80FF;color:#fff}
-.lt-skin .sc-cell:nth-child(2){background:#8B5CF6;color:#fff}
-.lt-skin .sc-cell:nth-child(3){background:#FF6B5A;color:#fff}
-.lt-skin .sc-cell:nth-child(4){background:#5CF0A5;color:#0A2C21}
-.lt-skin .sc-cell:nth-child(5){background:#EEF2F8;color:#121826}
-.lt-skin .sc-note{color:var(--sk-mute)}
-@media(max-width:560px){ .lt-skin{padding:14px 12px 12px;border-radius:16px} }
-/* The light theme paints panels white with a high-specificity rule;
-   inside a skin they take the book's dark panel instead. */
-body.s-light .lt-skin .scr-table,
-body.s-light .lt-skin .mkt-chart,
-body.s-light .lt-skin .ltc-wrap,
-body.s-light .lt-skin .ladder,
-body.s-light .lt-skin .hold,
-body.s-light .lt-skin .perf,
-body.s-light .lt-skin .card,
-body.s-light .lt-skin .tw{background:var(--sk-deep);box-shadow:none}
-body.s-light .lt-skin .scorecard{background:none;box-shadow:none}
-body.s-light .lt-skin .scr-table .tbl th,
-body.s-light .lt-skin th{background:var(--sk-deep)}
-body.s-light .lt-skin .hold:hover{box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}
-
 /* ---------- Pure Portfolio ----------
    Deliberately its own world: pine green and brass, Manrope
    throughout. Same
@@ -2305,7 +2254,6 @@ body.s-light .lt-skin .hold:hover{box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}
   border-radius:20px; padding:18px 18px 14px; margin-top:12px;
   font-variant-numeric:tabular-nums;
 }
-.pure-scope.pu-us{--pu-pine:#14213D;--pu-deep:#0B1429;--pu-line:#27395F;--pu-brass:#FCA311;--pu-mute:#A9B6CF;--pu-paper:#EEF2F8}
 .pure-scope button{font-family:inherit}
 .pu-up{color:var(--pu-mint)!important}
 .pu-dn{color:var(--pu-coral)!important}
@@ -5502,17 +5450,17 @@ function paintPure(body){
   var last = daily[daily.length - 1];
 
   if(!last){
-    body.innerHTML = ltBookBar() + '<div class="pure-scope' + (pureMkt() === 'US' ? ' pu-us' : '') + '">' + pureHead() +
+    body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead() +
       '<div class="pu-empty">The account opens after its first evening run.</div></div>';
     return;
   }
   if(LT_TAB === 'commentary'){
-    body.innerHTML = ltBookBar() + '<div class="pure-scope' + (pureMkt() === 'US' ? ' pu-us' : '') + '">' + pureHead(last) +
+    body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
       renderPureNotes(d.notes || []) + '</div>';
     return;
   }
   if(LT_TAB === 'mirror' && pureIsOwner()){
-    body.innerHTML = ltBookBar() + '<div class="pure-scope' + (pureMkt() === 'US' ? ' pu-us' : '') + '">' + pureHead(last) +
+    body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
       renderPureMirror(d, last) + '</div>';
     pureSortWire(body);
     return;
@@ -5687,7 +5635,7 @@ function paintPure(body){
         }).join('') + '</tbody></table></div></section>'
     : '';
 
-  body.innerHTML = ltBookBar() + '<div class="pure-scope' + (pureMkt() === 'US' ? ' pu-us' : '') + '">' + pureHead(last) +
+  body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
     acctLine + stats + curve + holdings + queue + trades + ledger +
     '<div class="pu-stamp">' + freshLine(pureMkt() === 'US' ? 'pure_us' : 'pure') + '</div></div>';
   pureSortWire(body);
@@ -5992,39 +5940,6 @@ function sortLt(rows){
   });
 }
 
-/* ---------- Long Term book skins ----------
-   Every book gets the Pure treatment: its own dark panel, its own
-   accent, Manrope, colour tiles. India and the US use different
-   colours, so the market is obvious at a glance.
-   bg = panel, deep = tables, line = rules, acc = accent, mute = soft text */
-var LT_SKINS = {
-  NSE: {
-    ALL: { bg:'#1B1F4B', deep:'#12153A', line:'#30367A', acc:'#9AA8FF', mute:'#A3ABD9' },
-    LC:  { bg:'#0E2A4A', deep:'#081E37', line:'#1F4A78', acc:'#5EC8FF', mute:'#9EC0DD' },
-    MC:  { bg:'#08363F', deep:'#05262D', line:'#145A66', acc:'#45E0F0', mute:'#9CCFD6' },
-    SC:  { bg:'#3A1640', deep:'#2A0E2F', line:'#5E2C66', acc:'#F38BFF', mute:'#D2A6D8' },
-    FO:  { bg:'#3F1D10', deep:'#2D1409', line:'#6A3620', acc:'#FF9A5C', mute:'#DDB39C' },
-    ET:  { bg:'#2B2F14', deep:'#1E210D', line:'#4D5428', acc:'#D7E45A', mute:'#C6C9A2' },
-    LM:  { bg:'#3E1324', deep:'#2C0C19', line:'#682944', acc:'#FF7AA8', mute:'#DDA6BA' },
-    MS:  { bg:'#2A2150', deep:'#1D1739', line:'#46397E', acc:'#C3A6FF', mute:'#BDB1E0' }
-  },
-  US: {
-    ALL: { bg:'#3A0F16', deep:'#29090F', line:'#66202C', acc:'#FF6B6B', mute:'#DEA4AA' },
-    LC:  { bg:'#1C2733', deep:'#121B24', line:'#334657', acc:'#9CC9E8', mute:'#AFC0CF' },
-    MC:  { bg:'#3A2A08', deep:'#291D04', line:'#664B14', acc:'#FFC94D', mute:'#DCC79A' },
-    SC:  { bg:'#0D3A33', deep:'#082A24', line:'#1B6356', acc:'#5EF2C2', mute:'#A0D6C8' },
-    ET:  { bg:'#26262D', deep:'#1A1A20', line:'#43434F', acc:'#C9C9D6', mute:'#B5B5C2' }
-  }
-};
-function ltSkinStyle(){
-  var mkt = (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') ? 'US' : 'NSE';
-  var key = ltIsSeg() ? LT_BOOK : 'ALL';
-  var k = (LT_SKINS[mkt] && LT_SKINS[mkt][key]) || LT_SKINS[mkt].ALL;
-  return '--sk-bg:' + k.bg + ';--sk-deep:' + k.deep + ';--sk-line:' + k.line +
-         ';--sk-acc:' + k.acc + ';--sk-mute:' + k.mute;
-}
-function ltSkin(html){ return '<div class="lt-skin" style="' + ltSkinStyle() + '">' + html + '</div>'; }
-
 function paintLongTerm(){
   var body = document.getElementById('ltBody');
   if(!body) return;
@@ -6223,7 +6138,7 @@ function paintLongTerm(){
   '</div>';
 
   if(LT_TAB === 'commentary'){
-    body.innerHTML = subTabs + ltBookBar() + ltSkin(renderLtNotes());
+    body.innerHTML = subTabs + ltBookBar() + renderLtNotes();
     return;
   }
 
@@ -6233,7 +6148,7 @@ function paintLongTerm(){
      rather than showing Indian rupees on an American page. */
   var showRecord = (typeof FEED_MARKET === 'undefined' || FEED_MARKET !== 'US') && !ltIsSeg();
 
-  body.innerHTML = subTabs + ltBookBar() + ltSkin(freshLine(ltFreshKey()) +
+  body.innerHTML = subTabs + ltBookBar() + freshLine(ltFreshKey()) +
     (showRecord ? renderLtPerf(closed) : ltYoungBook()) +
     strip +
     '<div class="mp-sec">' +
@@ -6250,7 +6165,7 @@ function paintLongTerm(){
             '<th>Note</th><th class="r">Date</th>' +
           '</tr></thead><tbody>' + jRows + '</tbody></table></div>' +
         '</div>'
-      : ''));
+      : '');
 
   /* The canvas has to be in the document before it can be sized. */
   setTimeout(drawLtPerf, 20);
