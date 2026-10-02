@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&amp;family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@400;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;family=Literata:wght@400;600;700&amp;family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;family=Source+Sans+3:wght@400;600;700&amp;family=Lora:wght@400;600;700&amp;family=Archivo:wght@400;500;600;700&amp;family=Inter+Tight:wght@400;500;600;700&amp;family=Bricolage+Grotesque:wght@400;600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;family=Libre+Baskerville:wght@400;700&amp;family=Nunito:wght@400;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=Rubik:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 
 <!-- ============================================================
      PART 1 — SHELL STYLES (landing page, auth modal, gate views)
@@ -26,15 +26,15 @@
      Inter does the working text: it was drawn for screens and has
      proper tabular figures, which is what keeps columns aligned now
      that nothing is monospaced. */
-  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --disp:'Fraunces',Georgia,'Times New Roman',serif;
+  --sans:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --disp:'Playfair Display',Georgia,'Times New Roman',serif;
   /* Tickers arrive in capitals, and capitals are unforgiving: an
      old-style serif has delicate, short caps that look stretched at
      any size, and tight tracking makes any all-caps setting look
      cheap. Fraunces has full, warm caps, and the tracking below is
      what actually stops them reading as a database key. */
-  --name:'Fraunces',Georgia,'Times New Roman',serif;
-  --fig:'Fraunces',Georgia,'Times New Roman',serif;
+  --name:'Playfair Display',Georgia,'Times New Roman',serif;
+  --fig:'Playfair Display',Georgia,'Times New Roman',serif;
   /* kept as an alias so older rules still resolve */
   --mono:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --ease:cubic-bezier(.22,.9,.28,1);
@@ -2241,6 +2241,85 @@ body.s-light .new-tag{color:#fff}
     padding-bottom:env(safe-area-inset-bottom);
   }
 }
+/* ---------- The record, in three parts ----------
+   Replaces the full-screen dark scene. Light cards on the light page
+   (the site's own panel tokens, so dark theme follows), strong ink,
+   and one saturated accent per card. */
+.recb{padding-top:22px;padding-bottom:8px}
+.recb-kick{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 12px;letter-spacing:.01em}
+.recb-dot{width:8px;height:8px;border-radius:50%;background:#0E9F6E;box-shadow:0 0 0 4px rgba(14,159,110,.18)}
+.recb-grid{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:14px}
+.recb-card{position:relative;background:var(--panel);border:1px solid var(--line-soft);border-radius:18px;
+  padding:18px 20px 16px;min-height:300px;display:flex;flex-direction:column;overflow:hidden}
+body.s-light .recb-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+.recb-c1{border-top:4px solid #3B4EE0}
+.recb-c2{border-top:4px solid #0E9F6E}
+.recb-c3{border-top:4px solid #E8590C}
+.rb-l{font-size:12.5px;font-weight:600;color:var(--muted)}
+.rb-big{font-family:var(--fig);font-size:38px;font-weight:600;letter-spacing:-.02em;line-height:1.05;margin-top:6px;
+  color:var(--text);font-variant-numeric:tabular-nums lining}
+.rb-sub{font-size:13.5px;font-weight:700;margin-top:4px;color:#0E9F6E}
+#recbCanvas{display:block;width:100%;flex:1;min-height:110px;margin:10px 0 8px}
+.rb-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line-soft);padding-top:10px}
+.rb-row span{display:block;font-size:11px;color:var(--muted)}
+.rb-row b{font-family:var(--fig);font-size:18px;font-weight:600;color:var(--text)}
+.rb-mid{font-size:13px;color:var(--muted);margin-top:8px}
+.rb-mid b{color:var(--text)}
+.rb-bars{flex:1;display:flex;align-items:flex-end;gap:5px;margin-top:12px;min-height:180px;position:relative}
+.rb-bars .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;position:relative}
+.rb-bars .bar i{display:block;width:100%;border-radius:5px 5px 2px 2px;background:#0E9F6E;
+  height:0;transition:height .9s cubic-bezier(.2,.8,.2,1)}
+.rb-bars .bar.neg i{background:#E5484D;border-radius:2px 2px 5px 5px}
+.rb-bars .bar.best i{background:linear-gradient(180deg,#12B886,#087F5B);box-shadow:0 6px 14px -6px rgba(8,127,91,.6)}
+.rb-bars .bar em{font-style:normal;font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;opacity:0;transition:opacity .4s .7s}
+.rb-bars.on .bar em{opacity:1}
+.rb-bars .bar small{font-size:9.5px;color:var(--muted);margin-top:5px}
+.rb-bars .zero{position:absolute;left:0;right:0;height:1px;background:var(--line)}
+.rb-pick{display:flex;align-items:center;gap:12px;margin-top:6px}
+.rb-pick b{font-family:var(--fig);font-size:34px;font-weight:600;color:#E8590C;min-width:88px;text-align:center;font-variant-numeric:tabular-nums lining}
+.rb-step{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+  font-size:20px;line-height:1;cursor:pointer}
+.rb-step:hover{border-color:#E8590C;color:#E8590C}
+.rb-amts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.rb-amts button{border:1px solid var(--line);background:transparent;color:var(--text);font-size:12.5px;font-weight:600;
+  padding:5px 11px;border-radius:999px;cursor:pointer}
+.rb-amts button.on{background:#E8590C;border-color:#E8590C;color:#fff}
+.rb-vs{margin-top:auto;padding-top:12px;display:flex;flex-direction:column;gap:7px}
+.rb-vsbar{position:relative;height:24px;border-radius:7px;background:var(--panel-2);overflow:hidden}
+.rb-vsbar i{position:absolute;left:0;top:0;bottom:0;width:0;background:#E8590C;border-radius:7px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.rb-vsbar.fd i{background:#94A3B8}
+.rb-vsbar span{position:relative;z-index:1;font-size:11.5px;font-weight:700;color:#fff;padding:0 9px;line-height:24px;
+  text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.rb-vsbar.fd span{color:var(--text);text-shadow:none}
+.recb-note{font-size:11.5px;color:var(--muted);margin:10px 0 0}
+@media(max-width:980px){ .recb-grid{grid-template-columns:1fr 1fr} .recb-c1{grid-column:1 / -1} }
+@media(max-width:640px){
+  .recb-grid{grid-template-columns:1fr}
+  .recb-card{min-height:0}
+  .rb-big{font-size:32px}
+  .rb-bars{min-height:150px}
+  .rb-bars .bar em{display:none}
+  .rb-bars .bar.best em{display:block}
+}
+/* ---------- One typeface pairing per segment ----------
+   Each tab re-points the four font tokens, so every rule inside it
+   (headings, figures, tickers, text) switches together. The pane
+   also sets font-family itself, because body text inherits the
+   resolved font, not the token. Pure keeps Manrope. */
+#ltab-overview,#record,#hero-wrap{--sans:'DM Sans',system-ui,sans-serif;--disp:'Literata',Georgia,serif;--name:'Literata',Georgia,serif;--fig:'Literata',Georgia,serif}
+#ltab-screener{--sans:'Barlow',system-ui,sans-serif;--disp:'Barlow Semi Condensed','Barlow',sans-serif;--name:'Barlow Semi Condensed','Barlow',sans-serif;--fig:'Barlow Semi Condensed','Barlow',sans-serif}
+#ltab-model{--sans:'Outfit',system-ui,sans-serif;--disp:'Outfit',system-ui,sans-serif;--name:'Outfit',system-ui,sans-serif;--fig:'Outfit',system-ui,sans-serif}
+#ltab-longterm{--sans:'Source Sans 3',system-ui,sans-serif;--disp:'Lora',Georgia,serif;--name:'Lora',Georgia,serif;--fig:'Lora',Georgia,serif}
+#ltab-ready{--sans:'Archivo',system-ui,sans-serif;--disp:'Archivo',system-ui,sans-serif;--name:'Archivo',system-ui,sans-serif;--fig:'Archivo',system-ui,sans-serif}
+#ltab-bigbets{--sans:'Inter Tight',system-ui,sans-serif;--disp:'Bricolage Grotesque',system-ui,sans-serif;--name:'Bricolage Grotesque',system-ui,sans-serif;--fig:'Bricolage Grotesque',system-ui,sans-serif}
+#ltab-calls{--sans:'Work Sans',system-ui,sans-serif;--disp:'Libre Baskerville',Georgia,serif;--name:'Libre Baskerville',Georgia,serif;--fig:'Libre Baskerville',Georgia,serif}
+#ltab-ask{--sans:'Nunito',system-ui,sans-serif;--disp:'Nunito',system-ui,sans-serif;--name:'Nunito',system-ui,sans-serif;--fig:'Nunito',system-ui,sans-serif}
+#ltab-pricing{--sans:'Lexend',system-ui,sans-serif;--disp:'Lexend',system-ui,sans-serif;--name:'Lexend',system-ui,sans-serif;--fig:'Lexend',system-ui,sans-serif}
+#ltab-account{--sans:'Rubik',system-ui,sans-serif;--disp:'Rubik',system-ui,sans-serif;--name:'Rubik',system-ui,sans-serif;--fig:'Rubik',system-ui,sans-serif}
+#ltab-overview,#record,#hero-wrap,#ltab-screener,#ltab-model,#ltab-longterm,#ltab-ready,
+#ltab-bigbets,#ltab-calls,#ltab-ask,#ltab-pricing,#ltab-account{font-family:var(--sans)}
+:where(#ltab-overview,#ltab-screener,#ltab-model,#ltab-longterm,#ltab-ready,#ltab-bigbets,#ltab-calls,
+#ltab-ask,#ltab-pricing,#ltab-account) :where(button,input,select,textarea){font-family:inherit}
 /* ---------- Pure Portfolio ----------
    Deliberately its own world: pine green and brass, Manrope
    throughout. Same
@@ -2815,21 +2894,53 @@ body.s-light .new-tag{color:#fff}
     </div>
   </header>
 
-  <div class="rec-scene" id="record">
-  <div class="rec-shade"></div>
-  <canvas id="recCanvas" aria-hidden="true"></canvas>
-  <div class="wrap-x rec-sky">
-    <div class="rec-kicker">Thirteen years of the same rule</div>
-    <h2 class="rec-title">Alpha Intel</h2>
-    <div class="rec-line"></div>
-    <div class="rec-v" id="recEnd">₹5,00,000</div>
-    <div class="rec-s" id="recGain">—</div>
-    <div class="rec-grid">
-      <div><span>Compounded</span><b id="recCagr">—</b></div>
-      <div><span>Closed trades</span><b>2,343</b></div>
-      <div><span>Profitable</span><b>48%</b></div>
+  <section class="recb wrap-x" id="record" aria-label="The record">
+    <div class="recb-kick"><span class="recb-dot"></span>Thirteen years of the same rule · Long Term book, backtested</div>
+    <div class="recb-grid">
+
+      <article class="recb-card recb-c1">
+        <div class="rb-l">₹5,00,000 put in, January 2013</div>
+        <div class="rb-big" id="recEnd">₹5,00,000</div>
+        <div class="rb-sub" id="recGain">—</div>
+        <canvas id="recbCanvas" aria-hidden="true"></canvas>
+        <div class="rb-row">
+          <div><span>Compounded</span><b id="recCagr">—</b></div>
+          <div><span>Closed trades</span><b>2,343</b></div>
+          <div><span>Profitable</span><b>48%</b></div>
+        </div>
+      </article>
+
+      <article class="recb-card recb-c2">
+        <div class="rb-l">Year by year</div>
+        <div class="rb-mid"><b id="recUp">—</b> of <b id="recYrs">—</b> years up · best <b id="recBest">—</b></div>
+        <div class="rb-bars" id="recBars"></div>
+      </article>
+
+      <article class="recb-card recb-c3">
+        <div class="rb-l">If you had started in</div>
+        <div class="rb-pick">
+          <button class="rb-step" id="recYrDn" aria-label="Earlier year">‹</button>
+          <b id="recYr">2016</b>
+          <button class="rb-step" id="recYrUp" aria-label="Later year">›</button>
+        </div>
+        <div class="rb-amts" id="recAmts">
+          <button data-a="100000" class="on">₹1 lakh</button>
+          <button data-a="500000">₹5 lakh</button>
+          <button data-a="1000000">₹10 lakh</button>
+        </div>
+        <div class="rb-l" style="margin-top:14px">it would be today</div>
+        <div class="rb-big" id="recCalc">—</div>
+        <div class="rb-sub" id="recCalcX">—</div>
+        <div class="rb-vs">
+          <div class="rb-vsbar"><i id="recVsA"></i><span id="recVsAl">Alpha Intel</span></div>
+          <div class="rb-vsbar fd"><i id="recVsB"></i><span id="recFd">7% fixed deposit</span></div>
+        </div>
+      </article>
+
     </div>
-  </div></div><div class="wrap-x" id="hero-wrap">
+    <p class="recb-note">Backtest of the Long Term rules on NSE data. Past results do not promise future returns.</p>
+  </section>
+<div class="wrap-x" id="hero-wrap">
     <div class="hero">
       <div class="hero-grid">
         <div>
@@ -7473,194 +7584,201 @@ function buildPublicModel(force){
   }
 }
 
-/* --- The record, over the footage ---
-   The clip already supplies the landscape, so the canvas draws only
-   the curve — in the same warm light as the sky behind it, sitting
-   low across the ridge line. Drawing an invented hill on top of a
-   real one would fight it; a single line reads as something written
-   across the scene.
-
-   The runners the earlier version drew are gone. There is a real
-   place in shot now, and a stick figure standing on it looked like
-   what it was. --- */
+/* --- The record, in three parts ---
+   1. the curve, drawing itself, with the value counting up beside it
+   2. every calendar year as a bar, growing in when scrolled into view
+   3. "if you had started in…", cycling through the years on its own
+      until the reader picks a year or an amount
+   Everything comes from LT_CURVE, which is already in this file. --- */
 function drawRecord(){
-  var cv = document.getElementById('recCanvas');
+  var cv = document.getElementById('recbCanvas');
   if(!cv || typeof LT_CURVE === 'undefined' || LT_CURVE.length < 20) return;
 
   var series = LT_CURVE;
+  var start = new Date(LT_CURVE_START);
+  function dateAt(i){ var d = new Date(start); d.setDate(d.getDate() + i * 7); return d; }
   var mult = series[series.length - 1] / series[0];
   var yrs = (series.length - 1) / 52.18;
+  var cagr = Math.pow(mult, 1 / yrs) - 1;
 
   var elEnd = document.getElementById('recEnd');
   var elGain = document.getElementById('recGain');
   var elCagr = document.getElementById('recCagr');
-  if(elCagr) elCagr.textContent = '+' + ((Math.pow(mult, 1 / yrs) - 1) * 100).toFixed(1) + '%';
+  if(elCagr) elCagr.textContent = '+' + (cagr * 100).toFixed(1) + '%';
 
-  /* Warm, to belong to the light in the clip. */
-  /* Picked out of the footage itself: the pale gold along the ridge
-     where the sun catches the grass. */
-  var LINE = '#FFD79A';
-  var GLOW = '#F5A63C';
+  /* ---- year ends ---- */
+  var yearEnd = {}, firstYear = start.getFullYear();
+  for(var i = 0; i < series.length; i++) yearEnd[dateAt(i).getFullYear()] = i;
+  var years = Object.keys(yearEnd).map(Number).sort();
+  var lastYear = years[years.length - 1];
+  var yearly = years.map(function(y, k){
+    var from = k === 0 ? series[0] : series[yearEnd[years[k - 1]]];
+    return { y: y, r: series[yearEnd[y]] / from - 1, ytd: y === lastYear };
+  });
 
-  var W, H, pf, X, Y;
-  var progress = 0, started = 0, running = false;
-  var MARKS = [];
-
+  /* ---- card 1: the curve ---- */
+  var W, H, X, Y, pf, progress = 0, running = false, started = 0;
+  function css(v, d){ var c = getComputedStyle(document.body).getPropertyValue(v).trim(); return c || d; }
   function layout(){
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = cv.clientWidth; H = cv.clientHeight;
     if(!W || !H) return false;
     cv.width = W * dpr; cv.height = H * dpr;
     cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    pf = series.map(function(v){ return v / series[0] * 100; });
-
-    var lo = Math.log(Math.min.apply(null, pf));
-    var hi = Math.log(Math.max.apply(null, pf));
-    var span = (hi - lo) || 1;
-
-    /* Low in the frame, across the dark part of the footage, so it
-       never crosses the words. */
-    /* Low, across the foreground hillside, well clear of the words
-       and of the runners on the skyline. */
-    var top = H * 0.70, base = H * 0.95;
-    X = function(i){ return i / (pf.length - 1) * W; };
-    Y = function(v){ return base - (Math.log(v) - lo) / span * (base - top); };
-
-    MARKS = [];
-    [[2014,'+88%'], [2020,'+75%'], [2023,'+55%']].forEach(function(m){
-      for(var i = 0; i < series.length; i++){
-        var d = new Date(LT_CURVE_START);
-        d.setDate(d.getDate() + i * 7);
-        if(d.getFullYear() === m[0]){ MARKS.push({ i: i, year: m[0], label: m[1] }); break; }
-      }
-    });
+    pf = series.map(function(v){ return v / series[0]; });
+    var lo = Math.log(Math.min.apply(null, pf)), hi = Math.log(Math.max.apply(null, pf)), span = (hi - lo) || 1;
+    X = function(i){ return 4 + i / (pf.length - 1) * (W - 8); };
+    Y = function(v){ return H - 6 - (Math.log(v) - lo) / span * (H - 16); };
     return true;
   }
-
   function draw(){
     if(!pf) return;
     var g = cv.getContext('2d');
     g.clearRect(0, 0, W, H);
-
     var upto = Math.max(1, Math.floor(progress * (pf.length - 1)));
-
-    /* A soft wash under the line, enough to lift it off the hillside
-       without hiding what is behind. */
-    var fill = g.createLinearGradient(0, H * 0.55, 0, H);
-    fill.addColorStop(0, 'rgba(255,215,154,0.16)');
-    fill.addColorStop(1, 'rgba(255,215,154,0)');
-    g.beginPath();
-    g.moveTo(X(0), H);
-    g.lineTo(X(0), Y(pf[0]));
+    var grad = g.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, '#3B4EE0'); grad.addColorStop(1, '#0E9F6E');
+    var fill = g.createLinearGradient(0, 0, 0, H);
+    fill.addColorStop(0, 'rgba(59,78,224,.18)'); fill.addColorStop(1, 'rgba(59,78,224,0)');
+    g.beginPath(); g.moveTo(X(0), H); g.lineTo(X(0), Y(pf[0]));
     for(var i = 1; i <= upto; i++) g.lineTo(X(i), Y(pf[i]));
-    g.lineTo(X(upto), H);
-    g.closePath();
-    g.fillStyle = fill;
-    g.fill();
-
-    /* the line */
-    g.beginPath();
-    g.moveTo(X(0), Y(pf[0]));
+    g.lineTo(X(upto), H); g.closePath(); g.fillStyle = fill; g.fill();
+    g.beginPath(); g.moveTo(X(0), Y(pf[0]));
     for(var k = 1; k <= upto; k++) g.lineTo(X(k), Y(pf[k]));
-    g.strokeStyle = LINE;
-    g.lineWidth = 2.6;
-    g.lineJoin = 'round'; g.lineCap = 'round';
-    g.shadowColor = GLOW; g.shadowBlur = 16;
-    g.stroke();
-    g.shadowBlur = 0;
-
-    /* the point it has reached */
-    g.beginPath();
-    g.arc(X(upto), Y(pf[upto]), progress < 1 ? 5 : 4, 0, Math.PI * 2);
-    g.fillStyle = '#FFFFFF';
-    g.shadowColor = GLOW; g.shadowBlur = 18;
-    g.fill();
-    g.shadowBlur = 0;
-
-    /* years already passed */
-    if(W > 620){
-      g.font = '600 11px Inter, sans-serif';
-      MARKS.forEach(function(m){
-        if(m.i > upto) return;
-        var mx = X(m.i), my = Y(pf[m.i]);
-        g.strokeStyle = 'rgba(255,255,255,.28)'; g.lineWidth = 1;
-        g.beginPath(); g.moveTo(mx, my - 6); g.lineTo(mx, my - 26); g.stroke();
-        g.beginPath(); g.arc(mx, my, 3, 0, Math.PI * 2);
-        g.fillStyle = LINE; g.fill();
-        g.fillStyle = 'rgba(255,255,255,.86)';
-        var lbl = m.year + '  ' + m.label;
-        g.fillText(lbl, mx - g.measureText(lbl).width / 2, my - 33);
-      });
-    }
+    g.strokeStyle = grad; g.lineWidth = 2.6; g.lineJoin = 'round'; g.lineCap = 'round'; g.stroke();
+    g.beginPath(); g.arc(X(upto), Y(pf[upto]), 4.5, 0, Math.PI * 2);
+    g.fillStyle = '#0E9F6E'; g.fill();
+    g.lineWidth = 2; g.strokeStyle = css('--panel', '#fff'); g.stroke();
   }
-
-  var DRAW = 4600, HOLD = 3600;
-  var CYCLE = DRAW + HOLD;
-
-  function tick(now){
-    if(!running) return;
-    var t = (now - started) % CYCLE;
-    progress = t < DRAW ? (1 - Math.pow(1 - t / DRAW, 2.1)) : 1;
-
-    var at = Math.floor(progress * (series.length - 1));
-    if(!isFinite(at)) at = 0;
-    at = Math.max(0, Math.min(series.length - 1, at));
-
+  function setValue(at){
     var val = series[at];
     if(elEnd) elEnd.textContent = pfMoney(val);
     if(elGain){
       var pct = Math.round((val / series[0] - 1) * 100);
-      elGain.textContent = (pct >= 0 ? '+' : '\u2212') +
-        Math.abs(pct).toLocaleString('en-IN') + '% since January 2013';
+      elGain.textContent = (pct >= 0 ? '+' : '\u2212') + Math.abs(pct).toLocaleString('en-IN') + '% since January 2013';
     }
-
+  }
+  var DRAW = 4200, HOLD = 4200, CYCLE = DRAW + HOLD;
+  function tick(now){
+    if(!running) return;
+    var t = (now - started) % CYCLE;
+    progress = t < DRAW ? (1 - Math.pow(1 - t / DRAW, 2.1)) : 1;
+    setValue(Math.max(0, Math.min(series.length - 1, Math.floor(progress * (series.length - 1)))));
     draw();
     requestAnimationFrame(tick);
   }
 
+  /* ---- card 2: year by year ---- */
+  var barsEl = document.getElementById('recBars');
+  function buildBars(){
+    if(!barsEl) return;
+    var max = Math.max.apply(null, yearly.map(function(x){ return Math.abs(x.r); })) || 1;
+    var hasNeg = yearly.some(function(x){ return x.r < 0; });
+    var negMax = hasNeg ? Math.max.apply(null, yearly.filter(function(x){ return x.r < 0; }).map(function(x){ return -x.r; })) : 0;
+    var posShare = max / (max + negMax);            /* share of height above zero */
+    var best = yearly.filter(function(x){ return !x.ytd; }).reduce(function(a, b){ return b.r > a.r ? b : a; }, yearly[0]);
+    barsEl.innerHTML = yearly.map(function(x){
+      var lab = (x.r >= 0 ? '+' : '\u2212') + Math.abs(Math.round(x.r * 100)) + '%';
+      return '<div class="bar' + (x.r < 0 ? ' neg' : '') + (x === best ? ' best' : '') + '" data-r="' + x.r + '">' +
+        '<em>' + lab + '</em><i></i><small>' + (x.ytd ? '\u2019' + String(x.y).slice(2) + '*' : '\u2019' + String(x.y).slice(2)) + '</small></div>';
+    }).join('');
+    barsEl.querySelectorAll('.bar').forEach(function(b){
+      b.style.paddingBottom = hasNeg ? '0' : '0';
+    });
+    var up = yearly.filter(function(x){ return x.r > 0; }).length;
+    var u = document.getElementById('recUp'); if(u) u.textContent = up;
+    var n = document.getElementById('recYrs'); if(n) n.textContent = yearly.length;
+    var bb = document.getElementById('recBest'); if(bb) bb.textContent = best.y + ' +' + Math.round(best.r * 100) + '%';
+    barsEl._grow = function(){
+      var h = barsEl.clientHeight - 34;
+      barsEl.querySelectorAll('.bar').forEach(function(b){
+        var r = +b.getAttribute('data-r');
+        var px = Math.max(3, Math.abs(r) / (r >= 0 ? max : (negMax || 1)) * h * (r >= 0 ? posShare : 1 - posShare));
+        b.querySelector('i').style.height = px + 'px';
+      });
+      barsEl.classList.add('on');
+    };
+  }
+
+  /* ---- card 3: if you had started in… ---- */
+  var yrEl = document.getElementById('recYr'), calcEl = document.getElementById('recCalc'),
+      calcX = document.getElementById('recCalcX'), vsA = document.getElementById('recVsA'),
+      vsB = document.getElementById('recVsB'), fdEl = document.getElementById('recFd');
+  var pickYears = years.filter(function(y){ return y < lastYear; });
+  var yIdx = Math.max(0, pickYears.indexOf(2016)), amt = 100000, auto = true, autoTimer = null;
+  function startIndex(y){
+    for(var i = 0; i < series.length; i++) if(dateAt(i).getFullYear() === y) return i;
+    return 0;
+  }
+  function countTo(el, to, ms){
+    if(!el) return;
+    var from = el._v || 0, t0 = performance.now();
+    function step(now){
+      var p = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - p, 3);
+      el._v = from + (to - from) * e;
+      el.textContent = pfMoney(Math.round(el._v));
+      if(p < 1) requestAnimationFrame(step);
+    }
+    REDUCED ? (el._v = to, el.textContent = pfMoney(to)) : requestAnimationFrame(step);
+  }
+  function paintCalc(){
+    var y = pickYears[yIdx];
+    var i0 = startIndex(y), endV = series[series.length - 1];
+    var grow = endV / series[i0];
+    var today = amt * grow;
+    var yrsHeld = (series.length - 1 - i0) / 52.18;
+    var fd = amt * Math.pow(1.07, yrsHeld);
+    if(yrEl) yrEl.textContent = y;
+    countTo(calcEl, today, 900);
+    if(calcX) calcX.textContent = grow.toFixed(1) + '\u00d7 your money in ' + yrsHeld.toFixed(1) + ' years';
+    if(fdEl) fdEl.textContent = '7% fixed deposit: ' + pfMoney(Math.round(fd));
+    var al = document.getElementById('recVsAl');
+    if(al) al.textContent = 'Alpha Intel: ' + pfMoney(Math.round(today));
+    var top = Math.max(today, fd);
+    if(vsA) vsA.style.width = (today / top * 100).toFixed(1) + '%';
+    if(vsB) vsB.style.width = (fd / top * 100).toFixed(1) + '%';
+  }
+  function stopAuto(){ auto = false; if(autoTimer){ clearInterval(autoTimer); autoTimer = null; } }
+  var dn = document.getElementById('recYrDn'), upB = document.getElementById('recYrUp');
+  if(dn) dn.onclick = function(){ stopAuto(); yIdx = Math.max(0, yIdx - 1); paintCalc(); };
+  if(upB) upB.onclick = function(){ stopAuto(); yIdx = Math.min(pickYears.length - 1, yIdx + 1); paintCalc(); };
+  document.querySelectorAll('#recAmts button').forEach(function(b){
+    b.onclick = function(){
+      stopAuto();
+      document.querySelectorAll('#recAmts button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on'); amt = +b.getAttribute('data-a'); paintCalc();
+    };
+  });
+
+  /* ---- run when seen ---- */
+  buildBars();
+  var grown = false;
   function play(){
     if(!layout()) return;
-    if(REDUCED){
-      progress = 1;
-      if(elEnd) elEnd.textContent = pfMoney(series[series.length - 1]);
-      if(elGain) elGain.textContent = '+' + Math.round((mult - 1) * 100).toLocaleString('en-IN') +
-                                      '% since January 2013';
-      draw();
-      return;
-    }
-    started = performance.now();
-    running = true;
-    requestAnimationFrame(tick);
-  }
-
-  /* The video and the drawing both idle when nobody is looking. */
-  var vid = document.getElementById('recVideo');
-  var visible = false, awake = true;
-
-  function maybeRun(){
-    var should = visible && awake;
-    if(should && !running) play();
-    else if(!should) running = false;
-    if(vid){
-      if(should && vid.paused) vid.play().catch(function(){});
-      else if(!should && !vid.paused) vid.pause();
+    if(!grown && barsEl && barsEl._grow){ barsEl._grow(); grown = true; }
+    paintCalc();
+    if(REDUCED){ progress = 1; setValue(series.length - 1); draw(); return; }
+    if(!running){ started = performance.now(); running = true; requestAnimationFrame(tick); }
+    if(auto && !autoTimer){
+      autoTimer = setInterval(function(){
+        if(!auto) return;
+        yIdx = (yIdx + 1) % pickYears.length; paintCalc();
+      }, 3200);
     }
   }
-
-  if(!REDUCED && 'IntersectionObserver' in window){
+  function pause(){
+    running = false;
+    if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+  }
+  if('IntersectionObserver' in window){
     new IntersectionObserver(function(es){
-      es.forEach(function(e){ visible = e.isIntersecting; });
-      maybeRun();
-    }, { threshold: .12 }).observe(cv);
-    document.addEventListener('visibilitychange', function(){
-      awake = !document.hidden; maybeRun();
-    });
+      es.forEach(function(e){ e.isIntersecting && !document.hidden ? play() : pause(); });
+    }, { threshold: .15 }).observe(document.getElementById('record'));
+    document.addEventListener('visibilitychange', function(){ if(document.hidden) pause(); });
   } else {
     play();
   }
-
-  window.addEventListener('resize', function(){ if(layout()) draw(); });
+  window.addEventListener('resize', function(){ if(layout()) draw(); if(barsEl && barsEl._grow) barsEl._grow(); });
 }
 
 if(document.readyState === 'loading'){
@@ -10173,7 +10291,7 @@ function drawPerf(cfg){
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.scale(dpr, dpr);
-    ctx.font = '11px Inter, sans-serif';
+    ctx.font = '11px "Plus Jakarta Sans", sans-serif';
 
     /* horizontal grid + y labels */
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
@@ -11801,7 +11919,7 @@ function drawEquityCurve(curve){
     ctx.clearRect(0,0,cv.width,cv.height);
     ctx.scale(dpr,dpr);
 
-    ctx.font = '11px Inter, sans-serif';
+    ctx.font = '11px "Plus Jakarta Sans", sans-serif';
     ctx.textBaseline = "middle";
     [max, 0, min].forEach(function(v){
       if(v===0 && (max===0||min===0)) return;
