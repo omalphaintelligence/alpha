@@ -5241,7 +5241,7 @@ function ltBookBar(){
     return '<div class="seg-bar"><button class="seg-btn' + (LT_BOOK !== 'PURE' ? ' on' : '') +
       '" onclick="setLtBook(\'ALL\')">Long Term</button></div>' +
       '<button class="pure-entry' + (LT_BOOK === 'PURE' ? ' on' : '') + '" onclick="setLtBook(\'PURE\')">' +
-      'Pure Portfolio<small>risk-sized account, Mid + small</small></button>';
+      'Pure Portfolio<small>risk-sized account, Large + mid + small</small></button>';
   }
   /* Pure is an account, not a segment book, so it sits on its own
      line under the segment pills rather than among them. */
@@ -5251,7 +5251,7 @@ function ltBookBar(){
       b[1] + '</button>';
   }).join('') + '</div>' +
   '<button class="pure-entry' + (LT_BOOK === 'PURE' ? ' on' : '') + '" onclick="setLtBook(\'PURE\')">' +
-    'Pure Portfolio<small>risk-sized account, Mid + small</small></button>';
+    'Pure Portfolio<small>risk-sized account, Large + mid + small</small></button>';
 }
 
 function setLtBook(b){
@@ -5318,7 +5318,7 @@ function loadLtBook(b){
 
 /* ============================================================
    PURE PORTFOLIO
-   A broker-style account inside Long Term: Mid + small names,
+   A broker-style account inside Long Term: large, mid and small names,
    sized by risk to the stop, with holdings, tradebook, funds
    ledger and charges. Its own tables (pure_*), and its own look:
    pine and brass, Manrope throughout, nothing shared with
