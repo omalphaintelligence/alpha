@@ -2971,6 +2971,32 @@ body.s-light .perf-split .perf-tops>div,body.s-light .perf-split .perf-card{
 @media(prefers-reduced-motion:reduce){ .yb-c i{animation:none} }
 @media(max-width:900px){ .dash-scope .perf-chartrow,.perf-chartrow{grid-template-columns:1fr} }
 @media(max-width:560px){ .yb-c em{display:none} .yb-c.best em{display:block} }
+/* ---------- Book trio ----------
+   Three cards on top of every book with a record: a square curve
+   (same length for time and value), year by year, and the "if you
+   had started in" calculator. Under it, the detailed chart keeps
+   two thirds and the window figures sit beside it. */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.trio-card{position:relative;background:var(--panel);border:1px solid var(--line-soft);border-radius:18px;
+  padding:18px 20px 16px;display:flex;flex-direction:column;min-width:0}
+body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+.trio .tc1{border-top:4px solid #3B4EE0}
+.trio .tc2{border-top:4px solid #0E9F6E}
+.trio .tc3{border-top:4px solid #E8590C}
+.trio .rb-big{font-size:32px}
+.trio-sq{position:relative;width:100%;aspect-ratio:1/1;max-height:300px;margin:10px auto 8px}
+.trio-sq canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.trio-bars{flex:1;display:flex;flex-direction:column}
+.trio-bars .yb{min-height:200px}
+.perf-sidec .perf-tops{display:flex!important;flex-direction:column;gap:12px;margin-top:10px!important}
+.perf-sidec .perf-tops>div{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+.perf-sidec .perf-tops .perf-lede{display:none}
+.perf-sidec .perf-k-v{font-size:26px!important}
+@media(max-width:980px){ .trio{grid-template-columns:1fr 1fr} .trio .tc1{grid-column:1 / -1} .trio-sq{max-height:340px;max-width:340px} }
+.trio .tc3 .rb-vs{margin-top:auto;padding-top:14px}
+.trio .rb-pick{margin-top:8px}
+.trio .rb-amts{margin-top:12px}
+@media(max-width:640px){ .trio{grid-template-columns:1fr} }
 </style>
 </head>
 <body class="s-light">
@@ -5376,31 +5402,9 @@ function renderLtPerf(closed){
 
   /* In parts, like the Model Portfolio: tiles, chart card, the
      summary cards, then the full record. */
+  setTimeout(function(){ trioInit('ltTrio', trioWeekly(LT_CURVE, LT_CURVE_START), { accent:LT_ACCENT, name:'Long Term', startAmount:LT_CURVE[0] }); }, 0);
   return '<div class="perf perf-split">' +
-    '<div class="perf-tops">' +
-      '<div class="perf-lede">' +
-        '<div class="cap-row">' +
-          '<label class="cap-l" for="ltCapIn">Invested ' +
-            st.startDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + '</label>' +
-          '<div class="cap-in"><span>\u20b9</span>' +
-            '<input id="ltCapIn" type="text" inputmode="numeric" value="' +
-              Math.round(LT_CAP_INPUT).toLocaleString('en-IN') +
-              '" oninput="setLtCapital(this.value)"></div>' +
-        '</div>' +
-        '<div class="cap-out">would be worth <b style="color:' + hue + '">' +
-          pfMoney(st.closing * (LT_CAP_INPUT / st.opening)) + '</b> today</div>' +
-        '<div class="cap-note">Percentages below are for the selected window.</div>' +
-      '</div>' +
-      '<div><div class="perf-k-l" style="color:' + LT_ACCENT + '">Long Term' +
-        '<span class="perf-k-p">' + pct(st.totalPct) + '</span></div>' +
-        '<div class="perf-k-v">' + pfMoney(st.closing) + '</div></div>' +
-      (st.benchPct != null && st.benchFull
-        ? '<div><div class="perf-k-l" style="color:var(--muted)">' + PF_BENCH_LABEL +
-          '<span class="perf-k-p">' + pct(st.benchPct) + '</span></div>' +
-          '<div class="perf-k-v dim">' + pct(st.benchPct) + '</div></div>'
-        : '') +
-    '</div>' +
-
+    trioHTML('ltTrio', LT_ACCENT) +
     '<div class="perf-chartrow">' +
     '<div class="perf-card perf-chartc" style="--pc:' + LT_ACCENT + '">' +
     '<div class="perf-hd">' +
@@ -5429,8 +5433,31 @@ function renderLtPerf(closed){
       'Past performance does not guarantee future returns.</div>' +
     '</div>' +
     '<div class="perf-card perf-sidec" style="--yb-best:' + LT_ACCENT + '">' +
-      '<div class="yb-ttl">Year by year</div>' +
-      perfYearBars(st.yearRows.slice().reverse().map(function(y){ return { year:y.year, pct:y.pct, partial:y.partial }; }), LT_ACCENT) +
+      '<div class="yb-ttl">This window</div>' +
+    '<div class="perf-tops">' +
+      '<div class="perf-lede">' +
+        '<div class="cap-row">' +
+          '<label class="cap-l" for="ltCapIn">Invested ' +
+            st.startDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + '</label>' +
+          '<div class="cap-in"><span>\u20b9</span>' +
+            '<input id="ltCapIn" type="text" inputmode="numeric" value="' +
+              Math.round(LT_CAP_INPUT).toLocaleString('en-IN') +
+              '" oninput="setLtCapital(this.value)"></div>' +
+        '</div>' +
+        '<div class="cap-out">would be worth <b style="color:' + hue + '">' +
+          pfMoney(st.closing * (LT_CAP_INPUT / st.opening)) + '</b> today</div>' +
+        '<div class="cap-note">Percentages below are for the selected window.</div>' +
+      '</div>' +
+      '<div><div class="perf-k-l" style="color:' + LT_ACCENT + '">Long Term' +
+        '<span class="perf-k-p">' + pct(st.totalPct) + '</span></div>' +
+        '<div class="perf-k-v">' + pfMoney(st.closing) + '</div></div>' +
+      (st.benchPct != null && st.benchFull
+        ? '<div><div class="perf-k-l" style="color:var(--muted)">' + PF_BENCH_LABEL +
+          '<span class="perf-k-p">' + pct(st.benchPct) + '</span></div>' +
+          '<div class="perf-k-v dim">' + pct(st.benchPct) + '</div></div>'
+        : '') +
+    '</div>' +
+
     '</div>' +
     '</div>' +
     '<div class="perf-card perf-cardsc">' +
@@ -10733,6 +10760,215 @@ function perfBlockForMarket(){
   return renderPerfBlock();
 }
 
+/* ---------- Book trio: curve · year by year · "if you had started" ----------
+   The same three cards as the landing page, for any book that has a
+   long enough record. The curve sits in a square panel, so time and
+   value get the same length on screen.
+   pts: [{ t: ms, v: value }] oldest first.
+   o:   { accent, startLabel, amounts: [..], fdRate } */
+function trioHTML(id, accent){
+  var a = accent || '#3B4EE0';
+  return '<div class="trio" id="' + id + '" style="--ta:' + a + '">' +
+    '<article class="trio-card tc1">' +
+      '<div class="rb-l" id="' + id + '-l">\u2014</div>' +
+      '<div class="rb-big" id="' + id + '-v">\u2014</div>' +
+      '<div class="rb-sub" id="' + id + '-g">\u2014</div>' +
+      '<div class="trio-sq"><canvas id="' + id + '-c" aria-hidden="true"></canvas></div>' +
+      '<div class="rb-row">' +
+        '<div><span>Compounded</span><b id="' + id + '-cagr">\u2014</b></div>' +
+        '<div><span>Years</span><b id="' + id + '-yrs">\u2014</b></div>' +
+        '<div><span>Worst fall</span><b id="' + id + '-dd">\u2014</b></div>' +
+      '</div>' +
+    '</article>' +
+    '<article class="trio-card tc2">' +
+      '<div class="yb-ttl">Year by year</div>' +
+      '<div class="trio-bars" id="' + id + '-b"></div>' +
+    '</article>' +
+    '<article class="trio-card tc3">' +
+      '<div class="rb-l">If you had started in</div>' +
+      '<div class="rb-pick">' +
+        '<button class="rb-step" id="' + id + '-dn" aria-label="Earlier year">\u2039</button>' +
+        '<b id="' + id + '-y">\u2014</b>' +
+        '<button class="rb-step" id="' + id + '-up" aria-label="Later year">\u203A</button>' +
+      '</div>' +
+      '<div class="rb-amts" id="' + id + '-a"></div>' +
+      '<div class="rb-l" style="margin-top:14px">it would be today</div>' +
+      '<div class="rb-big" id="' + id + '-x">\u2014</div>' +
+      '<div class="rb-sub" id="' + id + '-xs">\u2014</div>' +
+      '<div class="rb-vs">' +
+        '<div class="rb-vsbar"><i id="' + id + '-va"></i><span id="' + id + '-val">This book</span></div>' +
+        '<div class="rb-vsbar fd"><i id="' + id + '-vb"></i><span id="' + id + '-vbl">7% fixed deposit</span></div>' +
+      '</div>' +
+    '</article>' +
+  '</div>';
+}
+
+var TRIO_TIMERS = {};
+
+function trioInit(id, pts, o){
+  o = o || {};
+  var root = document.getElementById(id);
+  if(!root || !pts || pts.length < 10) { if(root) root.style.display = 'none'; return; }
+  var $ = function(k){ return document.getElementById(id + '-' + k); };
+  var money = function(v){ return pfMoney(Math.round(v)); };
+  var accent = o.accent || '#3B4EE0';
+  var first = pts[0], last = pts[pts.length - 1];
+  var yrs = (last.t - first.t) / (365.25 * 864e5);
+  var mult = last.v / first.v;
+  var cagr = yrs > 0.5 ? Math.pow(mult, 1 / yrs) - 1 : null;
+  var peak = -Infinity, dd = 0;
+  pts.forEach(function(p){ peak = Math.max(peak, p.v); dd = Math.min(dd, p.v / peak - 1); });
+  var startD = new Date(first.t);
+  var startAmt = o.startAmount || first.v;
+  var scale = startAmt / first.v;
+
+  $('l').textContent = money(startAmt) + ' put in, ' +
+    startD.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+  $('cagr').textContent = cagr == null ? '\u2014' : '+' + (cagr * 100).toFixed(1) + '%';
+  $('yrs').textContent = yrs.toFixed(1);
+  $('dd').textContent = (dd * 100).toFixed(1) + '%';
+
+  /* year by year */
+  var byYear = {};
+  pts.forEach(function(p){ byYear[new Date(p.t).getFullYear()] = p.v; });
+  var ys = Object.keys(byYear).map(Number).sort();
+  var nowYear = new Date(last.t).getFullYear();
+  var rows = ys.map(function(y, k){
+    var from = k === 0 ? first.v : byYear[ys[k - 1]];
+    return { year: y, pct: (byYear[y] / from - 1) * 100, partial: y === nowYear };
+  });
+  $('b').innerHTML = perfYearBars(rows, accent);
+
+  /* curve, drawn once when first seen, value counting with it */
+  var cv = $('c'), W, H, X, Y, lo, hi;
+  function layout(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    if(!W || !H) return false;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    lo = Math.log(Math.min.apply(null, pts.map(function(p){ return p.v; })));
+    hi = Math.log(Math.max.apply(null, pts.map(function(p){ return p.v; })));
+    var span = (hi - lo) || 1;
+    X = function(i){ return 6 + i / (pts.length - 1) * (W - 12); };
+    Y = function(v){ return H - 8 - (Math.log(v) - lo) / span * (H - 18); };
+    return true;
+  }
+  function draw(upto){
+    var g = cv.getContext('2d');
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(120,130,150,.18)'; g.lineWidth = 1;
+    for(var q = 1; q < 4; q++){
+      g.beginPath(); g.moveTo(0, H * q / 4); g.lineTo(W, H * q / 4); g.stroke();
+      g.beginPath(); g.moveTo(W * q / 4, 0); g.lineTo(W * q / 4, H); g.stroke();
+    }
+    var fill = g.createLinearGradient(0, 0, 0, H);
+    fill.addColorStop(0, 'rgba(59,78,224,.20)'); fill.addColorStop(1, 'rgba(59,78,224,0)');
+    g.beginPath(); g.moveTo(X(0), H); g.lineTo(X(0), Y(pts[0].v));
+    for(var i = 1; i <= upto; i++) g.lineTo(X(i), Y(pts[i].v));
+    g.lineTo(X(upto), H); g.closePath(); g.fillStyle = fill; g.fill();
+    var grad = g.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, '#3B4EE0'); grad.addColorStop(1, accent);
+    g.beginPath(); g.moveTo(X(0), Y(pts[0].v));
+    for(var k = 1; k <= upto; k++) g.lineTo(X(k), Y(pts[k].v));
+    g.strokeStyle = grad; g.lineWidth = 2.6; g.lineJoin = 'round'; g.lineCap = 'round'; g.stroke();
+    g.beginPath(); g.arc(X(upto), Y(pts[upto].v), 4.5, 0, Math.PI * 2);
+    g.fillStyle = accent; g.fill();
+  }
+  function setVal(i){
+    $('v').textContent = money(pts[i].v * scale);
+    var pct = Math.round((pts[i].v / first.v - 1) * 100);
+    $('g').textContent = (pct >= 0 ? '+' : '\u2212') + Math.abs(pct).toLocaleString('en-IN') + '% since ' +
+      startD.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+  }
+  function playCurve(){
+    if(!layout()) return;
+    if(REDUCED){ draw(pts.length - 1); setVal(pts.length - 1); return; }
+    var t0 = performance.now(), DUR = 2600;
+    (function step(now){
+      var p = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - p, 2.1);
+      var i = Math.max(1, Math.floor(e * (pts.length - 1)));
+      draw(i); setVal(i);
+      if(p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+
+  /* if you had started in… */
+  var picks = ys.filter(function(y){ return y < nowYear; });
+  if(!picks.length) picks = [ys[0]];
+  var amts = o.amounts || [100000, 500000, 1000000];
+  var amt = amts[0], yi = Math.floor(picks.length / 2), auto = true;
+  $('a').innerHTML = amts.map(function(a, i){
+    return '<button data-a="' + a + '"' + (i === 0 ? ' class="on"' : '') + '>' +
+      (pfMoney(a).replace(/,00,000$/, ' lakh').replace(/,000,000$/, 'M')) + '</button>';
+  }).join('');
+  function idxOfYear(y){
+    for(var i = 0; i < pts.length; i++) if(new Date(pts[i].t).getFullYear() === y) return i;
+    return 0;
+  }
+  function count(el, to){
+    var from = el._v || 0, t0 = performance.now();
+    if(REDUCED){ el._v = to; el.textContent = money(to); return; }
+    (function st(now){
+      var p = Math.min(1, (now - t0) / 800), e = 1 - Math.pow(1 - p, 3);
+      el._v = from + (to - from) * e; el.textContent = money(el._v);
+      if(p < 1) requestAnimationFrame(st);
+    })(t0);
+  }
+  function paintCalc(){
+    var y = picks[yi], i0 = idxOfYear(y);
+    var grow = last.v / pts[i0].v, held = (last.t - pts[i0].t) / (365.25 * 864e5);
+    var today = amt * grow, fd = amt * Math.pow(1 + (o.fdRate || 0.07), held);
+    $('y').textContent = y;
+    count($('x'), today);
+    $('xs').textContent = grow.toFixed(1) + '\u00d7 your money in ' + held.toFixed(1) + ' years';
+    $('val').textContent = (o.name || 'This book') + ': ' + money(today);
+    $('vbl').textContent = '7% fixed deposit: ' + money(fd);
+    var top = Math.max(today, fd);
+    $('va').style.width = (today / top * 100).toFixed(1) + '%';
+    $('vb').style.width = (fd / top * 100).toFixed(1) + '%';
+  }
+  function stop(){ auto = false; clearInterval(TRIO_TIMERS[id]); TRIO_TIMERS[id] = null; }
+  $('dn').onclick = function(){ stop(); yi = Math.max(0, yi - 1); paintCalc(); };
+  $('up').onclick = function(){ stop(); yi = Math.min(picks.length - 1, yi + 1); paintCalc(); };
+  $('a').querySelectorAll('button').forEach(function(b){
+    b.onclick = function(){
+      stop();
+      $('a').querySelectorAll('button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on'); amt = +b.getAttribute('data-a'); paintCalc();
+    };
+  });
+
+  /* start when seen; the year keeps changing on its own until touched */
+  clearInterval(TRIO_TIMERS[id]);
+  var played = false;
+  function go(){
+    if(!played){ playCurve(); played = true; }
+    paintCalc();
+    if(auto && !TRIO_TIMERS[id] && !REDUCED){
+      TRIO_TIMERS[id] = setInterval(function(){
+        if(!document.getElementById(id)){ clearInterval(TRIO_TIMERS[id]); return; }
+        yi = (yi + 1) % picks.length; paintCalc();
+      }, 3200);
+    }
+  }
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es, ob){
+      es.forEach(function(e){
+        if(e.isIntersecting) go();
+        else { clearInterval(TRIO_TIMERS[id]); TRIO_TIMERS[id] = null; }
+      });
+    }, { threshold: .15 }).observe(root);
+  } else go();
+  window.addEventListener('resize', function(){ if(played && layout()) draw(pts.length - 1); });
+}
+
+/* weekly series → points */
+function trioWeekly(series, startISO){
+  var t0 = new Date(startISO).getTime(), WEEK = 7 * 864e5;
+  return (series || []).map(function(v, i){ return { t: t0 + i * WEEK, v: v }; });
+}
+
 /* Year-by-year mini bars for the side card next to a performance
    chart. rows: [{ year, pct, partial }]. Bars grow in on paint. */
 function perfYearBars(rows, accent){
@@ -10764,25 +11000,9 @@ function renderPerfBlock(){
 
   /* In parts: three tiles (your money, the book, the index), then the
      chart in its own card, then the drawdown and the full record. */
+  setTimeout(function(){ trioInit('mpTrio', trioWeekly(PF_WEEKLY, PF_START), { accent:'#7C3AED', name:'Model Portfolio', startAmount:100000 }); }, 0);
   return '<div class="perf perf-split">' +
-    '<div class="perf-tops">' +
-      '<div class="perf-lede">' +
-        '<div class="cap-row">' +
-          '<label class="cap-l" for="perfCapIn">Invested <span id="perfCapWhen">at inception</span></label>' +
-          '<div class="cap-in"><span>\u20b9</span>' +
-            '<input id="perfCapIn" type="text" inputmode="numeric" value="' +
-              PF_USER_CAPITAL.toLocaleString('en-IN') + '" oninput="setPfCapital(this.value)"></div>' +
-        '</div>' +
-        '<div class="cap-out">would be worth <b id="perfRupee"></b> today <span class="cap-gain" id="perfGain"></span></div>' +
-        '<div class="cap-note">Percentages below are for the selected window.</div>' +
-      '</div>' +
-      '<div><div class="perf-k-l" style="color:var(--purple)">Model Portfolio' +
-        '<span class="perf-k-p" id="perfPfPct"></span></div>' +
-        '<div class="perf-k-v" id="perfPfVal">\u2014</div></div>' +
-      '<div id="perfBmWrap" style="display:none"><div class="perf-k-l" style="color:var(--muted)">' +
-        PF_BENCH_LABEL + '<span class="perf-k-p" id="perfBmPct"></span></div>' +
-        '<div class="perf-k-v" id="perfBmVal">\u2014</div></div>' +
-    '</div>' +
+    trioHTML('mpTrio', '#7C3AED') +
     '<div class="perf-chartrow">' +
     '<div class="perf-card perf-chartc" style="--pc:var(--purple,#7C3AED)">' +
     '<div class="perf-hd">' +
@@ -10801,8 +11021,25 @@ function renderPerfBlock(){
     '<div class="perf-foot">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Open positions do not move it until they close. Nifty is shown at index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
     '</div>' +
     '<div class="perf-card perf-sidec" style="--yb-best:#7C3AED">' +
-      '<div class="yb-ttl">Year by year</div>' +
-      perfYearBars(computeYearlyStats().slice().reverse().map(function(r){ return { year:r.year, pct:r.ret, partial:r.partial }; }), '#7C3AED') +
+      '<div class="yb-ttl">This window</div>' +
+    '<div class="perf-tops">' +
+      '<div class="perf-lede">' +
+        '<div class="cap-row">' +
+          '<label class="cap-l" for="perfCapIn">Invested <span id="perfCapWhen">at inception</span></label>' +
+          '<div class="cap-in"><span>\u20b9</span>' +
+            '<input id="perfCapIn" type="text" inputmode="numeric" value="' +
+              PF_USER_CAPITAL.toLocaleString('en-IN') + '" oninput="setPfCapital(this.value)"></div>' +
+        '</div>' +
+        '<div class="cap-out">would be worth <b id="perfRupee"></b> today <span class="cap-gain" id="perfGain"></span></div>' +
+        '<div class="cap-note">Percentages below are for the selected window.</div>' +
+      '</div>' +
+      '<div><div class="perf-k-l" style="color:var(--purple)">Model Portfolio' +
+        '<span class="perf-k-p" id="perfPfPct"></span></div>' +
+        '<div class="perf-k-v" id="perfPfVal">\u2014</div></div>' +
+      '<div id="perfBmWrap" style="display:none"><div class="perf-k-l" style="color:var(--muted)">' +
+        PF_BENCH_LABEL + '<span class="perf-k-p" id="perfBmPct"></span></div>' +
+        '<div class="perf-k-v" id="perfBmVal">\u2014</div></div>' +
+    '</div>' +
       renderRecoveryStrip() +
     '</div>' +
     '</div>' +
