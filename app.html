@@ -2999,6 +2999,58 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 @media(max-width:640px){ .trio{grid-template-columns:1fr} }
 .dash-scope #ltSegCanvas{width:100%;height:250px;display:block;cursor:crosshair}
 @media(max-width:768px){ .dash-scope #ltSegCanvas{height:200px} }
+.pure-scope .pu-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 6px}
+.pure-scope .pu-tc{background:var(--pu-deep);border:1px solid var(--pu-line);border-radius:16px;padding:16px 18px;
+  display:flex;flex-direction:column;min-width:0}
+.pure-scope .pu-tc1{border-top:4px solid var(--pu-brass)}
+.pure-scope .pu-tc2{border-top:4px solid var(--pu-mint)}
+.pure-scope .pu-tc3{border-top:4px solid #7CC4FF}
+.pure-scope .pu-tc small{font-size:12.5px;font-weight:600;color:var(--pu-mute)}
+.pure-scope .pu-tbig{font-size:30px;font-weight:800;color:var(--pu-paper);margin-top:4px;letter-spacing:-.01em}
+.pure-scope .pu-tc > p{margin:4px 0 0;font-size:13px;font-weight:700}
+.pure-scope .pu-tsub{color:var(--pu-mute)!important;font-weight:500!important}
+.pure-scope .pu-tsub b{color:var(--pu-paper)}
+.pure-scope .pu-sq{display:block;width:100%;aspect-ratio:1/1;max-height:300px;margin:12px 0 6px}
+.pure-scope .pu-grid{stroke:rgba(156,196,177,.16);stroke-width:1;vector-effect:non-scaling-stroke}
+.pure-scope .pu-days{flex:1;display:flex;align-items:stretch;gap:3px;min-height:220px;margin:12px 0 8px;position:relative}
+.pure-scope .pu-days::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--pu-line)}
+.pure-scope .pu-day{flex:1;height:100%;display:flex;flex-direction:column;min-width:0}
+.pure-scope .pu-day span{flex:1;display:flex;min-height:0}
+.pure-scope .pu-day .t{align-items:flex-end}
+.pure-scope .pu-day .b{align-items:flex-start}
+.pure-scope .pu-day i{display:block;width:100%;animation:ybGrow .6s cubic-bezier(.2,.8,.2,1) both}
+.pure-scope .pu-day.up i{background:linear-gradient(180deg,#9EF7C8,var(--pu-mint));border-radius:3px 3px 0 0;transform-origin:bottom}
+.pure-scope .pu-day.dn i{background:linear-gradient(180deg,var(--pu-coral),#FF9A8B);border-radius:0 0 3px 3px;transform-origin:top}
+.pure-scope .pu-tfoot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--pu-mute);
+  border-top:1px solid var(--pu-line);padding-top:8px}
+.pure-scope .pu-stack{display:flex;height:26px;border-radius:8px;overflow:hidden;margin:14px 0 12px;gap:2px}
+.pure-scope .pu-stack i{display:block;min-width:2px}
+.pure-scope .pu-cashseg{background:repeating-linear-gradient(45deg,var(--pu-line),var(--pu-line) 4px,transparent 4px,transparent 8px)}
+.pure-scope .pu-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12.5px;margin-bottom:12px}
+.pure-scope .pu-legend div{display:flex;align-items:center;gap:7px;min-width:0}
+.pure-scope .pu-legend em{width:10px;height:10px;border-radius:3px;flex:none}
+.pure-scope .pu-legend span{color:var(--pu-paper);font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.pure-scope .pu-legend b{margin-left:auto;color:var(--pu-mute);font-weight:600}
+.pure-scope .pu-more{color:var(--pu-mute)}
+@media(max-width:980px){ .pure-scope .pu-trio{grid-template-columns:1fr 1fr} .pure-scope .pu-tc1{grid-column:1 / -1} .pure-scope .pu-sq{max-width:340px;margin-left:auto;margin-right:auto} }
+@media(max-width:640px){ .pure-scope .pu-trio{grid-template-columns:1fr} }
+/* ---------- The book's chart, inside the first card ----------
+   Square, so time and value take the same length, and tinted with
+   the book's colour. */
+.dash-scope .trio .tc-chart{border-top:4px solid var(--pc,#3B4EE0);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc,#3B4EE0) 12%,var(--panel)) 0%,var(--panel) 75%)}
+.dash-scope .trio .tc-chart .perf-hd{flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:6px}
+.dash-scope .trio .tc-chart .perf-ttl{color:var(--pc,#3B4EE0);font-size:15px}
+.dash-scope .trio .tc-chart .perf-ctl{gap:3px}
+.dash-scope .trio .tc-chart .perf-btn{padding:3px 8px;font-size:10.5px}
+.dash-scope .trio .tc-chart .perf-btn.on{background:var(--pc,#3B4EE0);border-color:var(--pc,#3B4EE0);color:#fff}
+.dash-scope .trio .tc-chart .perf-canvas-wrap{width:100%;aspect-ratio:1/1;max-height:420px;margin-top:4px}
+.dash-scope .trio .tc-chart canvas{width:100%!important;height:100%!important}
+.dash-scope .perf-sidec.perf-wide{border-top-color:#0E9F6E}
+.dash-scope .perf-sidec.perf-wide .perf-tops{flex-direction:row!important;flex-wrap:wrap;gap:22px 40px!important}
+.dash-scope .perf-sidec.perf-wide .perf-tops .perf-lede{display:none}
+.dash-scope .perf-sidec.perf-wide .perf-foot{margin-top:10px}
+@media(max-width:980px){ .dash-scope .trio .tc-chart .perf-canvas-wrap{max-width:420px} }
 </style>
 </head>
 <body class="s-light">
@@ -5091,9 +5143,7 @@ function renderLtSegPerf(key){
              { accent: hue, name: name, startAmount: 100000 });
   }, 0);
   return '<div class="perf perf-split" style="--ltseg:' + hue + '">' +
-    trioHTML('segTrio', hue) +
-    '<div class="perf-chartrow">' +
-    '<div class="perf-card perf-chartc" style="--pc:' + hue + '">' +
+    trioHTML('segTrio', hue,
     '<div class="perf-hd">' +
       '<div><span class="perf-ttl">' + name + ' \u2014 the record</span> ' +
         '<span class="perf-tag">' +
@@ -5107,14 +5157,8 @@ function renderLtSegPerf(key){
       '<div class="perf-tip" id="ltSegTip"></div>' +
     '</div>' +
 
-    '<div class="perf-foot">A 21-year run of this book on the ' + name.toLowerCase() +
-      ' pool, reconstructed from entry and exit prices. The line moves when a trade closes, ' +
-      'so it does not show what open positions were doing in between \u2014 the real falls, ' +
-      '2008 above all, were deeper than the figure above. Segments use today\u2019s cap ' +
-      'classification applied backwards, on names that still trade. ' +
-      'Past performance does not guarantee future returns.</div>' +
-    '</div>' +
-    '<div class="perf-card perf-sidec">' +
+      '') +
+    '<div class="perf-card perf-sidec perf-wide">' +
       '<div class="yb-ttl">This window</div>' +
     '<div class="perf-tops">' +
       '<div class="perf-lede">' +
@@ -5135,7 +5179,12 @@ function renderLtSegPerf(key){
         '<div class="perf-k-v">' + pfMoney(ltSegMoney(st.closing)) + '</div></div>' +
     '</div>' +
 
-    '</div>' +
+    '<div class="perf-foot">A 21-year run of this book on the ' + name.toLowerCase() +
+      ' pool, reconstructed from entry and exit prices. The line moves when a trade closes, ' +
+      'so it does not show what open positions were doing in between \u2014 the real falls, ' +
+      '2008 above all, were deeper than the figure above. Segments use today\u2019s cap ' +
+      'classification applied backwards, on names that still trade. ' +
+      'Past performance does not guarantee future returns.</div>' +
     '</div>' +
     '<div class="perf-card perf-cardsc">' +
     '<div class="card-grid">' + cards + '</div>' +
@@ -5232,7 +5281,9 @@ function drawLtSegPerf(){
       var xx = X(j), y2 = Y(v[j]);
       j ? ctx.lineTo(xx, y2) : ctx.moveTo(xx, y2);
     }
-    ctx.strokeStyle = hue; ctx.lineWidth = 2;
+    var segLg = ctx.createLinearGradient(padL, 0, w - padR, 0);
+    segLg.addColorStop(0, '#3B4EE0'); segLg.addColorStop(1, hue);
+    ctx.strokeStyle = segLg; ctx.lineWidth = 2.6;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.stroke();
 
@@ -5758,9 +5809,7 @@ function renderLtPerf(closed){
      summary cards, then the full record. */
   setTimeout(function(){ trioInit('ltTrio', trioWeekly(LT_CURVE, LT_CURVE_START), { accent:LT_ACCENT, name:'Long Term', startAmount:LT_CURVE[0] }); }, 0);
   return '<div class="perf perf-split">' +
-    trioHTML('ltTrio', LT_ACCENT) +
-    '<div class="perf-chartrow">' +
-    '<div class="perf-card perf-chartc" style="--pc:' + LT_ACCENT + '">' +
+    trioHTML('ltTrio', LT_ACCENT,
     '<div class="perf-hd">' +
       '<div><span class="perf-ttl">Long Term Performance</span> ' +
         '<span class="perf-tag">' +
@@ -5779,14 +5828,8 @@ function renderLtPerf(closed){
       '<div class="perf-tip" id="ltPerfTip"></div>' +
     '</div>' +
 
-    '<div class="perf-foot">The account opens with ' + LT_SLOTS + ' positions of ' +
-      pfMoney(LT_PER_TRADE) + ' and every new position takes an equal share of the account ' +
-      'as it stands that day, so gains are put back to work. Reconstructed from entry and ' +
-      'exit prices, so the line runs smooth between them and does not show intra-trade ' +
-      'drawdown. ' + PF_BENCH_LABEL + ' is shown at index level, excluding dividends. ' +
-      'Past performance does not guarantee future returns.</div>' +
-    '</div>' +
-    '<div class="perf-card perf-sidec" style="--yb-best:' + LT_ACCENT + '">' +
+      '') +
+    '<div class="perf-card perf-sidec perf-wide" style="--yb-best:' + LT_ACCENT + '">' +
       '<div class="yb-ttl">This window</div>' +
     '<div class="perf-tops">' +
       '<div class="perf-lede">' +
@@ -5812,7 +5855,12 @@ function renderLtPerf(closed){
         : '') +
     '</div>' +
 
-    '</div>' +
+    '<div class="perf-foot">The account opens with ' + LT_SLOTS + ' positions of ' +
+      pfMoney(LT_PER_TRADE) + ' and every new position takes an equal share of the account ' +
+      'as it stands that day, so gains are put back to work. Reconstructed from entry and ' +
+      'exit prices, so the line runs smooth between them and does not show intra-trade ' +
+      'drawdown. ' + PF_BENCH_LABEL + ' is shown at index level, excluding dividends. ' +
+      'Past performance does not guarantee future returns.</div>' +
     '</div>' +
     '<div class="perf-card perf-cardsc">' +
     '<div class="card-grid">' + cards + '</div>' +
@@ -6149,24 +6197,99 @@ function paintPure(body){
     'No stock takes more than ' + (+last.max_pos_pct || 0) + '% of the account, and a name whose stop sits more than ' +
     (+last.max_stop_pct || 0) + '% below price is skipped. When cash runs out, names wait. Nothing is borrowed.</p>';
 
-  /* --- account curve --- */
+  /* --- three cards: the account curve (square, so time and value
+     get the same length), day by day, and where the money sits --- */
   var curve = '';
   if(daily.length >= 2){
-    var W = 1000, H = 140, P = 6;
+    var S = 300, P = 10;
     var vals = daily.map(function(r){ return +r.account_value || 0; });
     var lo = Math.min.apply(null, vals.concat([cap])), hi = Math.max.apply(null, vals.concat([cap]));
     if(hi === lo) hi = lo + 1;
-    var x = function(i){ return P + i * (W - 2 * P) / (vals.length - 1); };
-    var y = function(v){ return H - P - (v - lo) / (hi - lo) * (H - 2 * P); };
+    var x = function(i){ return P + i * (S - 2 * P) / (vals.length - 1); };
+    var y = function(v){ return S - P - (v - lo) / (hi - lo) * (S - 2 * P); };
     var pts = vals.map(function(v, i){ return x(i).toFixed(1) + ',' + y(v).toFixed(1); }).join(' ');
-    curve = '<section class="pu-sec"><h4>Account value over time</h4>' +
-      '<svg class="pu-curve" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
-        '<line x1="0" x2="' + W + '" y1="' + y(cap).toFixed(1) + '" y2="' + y(cap).toFixed(1) +
+    var area = 'M' + x(0).toFixed(1) + ',' + S + ' L' + pts.split(' ').join(' L') +
+               ' L' + x(vals.length - 1).toFixed(1) + ',' + S + ' Z';
+    var grid = '';
+    for(var g = 1; g < 4; g++){
+      grid += '<line x1="0" x2="' + S + '" y1="' + (S * g / 4) + '" y2="' + (S * g / 4) + '" class="pu-grid"/>' +
+              '<line y1="0" y2="' + S + '" x1="' + (S * g / 4) + '" x2="' + (S * g / 4) + '" class="pu-grid"/>';
+    }
+    var lastV = vals[vals.length - 1], firstV = cap || vals[0];
+    var chgAll = firstV ? (lastV / firstV - 1) * 100 : 0;
+
+    var card1 = '<article class="pu-tc pu-tc1">' +
+      '<small>Account value</small>' +
+      '<b class="pu-tbig">' + pureInr(lastV) + '</b>' +
+      '<p class="' + pureCls(chgAll) + '">' + purePct(chgAll) + ' since ' + pureDay(daily[0].as_of) + '</p>' +
+      '<svg class="pu-sq" viewBox="0 0 ' + S + ' ' + S + '" preserveAspectRatio="none">' +
+        '<defs><linearGradient id="puLn" x1="0" x2="1" y1="0" y2="0">' +
+          '<stop offset="0" stop-color="#F2B632"/><stop offset="1" stop-color="#5CF0A5"/></linearGradient>' +
+        '<linearGradient id="puAr" x1="0" x2="0" y1="0" y2="1">' +
+          '<stop offset="0" stop-color="#5CF0A5" stop-opacity=".28"/><stop offset="1" stop-color="#5CF0A5" stop-opacity="0"/></linearGradient></defs>' +
+        grid +
+        '<line x1="0" x2="' + S + '" y1="' + y(cap).toFixed(1) + '" y2="' + y(cap).toFixed(1) +
           '" class="pu-capline" vector-effect="non-scaling-stroke"/>' +
-        '<polyline points="' + pts + '" class="pu-line" vector-effect="non-scaling-stroke"/>' +
+        '<path d="' + area + '" fill="url(#puAr)"/>' +
+        '<polyline points="' + pts + '" fill="none" stroke="url(#puLn)" stroke-width="2.6" ' +
+          'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+        '<circle cx="' + x(vals.length - 1).toFixed(1) + '" cy="' + y(lastV).toFixed(1) + '" r="5" fill="#5CF0A5"/>' +
       '</svg>' +
       '<div class="pu-axis"><span>' + pureDay(daily[0].as_of) + '</span><span>dashed: capital</span>' +
-        '<span>' + pureDay(last.as_of) + '</span></div></section>';
+        '<span>' + pureDay(last.as_of) + '</span></div>' +
+    '</article>';
+
+    /* day by day: the account's move from one evening to the next */
+    var moves = [];
+    for(var d2 = 1; d2 < daily.length; d2++){
+      var a0 = +daily[d2 - 1].account_value || 0, a1 = +daily[d2].account_value || 0;
+      if(a0) moves.push({ d: daily[d2].as_of, p: (a1 / a0 - 1) * 100 });
+    }
+    moves = moves.slice(-30);
+    var mx = Math.max.apply(null, moves.map(function(m){ return Math.abs(m.p); }).concat([0.01]));
+    var upDays = moves.filter(function(m){ return m.p > 0; }).length;
+    var bestDay = moves.reduce(function(a, m){ return !a || m.p > a.p ? m : a; }, null);
+    var worstDay = moves.reduce(function(a, m){ return !a || m.p < a.p ? m : a; }, null);
+    var card2 = '<article class="pu-tc pu-tc2">' +
+      '<small>Day by day</small>' +
+      '<p class="pu-tsub"><b>' + upDays + '</b> of <b>' + moves.length + '</b> sessions up</p>' +
+      '<div class="pu-days">' + moves.map(function(m, i){
+        var h = Math.max(4, Math.abs(m.p) / mx * 100).toFixed(1);
+        var bar = '<i style="height:' + h + '%;animation-delay:' + (i * 30) + 'ms"></i>';
+        return '<div class="pu-day ' + (m.p >= 0 ? 'up' : 'dn') + '" title="' + pureDay(m.d) + ': ' + purePct(m.p) + '">' +
+          '<span class="t">' + (m.p >= 0 ? bar : '') + '</span>' +
+          '<span class="b">' + (m.p < 0 ? bar : '') + '</span></div>';
+      }).join('') + '</div>' +
+      (bestDay ? '<div class="pu-tfoot"><span>Best <b class="pu-up">' + purePct(bestDay.p) + '</b> ' + pureDay(bestDay.d) +
+        '</span><span>Worst <b class="' + pureCls(worstDay.p) + '">' + purePct(worstDay.p) + '</b> ' + pureDay(worstDay.d) + '</span></div>' : '') +
+    '</article>';
+
+    /* where the money sits: every holding as a share of the account */
+    var HUES = ['#F2B632','#5CF0A5','#7CC4FF','#FF8A6B','#C7A6FF','#FFD27A','#6FE3D1','#FF9EC4',
+                '#A6E36F','#8FB8FF','#FFB86B','#9EF0C8','#E3A6FF','#FFE08A'];
+    var byVal = hold.slice().sort(function(a, b){ return (+b.value || 0) - (+a.value || 0); });
+    var segs = byVal.map(function(h, i){
+      return { sym: h.symbol, v: +h.value || 0, c: HUES[i % HUES.length] };
+    });
+    var total = acct || 1;
+    var card3 = '<article class="pu-tc pu-tc3">' +
+      '<small>Where the money sits</small>' +
+      '<p class="pu-tsub"><b>' + inPct.toFixed(0) + '%</b> in ' + hold.length + ' stocks \u00b7 <b>' +
+        cashPct.toFixed(0) + '%</b> cash</p>' +
+      '<div class="pu-stack">' + segs.map(function(g2){
+        return '<i style="flex:' + Math.max(0.001, g2.v / total) + ';background:' + g2.c + '" title="' +
+          g2.sym + ' ' + (g2.v / total * 100).toFixed(1) + '%"></i>';
+      }).join('') + (cash > 0 ? '<i class="pu-cashseg" style="flex:' + Math.max(0.001, cash / total) + '"></i>' : '') +
+      '</div>' +
+      '<div class="pu-legend">' + segs.slice(0, 10).map(function(g2){
+        return '<div><em style="background:' + g2.c + '"></em><span>' + g2.sym + '</span><b>' +
+          (g2.v / total * 100).toFixed(1) + '%</b></div>';
+      }).join('') + (segs.length > 10 ? '<div class="pu-more">+' + (segs.length - 10) + ' more</div>' : '') + '</div>' +
+      '<div class="pu-tfoot" style="margin-top:auto"><span>If every stop hits <b class="pu-dn">' +
+        pureInr(last.open_risk) + '</b></span><span>' + (+last.open_risk_pct || 0).toFixed(2) + '% of account</span></div>' +
+    '</article>';
+
+    curve = '<div class="pu-trio">' + card1 + card2 + card3 + '</div>';
   }
 
   /* --- holdings --- */
@@ -10840,7 +10963,11 @@ function drawPerf(cfg){
     grad.addColorStop(0, accent); grad.addColorStop(1, 'transparent');
     ctx.globalAlpha = .14; ctx.fillStyle = grad; ctx.fill(); ctx.globalAlpha = 1;
 
-    line(d.pf, accent, 2, 1);
+    /* The book's own line runs from blue into its colour, so it reads
+       as the lead line against the grey index. */
+    var lg = ctx.createLinearGradient(padL, 0, w - padR, 0);
+    lg.addColorStop(0, '#3B4EE0'); lg.addColorStop(1, accent);
+    line(d.pf, lg, 2.6, 1);
 
     /* x labels */
     ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = muted;
@@ -11122,9 +11249,15 @@ function perfBlockForMarket(){
    value get the same length on screen.
    pts: [{ t: ms, v: value }] oldest first.
    o:   { accent, startLabel, amounts: [..], fdRate } */
-function trioHTML(id, accent){
+function trioHTML(id, accent, chartInner){
   var a = accent || '#3B4EE0';
+  /* A book with its own interactive chart puts that chart here, in
+     the square first card, instead of the simple drawn curve. */
+  var first = chartInner
+    ? '<article class="trio-card tc1 tc-chart" style="--pc:' + a + '">' + chartInner + '</article>'
+    : null;
   return '<div class="trio" id="' + id + '" style="--ta:' + a + '">' +
+    (first ||
     '<article class="trio-card tc1">' +
       '<div class="rb-l" id="' + id + '-l">\u2014</div>' +
       '<div class="rb-big" id="' + id + '-v">\u2014</div>' +
@@ -11135,7 +11268,7 @@ function trioHTML(id, accent){
         '<div><span>Years</span><b id="' + id + '-yrs">\u2014</b></div>' +
         '<div><span>Worst fall</span><b id="' + id + '-dd">\u2014</b></div>' +
       '</div>' +
-    '</article>' +
+    '</article>') +
     '<article class="trio-card tc2">' +
       '<div class="yb-ttl">Year by year</div>' +
       '<div class="trio-bars" id="' + id + '-b"></div>' +
@@ -11185,11 +11318,14 @@ function trioInit(id, pts, o){
   var startAmt = o.startAmount || first.v;
   var scale = startAmt / first.v;
 
-  $('l').textContent = money(startAmt) + ' put in, ' +
-    startD.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
-  $('cagr').textContent = cagr == null ? '\u2014' : '+' + (cagr * 100).toFixed(1) + '%';
-  $('yrs').textContent = yrs.toFixed(1);
-  $('dd').textContent = (dd * 100).toFixed(1) + '%';
+  var hasCurve = !!$('c');
+  if(hasCurve){
+    $('l').textContent = money(startAmt) + ' put in, ' +
+      startD.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+    $('cagr').textContent = cagr == null ? '\u2014' : '+' + (cagr * 100).toFixed(1) + '%';
+    $('yrs').textContent = yrs.toFixed(1);
+    $('dd').textContent = (dd * 100).toFixed(1) + '%';
+  }
 
   /* year by year */
   var byYear = {};
@@ -11306,7 +11442,7 @@ function trioInit(id, pts, o){
   clearInterval(TRIO_TIMERS[id]);
   var played = false;
   function go(){
-    if(!played){ playCurve(); played = true; }
+    if(!played){ if(hasCurve) playCurve(); played = true; }
     paintCalc();
     if(auto && !TRIO_TIMERS[id] && !REDUCED){
       TRIO_TIMERS[id] = setInterval(function(){
@@ -11323,7 +11459,7 @@ function trioInit(id, pts, o){
       });
     }, { threshold: .15 }).observe(root);
   } else go();
-  window.addEventListener('resize', function(){ if(played && layout()) draw(pts.length - 1); });
+  window.addEventListener('resize', function(){ if(hasCurve && played && layout()) draw(pts.length - 1); });
 }
 
 /* weekly series → points */
@@ -11365,9 +11501,7 @@ function renderPerfBlock(){
      chart in its own card, then the drawdown and the full record. */
   setTimeout(function(){ trioInit('mpTrio', trioWeekly(PF_WEEKLY, PF_START), { accent:'#7C3AED', name:'Model Portfolio', startAmount:100000 }); }, 0);
   return '<div class="perf perf-split">' +
-    trioHTML('mpTrio', '#7C3AED') +
-    '<div class="perf-chartrow">' +
-    '<div class="perf-card perf-chartc" style="--pc:var(--purple,#7C3AED)">' +
+    trioHTML('mpTrio', '#7C3AED',
     '<div class="perf-hd">' +
       '<div><span class="perf-ttl">Model Portfolio Performance</span> ' +
       '<span class="perf-tag" id="perfSpan"></span></div>' +
@@ -11381,9 +11515,8 @@ function renderPerfBlock(){
       '<canvas id="perfCanvas"></canvas>' +
       '<div class="perf-tip" id="perfTip"></div>' +
     '</div>' +
-    '<div class="perf-foot">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Open positions do not move it until they close. Nifty is shown at index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
-    '</div>' +
-    '<div class="perf-card perf-sidec" style="--yb-best:#7C3AED">' +
+      '') +
+    '<div class="perf-card perf-sidec perf-wide" style="--yb-best:#7C3AED">' +
       '<div class="yb-ttl">This window</div>' +
     '<div class="perf-tops">' +
       '<div class="perf-lede">' +
@@ -11404,7 +11537,7 @@ function renderPerfBlock(){
         '<div class="perf-k-v" id="perfBmVal">\u2014</div></div>' +
     '</div>' +
       renderRecoveryStrip() +
-    '</div>' +
+    '<div class="perf-foot">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Open positions do not move it until they close. Nifty is shown at index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
     '</div>' +
     '<div class="perf-card perf-recc">' +
     renderPeriodTable() +
