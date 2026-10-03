@@ -2939,6 +2939,38 @@ body.s-light .perf-split .perf-tops>div,body.s-light .perf-split .perf-card{
 .dash-scope .perf-split .perf-cardsc{border-top:4px solid #E8590C}
 .dash-scope .perf-split .perf-recc{border-top:4px solid #E5484D}
 @media(max-width:720px){.dash-scope .perf-split .perf-tops,.perf-split .perf-tops{grid-template-columns:1fr}}
+/* ---------- Chart + year bars, side by side ----------
+   The chart no longer runs the full width: it takes two thirds, and
+   a colourful year-by-year card sits beside it. The chart card is
+   tinted with its book's colour; text stays dark for contrast. */
+.dash-scope .perf-chartrow,.perf-chartrow{display:grid;grid-template-columns:1.75fr 1fr;gap:14px;align-items:stretch}
+.dash-scope .perf-split .perf-chartc,.perf-split .perf-chartc{
+  border-top:4px solid var(--pc,#0E9F6E);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc,#0E9F6E) 9%,var(--panel)) 0%,var(--panel) 70%)}
+.dash-scope .perf-split .perf-chartc .perf-ttl{color:var(--pc,#0E9F6E)}
+.dash-scope .perf-split .perf-chartc .perf-btn.on{background:var(--pc,#0E9F6E);border-color:var(--pc,#0E9F6E);color:#fff}
+.dash-scope .perf-split .perf-sidec,.perf-split .perf-sidec{
+  border-top:4px solid #0E9F6E;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,color-mix(in srgb,#0E9F6E 7%,var(--panel)) 0%,var(--panel) 60%)}
+.yb-ttl{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--text)}
+.yb-head{font-size:12.5px;color:var(--muted);margin-top:4px}
+.yb-head b{color:var(--text)}
+.yb{flex:1;display:flex;align-items:flex-end;gap:4px;min-height:170px;margin:12px 0 6px}
+.yb-c{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.yb-c i{display:block;width:100%;border-radius:5px 5px 2px 2px;
+  background:linear-gradient(180deg,#34D399,#0E9F6E);transform-origin:bottom;animation:ybGrow .7s cubic-bezier(.2,.8,.2,1) both}
+.yb-c.best i{background:linear-gradient(180deg,color-mix(in srgb,var(--yb) 70%,#fff),var(--yb));box-shadow:0 6px 14px -6px var(--yb)}
+.yb-c.neg i{background:linear-gradient(180deg,#F87171,#E5484D)}
+.yb-c em{font-style:normal;font-size:9.5px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap}
+.yb-c small{font-size:9.5px;color:var(--muted);margin-top:4px}
+.yb-foot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);
+  border-top:1px solid var(--line-soft);padding-top:8px}
+.yb-empty{font-size:13px;color:var(--muted);padding:30px 0;text-align:center}
+.perf-sidec .dd-strip{margin-top:10px;font-size:12px}
+@keyframes ybGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@media(prefers-reduced-motion:reduce){ .yb-c i{animation:none} }
+@media(max-width:900px){ .dash-scope .perf-chartrow,.perf-chartrow{grid-template-columns:1fr} }
+@media(max-width:560px){ .yb-c em{display:none} .yb-c.best em{display:block} }
 </style>
 </head>
 <body class="s-light">
@@ -5369,7 +5401,8 @@ function renderLtPerf(closed){
         : '') +
     '</div>' +
 
-    '<div class="perf-card perf-chartc">' +
+    '<div class="perf-chartrow">' +
+    '<div class="perf-card perf-chartc" style="--pc:' + LT_ACCENT + '">' +
     '<div class="perf-hd">' +
       '<div><span class="perf-ttl">Long Term Performance</span> ' +
         '<span class="perf-tag">' +
@@ -5394,6 +5427,11 @@ function renderLtPerf(closed){
       'exit prices, so the line runs smooth between them and does not show intra-trade ' +
       'drawdown. ' + PF_BENCH_LABEL + ' is shown at index level, excluding dividends. ' +
       'Past performance does not guarantee future returns.</div>' +
+    '</div>' +
+    '<div class="perf-card perf-sidec" style="--yb-best:' + LT_ACCENT + '">' +
+      '<div class="yb-ttl">Year by year</div>' +
+      perfYearBars(st.yearRows.slice().reverse().map(function(y){ return { year:y.year, pct:y.pct, partial:y.partial }; }), LT_ACCENT) +
+    '</div>' +
     '</div>' +
     '<div class="perf-card perf-cardsc">' +
     '<div class="card-grid">' + cards + '</div>' +
@@ -10695,6 +10733,30 @@ function perfBlockForMarket(){
   return renderPerfBlock();
 }
 
+/* Year-by-year mini bars for the side card next to a performance
+   chart. rows: [{ year, pct, partial }]. Bars grow in on paint. */
+function perfYearBars(rows, accent){
+  rows = (rows || []).filter(function(r){ return r && isFinite(r.pct); });
+  if(rows.length < 2) return '<div class="yb-empty">Not enough history yet.</div>';
+  var max = Math.max.apply(null, rows.map(function(r){ return Math.abs(r.pct); })) || 1;
+  var up = rows.filter(function(r){ return r.pct > 0; }).length;
+  var full = rows.filter(function(r){ return !r.partial; });
+  var best = (full.length ? full : rows).reduce(function(a, b){ return b.pct > a.pct ? b : a; });
+  var worst = (full.length ? full : rows).reduce(function(a, b){ return b.pct < a.pct ? b : a; });
+  var fmt = function(x){ return (x >= 0 ? '+' : '\u2212') + Math.abs(x).toFixed(0) + '%'; };
+  return '<div class="yb-head"><b>' + up + '</b> of <b>' + rows.length + '</b> years up</div>' +
+    '<div class="yb" style="--yb:' + (accent || '#0E9F6E') + '">' + rows.map(function(r, i){
+      var h = Math.max(4, Math.abs(r.pct) / max * 100);
+      return '<div class="yb-c' + (r.pct < 0 ? ' neg' : '') + (r === best ? ' best' : '') + '" title="' +
+        r.year + ': ' + fmt(r.pct) + '">' +
+        '<em>' + fmt(r.pct) + '</em>' +
+        '<i style="height:' + h.toFixed(1) + '%;animation-delay:' + (i * 45) + 'ms"></i>' +
+        '<small>\u2019' + String(r.year).slice(2) + (r.partial ? '*' : '') + '</small></div>';
+    }).join('') + '</div>' +
+    '<div class="yb-foot"><span>Best <b style="color:var(--yb-best,#0E9F6E)">' + best.year + ' ' + fmt(best.pct) + '</b></span>' +
+    '<span>Worst <b style="color:' + (worst.pct < 0 ? '#E5484D' : 'var(--text)') + '">' + worst.year + ' ' + fmt(worst.pct) + '</b></span></div>';
+}
+
 function renderPerfBlock(){
   const btns = ['1m','3m','6m','1y','3y','5y','max']
     .map(r => '<button class="perf-btn' + (r === PERF_RANGE ? ' on' : '') +
@@ -10721,7 +10783,8 @@ function renderPerfBlock(){
         PF_BENCH_LABEL + '<span class="perf-k-p" id="perfBmPct"></span></div>' +
         '<div class="perf-k-v" id="perfBmVal">\u2014</div></div>' +
     '</div>' +
-    '<div class="perf-card perf-chartc">' +
+    '<div class="perf-chartrow">' +
+    '<div class="perf-card perf-chartc" style="--pc:var(--purple,#7C3AED)">' +
     '<div class="perf-hd">' +
       '<div><span class="perf-ttl">Model Portfolio Performance</span> ' +
       '<span class="perf-tag" id="perfSpan"></span></div>' +
@@ -10737,8 +10800,13 @@ function renderPerfBlock(){
     '</div>' +
     '<div class="perf-foot">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Open positions do not move it until they close. Nifty is shown at index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
     '</div>' +
+    '<div class="perf-card perf-sidec" style="--yb-best:#7C3AED">' +
+      '<div class="yb-ttl">Year by year</div>' +
+      perfYearBars(computeYearlyStats().slice().reverse().map(function(r){ return { year:r.year, pct:r.ret, partial:r.partial }; }), '#7C3AED') +
+      renderRecoveryStrip() +
+    '</div>' +
+    '</div>' +
     '<div class="perf-card perf-recc">' +
-    renderRecoveryStrip() +
     renderPeriodTable() +
     '</div>' +
   '</div>';
