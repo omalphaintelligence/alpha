@@ -11168,6 +11168,13 @@ function trioInit(id, pts, o){
   var $ = function(k){ return document.getElementById(id + '-' + k); };
   var money = function(v){ return pfMoney(Math.round(v)); };
   var accent = o.accent || '#3B4EE0';
+  /* Canvas cannot read 'var(--x)'. Resolve it to the real colour
+     first (the Long Term accent is passed as a CSS variable). */
+  var mv = /^var\((--[\w-]+)/.exec(accent);
+  if(mv){
+    accent = getComputedStyle(root).getPropertyValue(mv[1]).trim() ||
+             getComputedStyle(document.body).getPropertyValue(mv[1]).trim() || '#3B4EE0';
+  }
   var first = pts[0], last = pts[pts.length - 1];
   var yrs = (last.t - first.t) / (365.25 * 864e5);
   var mult = last.v / first.v;
