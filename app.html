@@ -2320,6 +2320,59 @@ body.s-light .recb-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 #ltab-bigbets,#ltab-calls,#ltab-ask,#ltab-pricing,#ltab-account{font-family:var(--sans)}
 :where(#ltab-overview,#ltab-screener,#ltab-model,#ltab-longterm,#ltab-ready,#ltab-bigbets,#ltab-calls,
 #ltab-ask,#ltab-pricing,#ltab-account) :where(button,input,select,textarea){font-family:inherit}
+/* ---------- Hero, in three parts ----------
+   Same treatment as the record band above it: three cards in a row,
+   each with its own colour edge. Copy, live ladder, quote. */
+#hero-wrap .hero{padding:22px 0 40px}
+#hero-wrap .hero-grid{grid-template-columns:1.35fr 1fr .9fr;gap:14px;align-items:stretch}
+#hero-wrap .hero-copy,#hero-wrap .hero-quote{
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:18px;padding:20px 22px 18px;
+  display:flex;flex-direction:column}
+body.s-light #hero-wrap .hero-copy,body.s-light #hero-wrap .hero-quote{
+  box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+#hero-wrap .hero-copy{border-top:4px solid #3B4EE0}
+#hero-wrap .hero-copy h1{font-size:clamp(30px,3.3vw,44px);max-width:none;margin-top:12px}
+#hero-wrap .hero p.lede{margin-top:12px;font-size:15px;line-height:1.55}
+#hero-wrap .hero-cta{margin-top:auto;padding-top:18px}
+#hero-wrap .hero-copy .note{font-size:12px;margin-top:10px}
+#hero-wrap .hero-right .ladder{height:100%;border-radius:18px;border-top:4px solid #0E9F6E;
+  box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+#hero-wrap .hero-quote{border-top:4px solid #E8590C;position:relative;overflow:hidden}
+.hq-l{font-size:12.5px;font-weight:600;color:var(--muted)}
+.hq-mark{font-family:var(--disp);font-size:96px;line-height:.8;color:#E8590C;opacity:.9;margin:14px 0 -6px}
+#hero-wrap .hero-quote .quote-rail{margin-top:8px;padding:0;min-height:0;flex:1}
+#hero-wrap .hero-quote .quote-rail::before{display:none}
+#hero-wrap .hero-quote .q-text{font-size:19px;line-height:1.5;font-style:normal;font-weight:600;color:var(--text)}
+#hero-wrap .hero-quote .q-text.in{opacity:1}
+#hero-wrap .hero-quote .q-by{font-size:13px;font-weight:700;color:#E8590C;margin-top:12px}
+.hq-foot{font-size:11px;color:var(--muted);margin-top:14px;padding-top:10px;border-top:1px solid var(--line-soft)}
+@media(max-width:980px){
+  #hero-wrap .hero-grid{grid-template-columns:1fr 1fr}
+  #hero-wrap .hero-copy{grid-column:1 / -1}
+}
+@media(max-width:640px){
+  #hero-wrap .hero-grid{grid-template-columns:1fr}
+  .hq-mark{font-size:72px}
+}
+/* ---------- What a subscription opens, in four parts ----------
+   The stacked, rotating deck is laid out flat: four product cards
+   side by side, each in its own colour, every one clickable. */
+#showDeck{height:auto;perspective:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+#showDeck .show-card,#showDeck .show-card.p0,#showDeck .show-card.p1,#showDeck .show-card.p2,#showDeck .show-card.px{
+  position:relative;inset:auto;transform:none;opacity:1;z-index:auto;pointer-events:auto;
+  padding:20px 20px 18px;border-radius:18px;min-height:230px;
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+#showDeck .show-card:hover{transform:translateY(-4px);box-shadow:0 22px 40px -22px color-mix(in srgb,var(--a) 85%,transparent)}
+#showDeck .show-card::after{width:200px;height:200px;right:-70px;top:-70px}
+#showDeck .sc-tag{margin-bottom:10px}
+#showDeck .sc-title{font-size:22px;line-height:1.12}
+#showDeck .sc-line{font-size:13.5px;line-height:1.5;margin-top:8px}
+#showDeck .sc-stat b{font-size:28px}
+#showDeck .sc-stat span{font-size:12px}
+#showDeck .sc-foot{flex-direction:column;align-items:flex-start;gap:8px}
+#showChips{display:none}
+@media(max-width:980px){ #showDeck{grid-template-columns:1fr 1fr} }
+@media(max-width:560px){ #showDeck{grid-template-columns:1fr} #showDeck .show-card{min-height:0} }
 /* ---------- Pure Portfolio ----------
    Deliberately its own world: pine green and brass, Manrope
    throughout. Same
@@ -2859,6 +2912,33 @@ body.s-light .recb-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 .dash-scope ::-webkit-scrollbar{width:4px;height:4px}
 .dash-scope ::-webkit-scrollbar-track{background:var(--s1)}
 .dash-scope ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:9px}
+/* ---------- Performance blocks, in parts ----------
+   Model Portfolio and Long Term: the one big panel becomes tiles and
+   cards with coloured top edges, like the landing page. */
+.dash-scope .perf.perf-split,.perf.perf-split{background:none;border:0;box-shadow:none;padding:0;display:flex;flex-direction:column;gap:14px}
+body.s-light .dash-scope .perf.perf-split,.perf.perf-split{background:none;box-shadow:none}
+.dash-scope .perf-split .perf-tops,.perf-split .perf-tops{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:0;padding:0;border:0}
+.perf-split .perf-tops>div,.perf-split .perf-card{
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:18px;padding:18px 20px}
+body.s-light .perf-split .perf-tops>div,body.s-light .perf-split .perf-card{
+  box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+.perf-split .perf-tops>div:nth-child(1){border-top:4px solid #3B4EE0}
+.perf-split .perf-tops>div:nth-child(2){border-top:4px solid var(--purple,#7C3AED)}
+.perf-split .perf-tops>div:nth-child(3){border-top:4px solid #64748B}
+.dash-scope .perf-split .perf-tops .perf-k-v,.perf-split .perf-tops .perf-k-v{font-size:30px}
+.perf-split .perf-chartc{border-top:4px solid #0E9F6E}
+.perf-split .perf-cardsc{border-top:4px solid #E8590C}
+.perf-split .perf-recc{border-top:4px solid #E5484D}
+.perf-split .perf-recc:empty{display:none}
+.dash-scope .perf-split .perf-hd,.perf-split .perf-hd{margin-bottom:10px}
+.dash-scope .perf-split .perf-tops>div,.dash-scope .perf-split .perf-card{background:var(--panel);border:1px solid var(--line-soft);border-radius:18px;padding:18px 20px}
+.dash-scope .perf-split .perf-tops>div:nth-child(1){border-top:4px solid #3B4EE0}
+.dash-scope .perf-split .perf-tops>div:nth-child(2){border-top:4px solid var(--purple,#7C3AED)}
+.dash-scope .perf-split .perf-tops>div:nth-child(3){border-top:4px solid #64748B}
+.dash-scope .perf-split .perf-chartc{border-top:4px solid #0E9F6E}
+.dash-scope .perf-split .perf-cardsc{border-top:4px solid #E8590C}
+.dash-scope .perf-split .perf-recc{border-top:4px solid #E5484D}
+@media(max-width:720px){.dash-scope .perf-split .perf-tops,.perf-split .perf-tops{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="s-light">
@@ -2943,7 +3023,7 @@ body.s-light .recb-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 <div class="wrap-x" id="hero-wrap">
     <div class="hero">
       <div class="hero-grid">
-        <div>
+        <div class="hero-copy">
           <div class="eyebrow"><span class="livedot"></span><span id="heroClose">Updated after every NSE close</span></div>
           <h1>Know which stocks are <em>actually</em> moving.</h1>
           <p class="lede"><span id="heroScan">Alpha Intel scans the entire NSE universe every session and ranks what's working right now. No noise, no tips, no opinions — just a ranked list of names showing genuine institutional demand, refreshed daily.</p>
@@ -2952,12 +3032,6 @@ body.s-light .recb-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
             <a class="btn btn-ghost" href="#how">See how it works</a>
           </div>
           <p class="note">Free to create an account. Access to live signals requires an active subscription.</p>
-
-          <div class="quote-rail">
-            <div class="q-text" id="q-text"></div>
-            <div class="q-by" id="q-by"></div>
-          </div>
-
         </div>
 
         <div class="hero-right">
@@ -2974,6 +3048,16 @@ body.s-light .recb-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
             </div>
           </div>
 
+        </div>
+
+        <div class="hero-quote">
+          <div class="hq-l">Words to trade by</div>
+          <div class="hq-mark" aria-hidden="true">“</div>
+          <div class="quote-rail">
+            <div class="q-text" id="q-text"></div>
+            <div class="q-by" id="q-by"></div>
+          </div>
+          <div class="hq-foot">A new line every few seconds</div>
         </div>
       </div>
 
@@ -5258,15 +5342,9 @@ function renderLtPerf(closed){
     '</tr>';
   }).join('');
 
-  return '<div class="perf">' +
-    '<div class="perf-hd">' +
-      '<div><span class="perf-ttl">Long Term Performance</span> ' +
-        '<span class="perf-tag">' +
-          st.startDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + ' \u2013 ' +
-          st.endDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + '</span></div>' +
-      '<div class="perf-ctl">' + btns + '</div>' +
-    '</div>' +
-
+  /* In parts, like the Model Portfolio: tiles, chart card, the
+     summary cards, then the full record. */
+  return '<div class="perf perf-split">' +
     '<div class="perf-tops">' +
       '<div class="perf-lede">' +
         '<div class="cap-row">' +
@@ -5291,6 +5369,15 @@ function renderLtPerf(closed){
         : '') +
     '</div>' +
 
+    '<div class="perf-card perf-chartc">' +
+    '<div class="perf-hd">' +
+      '<div><span class="perf-ttl">Long Term Performance</span> ' +
+        '<span class="perf-tag">' +
+          st.startDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + ' \u2013 ' +
+          st.endDate.toLocaleDateString('en-IN', { month:'short', year:'numeric' }) + '</span></div>' +
+      '<div class="perf-ctl">' + btns + '</div>' +
+    '</div>' +
+
     '<div class="perf-legend">' +
       '<span><i style="background:' + LT_ACCENT + '"></i>Long Term</span>' +
       (st.bench ? '<span><i style="background:var(--muted)"></i>' + PF_BENCH_LABEL + '</span>' : '') +
@@ -5301,8 +5388,17 @@ function renderLtPerf(closed){
       '<div class="perf-tip" id="ltPerfTip"></div>' +
     '</div>' +
 
+    '<div class="perf-foot">The account opens with ' + LT_SLOTS + ' positions of ' +
+      pfMoney(LT_PER_TRADE) + ' and every new position takes an equal share of the account ' +
+      'as it stands that day, so gains are put back to work. Reconstructed from entry and ' +
+      'exit prices, so the line runs smooth between them and does not show intra-trade ' +
+      'drawdown. ' + PF_BENCH_LABEL + ' is shown at index level, excluding dividends. ' +
+      'Past performance does not guarantee future returns.</div>' +
+    '</div>' +
+    '<div class="perf-card perf-cardsc">' +
     '<div class="card-grid">' + cards + '</div>' +
-
+    '</div>' +
+    '<div class="perf-card perf-recc">' +
     '<button class="perf-btn perf-toggle" onclick="toggleLtYearTable(this)">' +
       (LT_YEARS_OPEN ? 'Hide the full record' : 'See the full record') + '</button>' +
     '<div id="ltYearBox"' + (LT_YEARS_OPEN ? '' : ' style="display:none"') + '>' +
@@ -5313,12 +5409,7 @@ function renderLtPerf(closed){
       '</tr></thead><tbody>' + yearRows + '</tbody></table></div>' +
     '</div>' +
 
-    '<div class="perf-foot">The account opens with ' + LT_SLOTS + ' positions of ' +
-      pfMoney(LT_PER_TRADE) + ' and every new position takes an equal share of the account ' +
-      'as it stands that day, so gains are put back to work. Reconstructed from entry and ' +
-      'exit prices, so the line runs smooth between them and does not show intra-trade ' +
-      'drawdown. ' + PF_BENCH_LABEL + ' is shown at index level, excluding dividends. ' +
-      'Past performance does not guarantee future returns.</div>' +
+    '</div>' +
   '</div>';
 }
 
@@ -6990,11 +7081,8 @@ function buildShowcase(){
     }).join('');
   }
 
-  deck.addEventListener('mouseenter', showStop);
-  deck.addEventListener('mouseleave', showStart);
-
+  /* Four cards side by side now, so nothing rotates. */
   paintShowcase();
-  showStart();
 
   /* Fill in the live figures once the feed lands. */
   ensureFeed().then(function(){
@@ -7026,7 +7114,6 @@ function showTo(i){ showIdx = i; paintShowcase(); showStart(); }
 
 /* Clicking the front card takes you into that product. */
 function showGo(i){
-  if(i !== showIdx){ showTo(i); return; }
   var tab = SHOWCASE[i].tab;
   var order = ZONE_TABS[ZONE].map(function(t){ return t[0]; });
   var at = order.indexOf(tab);
@@ -10613,12 +10700,9 @@ function renderPerfBlock(){
     .map(r => '<button class="perf-btn' + (r === PERF_RANGE ? ' on' : '') +
               '" onclick="setPerfRange(\'' + r + '\',this)">' + r + '</button>').join('');
 
-  return '<div class="perf">' +
-    '<div class="perf-hd">' +
-      '<div><span class="perf-ttl">Model Portfolio Performance</span> ' +
-      '<span class="perf-tag" id="perfSpan"></span></div>' +
-      '<div class="perf-ctl">' + btns + '</div>' +
-    '</div>' +
+  /* In parts: three tiles (your money, the book, the index), then the
+     chart in its own card, then the drawdown and the full record. */
+  return '<div class="perf perf-split">' +
     '<div class="perf-tops">' +
       '<div class="perf-lede">' +
         '<div class="cap-row">' +
@@ -10637,6 +10721,12 @@ function renderPerfBlock(){
         PF_BENCH_LABEL + '<span class="perf-k-p" id="perfBmPct"></span></div>' +
         '<div class="perf-k-v" id="perfBmVal">\u2014</div></div>' +
     '</div>' +
+    '<div class="perf-card perf-chartc">' +
+    '<div class="perf-hd">' +
+      '<div><span class="perf-ttl">Model Portfolio Performance</span> ' +
+      '<span class="perf-tag" id="perfSpan"></span></div>' +
+      '<div class="perf-ctl">' + btns + '</div>' +
+    '</div>' +
     '<div class="perf-legend">' +
       '<span><i style="background:var(--purple)"></i>Model Portfolio</span>' +
       '<span id="perfBmLeg" style="display:none"><i style="background:var(--muted)"></i>' + PF_BENCH_LABEL + '</span>' +
@@ -10646,8 +10736,11 @@ function renderPerfBlock(){
       '<div class="perf-tip" id="perfTip"></div>' +
     '</div>' +
     '<div class="perf-foot">Reconstructed from entry and exit prices, so the line runs smooth between them and does not show intra-trade drawdown. Open positions do not move it until they close. Nifty is shown at index level, excluding dividends. Past performance does not guarantee future returns.</div>' +
+    '</div>' +
+    '<div class="perf-card perf-recc">' +
     renderRecoveryStrip() +
     renderPeriodTable() +
+    '</div>' +
   '</div>';
 }
 
