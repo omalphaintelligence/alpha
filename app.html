@@ -3173,6 +3173,40 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 /* the tab row fits on one line on a laptop screen */
 .ltab-btn{padding:8px 12px}
 .nav-in{gap:12px}
+/* ---------- Curves draw themselves in ---------- */
+.pure-scope .pu-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:puDraw 1.7s cubic-bezier(.3,.7,.2,1) forwards}
+.pure-scope .pu-areain{opacity:0;animation:puFade .9s ease .7s forwards}
+.pure-scope .pu-dotin{opacity:0;animation:puFade .4s ease 1.6s forwards}
+@keyframes puDraw{to{stroke-dashoffset:0}}
+@keyframes puFade{to{opacity:1}}
+#mktCanvas{animation:chartReveal 1.8s cubic-bezier(.3,.7,.2,1) both}
+@keyframes chartReveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@media(prefers-reduced-motion:reduce){ .pure-scope .pu-draw,.pure-scope .pu-areain,.pure-scope .pu-dotin,#mktCanvas{animation:none;stroke-dashoffset:0;opacity:1} }
+/* ---------- Placeholder trio for books without a record ---------- */
+.trio-soon .soon-ttl{font-family:var(--disp);font-size:15px;font-weight:700;color:color-mix(in srgb,var(--pc) 75%,#000)}
+.trio-soon .soon-sq{position:relative;width:100%;aspect-ratio:1/1;max-height:340px;margin:12px 0 8px;border-radius:12px;
+  border:1px dashed color-mix(in srgb,var(--pc) 45%,var(--line));
+  background:repeating-linear-gradient(0deg,transparent 0 24%,color-mix(in srgb,var(--muted) 10%,transparent) 24% 25%),
+    repeating-linear-gradient(90deg,transparent 0 24%,color-mix(in srgb,var(--muted) 10%,transparent) 24% 25%);
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.trio-soon .soon-sq svg{position:absolute;inset:8%;width:84%;height:84%}
+.trio-soon .soon-line{fill:none;stroke:color-mix(in srgb,var(--pc) 45%,transparent);stroke-width:2.5;stroke-dasharray:6 6;
+  vector-effect:non-scaling-stroke;animation:soonDash 2.4s linear infinite}
+.trio-soon .soon-sq span{position:relative;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;color:#fff;
+  background:var(--pc)}
+.trio-soon .soon-bars{flex:1;display:flex;align-items:flex-end;gap:5px;min-height:170px;margin:14px 0 8px}
+.trio-soon .soon-bars i{flex:1;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,#0E9F6E 22%,transparent);
+  animation:soonPulse 1.6s ease-in-out infinite}
+.trio-soon .soon-big{font-family:var(--fig);font-size:30px;font-weight:700;color:#E8590C;margin:12px 0 6px}
+.trio-soon .soon-p{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0}
+@keyframes soonDash{to{stroke-dashoffset:-24}}
+@keyframes soonPulse{0%,100%{opacity:.45}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){ .trio-soon .soon-line,.trio-soon .soon-bars i{animation:none} }
+.trio-soon .soon-vs{display:flex;flex-direction:column;gap:7px;margin-top:auto;padding-top:14px}
+.trio-soon .soon-vs i{height:24px;border-radius:7px;background:color-mix(in srgb,#E8590C 22%,transparent);animation:soonPulse 1.6s ease-in-out infinite}
+.trio-soon .soon-vs i:last-child{width:45%;background:color-mix(in srgb,#94A3B8 30%,transparent)}
+.trio-soon .soon-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:5px;margin-top:6px}
+.trio-soon .soon-chips i{height:38px;border-radius:8px;background:color-mix(in srgb,var(--muted) 12%,transparent);animation:soonPulse 1.6s ease-in-out infinite}
 </style>
 </head>
 <body class="s-light">
@@ -5107,7 +5141,44 @@ function comingSoon(label){
   '</div>';
 }
 
-function ltYoungBook(){ return comingSoon('Curve'); }
+/* A book with no record yet still gets the same three cards as the
+   others, so every book reads the same way. They say plainly that
+   the record is coming rather than showing invented numbers. */
+function trioSoon(name, accent){
+  var a = accent || '#3B4EE0';
+  var bars = '';
+  for(var i = 0; i < 12; i++){
+    bars += '<i style="height:' + (22 + ((i * 37) % 60)) + '%;animation-delay:' + (i * 90) + 'ms"></i>';
+  }
+  return '<div class="trio trio-soon" style="--ta:' + a + '">' +
+    '<article class="trio-card tc1 tc-chart" style="--pc:' + a + '">' +
+      '<div class="soon-ttl">' + name + ' Performance</div>' +
+      '<div class="soon-sq"><svg viewBox="0 0 100 100" preserveAspectRatio="none">' +
+        '<path d="M2,88 C20,84 28,70 40,66 S62,50 72,38 S88,20 98,10" class="soon-line"/></svg>' +
+        '<span>Curve coming soon</span></div>' +
+      '<p class="soon-p">The curve starts once this book has a record of its own.</p>' +
+    '</article>' +
+    '<article class="trio-card tc2">' +
+      '<div class="yb-ttl">Year by year</div>' +
+      '<div class="soon-bars">' + bars + '</div>' +
+      '<p class="soon-p">Each calendar year as a bar, once there is a year to show.</p>' +
+    '</article>' +
+    '<article class="trio-card tc3">' +
+      '<div class="rb-l">If you had started in</div>' +
+      '<div class="soon-big">Coming soon</div>' +
+      '<p class="soon-p">What a sum put in would be worth today, against a fixed deposit, from the first full year of this book.</p>' +
+      '<div class="soon-vs"><i></i><i></i></div>' +
+      '<div class="rb-l" style="margin-top:12px">Every start year, money multiplied</div>' +
+      '<div class="soon-chips">' + bars.replace(/<i style="height:[^;]*;/g, '<i style="') + '</div>' +
+    '</article>' +
+  '</div>';
+}
+
+function ltYoungBook(){
+  var name = ltIsSeg() ? segMeta(LT_BOOK)[1] : 'Long Term';
+  var hue = ltIsSeg() ? segMeta(LT_BOOK)[2] : LT_ACCENT;
+  return '<div class="perf perf-split">' + trioSoon(name, hue) + '</div>';
+}
 
 /* ============================================================
    SEGMENT LONG TERM — BACKTEST CURVE (2005 to 2026)
@@ -5368,6 +5439,7 @@ function drawLtSegPerf(){
     return '\u20b9' + Math.round(m);
   };
 
+  var UPTO = v.length - 1;
   function render(hover){
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -5387,11 +5459,11 @@ function drawLtSegPerf(){
     }
 
     ctx.beginPath();
-    for(var i = 0; i < v.length; i++){
+    for(var i = 0; i <= UPTO; i++){
       var x = X(i), yy = Y(v[i]);
       i ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy);
     }
-    ctx.lineTo(X(v.length - 1), padT + ph);
+    ctx.lineTo(X(UPTO), padT + ph);
     ctx.lineTo(X(0), padT + ph);
     ctx.closePath();
     var grad = ctx.createLinearGradient(0, padT, 0, padT + ph);
@@ -5399,7 +5471,7 @@ function drawLtSegPerf(){
     ctx.globalAlpha = .16; ctx.fillStyle = grad; ctx.fill(); ctx.globalAlpha = 1;
 
     ctx.beginPath();
-    for(var j = 0; j < v.length; j++){
+    for(var j = 0; j <= UPTO; j++){
       var xx = X(j), y2 = Y(v[j]);
       j ? ctx.lineTo(xx, y2) : ctx.moveTo(xx, y2);
     }
@@ -5408,6 +5480,7 @@ function drawLtSegPerf(){
     ctx.strokeStyle = segLg; ctx.lineWidth = 2.6;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.stroke();
+    if(UPTO < v.length - 1) chartHead(ctx, X(UPTO), Y(v[UPTO]), hue);
 
     ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = muted;
     var fmt = function(d){ return d.toLocaleDateString('en-IN', { month:'short', year:'2-digit' }); };
@@ -5426,7 +5499,7 @@ function drawLtSegPerf(){
     }
   }
 
-  render(null);
+  animateChart(cv, v.length, function(u){ UPTO = u; render(null); });
 
   function at(clientX){
     var r = cv.getBoundingClientRect();
@@ -5435,6 +5508,7 @@ function drawLtSegPerf(){
   }
 
   function show(i){
+    if(cv._busy) return;
     render(i);
     if(!tip) return;
     var d = st.dates[i];
@@ -6360,10 +6434,10 @@ function paintPure(body){
         grid +
         '<line x1="0" x2="' + S + '" y1="' + y(cap).toFixed(1) + '" y2="' + y(cap).toFixed(1) +
           '" class="pu-capline" vector-effect="non-scaling-stroke"/>' +
-        '<path d="' + area + '" fill="url(#puAr)"/>' +
-        '<polyline points="' + pts + '" fill="none" stroke="url(#puLn)" stroke-width="2.6" ' +
-          'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
-        '<circle cx="' + x(vals.length - 1).toFixed(1) + '" cy="' + y(lastV).toFixed(1) + '" r="5" fill="#5CF0A5"/>' +
+        '<path d="' + area + '" fill="url(#puAr)" class="pu-areain"/>' +
+        '<polyline points="' + pts + '" fill="none" stroke="url(#puLn)" stroke-width="2.6" pathLength="1" ' +
+          'class="pu-draw" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+        '<circle cx="' + x(vals.length - 1).toFixed(1) + '" cy="' + y(lastV).toFixed(1) + '" r="5" fill="#5CF0A5" class="pu-dotin"/>' +
       '</svg>' +
       '<div class="pu-axis"><span>' + pureDay(daily[0].as_of) + '</span><span>dashed: capital</span>' +
         '<span>' + (series[series.length - 1].live ? 'now, live' : pureDay(last.as_of)) + '</span></div>' +
@@ -11165,6 +11239,34 @@ function paintPerfHeads(){
    the long term page needs the same chart, the same hover and the
    same tooltip, and copying all of it would have meant two versions
    drifting apart. */
+/* Every book chart draws itself in when it is shown, the way the
+   record on the front page does, instead of appearing all at once.
+   step(upto) repaints up to a point; done() runs once it is whole.
+   A second call on the same canvas cancels the first. */
+function animateChart(cv, n, step, done){
+  if(cv._anim) cancelAnimationFrame(cv._anim);
+  cv._busy = true;
+  if(REDUCED || n < 3){ step(n - 1); cv._busy = false; if(done) done(); return; }
+  var t0 = performance.now(), DUR = 1700;
+  (function f(now){
+    var p = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - p, 2.4);
+    step(Math.max(1, Math.round(e * (n - 1))));
+    if(p < 1){ cv._anim = requestAnimationFrame(f); }
+    else { cv._anim = null; cv._busy = false; if(done) done(); }
+  })(t0);
+}
+/* The moving head of a line that is still drawing. */
+function chartHead(ctx, x, y, hue){
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2);
+  ctx.fillStyle = hue; ctx.globalAlpha = .18; ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.beginPath(); ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+  ctx.fillStyle = hue; ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+  ctx.restore();
+}
+
 function drawPerf(cfg){
   cfg = cfg || {};
   const cv = document.getElementById(cfg.canvas || 'perfCanvas');
@@ -11204,6 +11306,7 @@ function drawPerf(cfg){
   const X = i => padL + (i / (d.pf.length - 1)) * pw;
   const Y = v => padT + ph * (1 - (T(v) - lo) / (hi - lo));
 
+  let UPTO = d.pf.length - 1;
   function render(hover){
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -11226,6 +11329,7 @@ function drawPerf(cfg){
       ctx.beginPath();
       let pen = false;
       arr.forEach((v, i) => {
+        if(i > UPTO) return;
         if(v == null){ pen = false; return; }
         const x = X(i), y = Y(v);
         pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
@@ -11241,8 +11345,8 @@ function drawPerf(cfg){
 
     /* fill under the portfolio line */
     ctx.beginPath();
-    d.pf.forEach((v, i) => { const x = X(i), y = Y(v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
-    ctx.lineTo(X(d.pf.length - 1), padT + ph);
+    d.pf.forEach((v, i) => { if(i > UPTO) return; const x = X(i), y = Y(v); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.lineTo(X(UPTO), padT + ph);
     ctx.lineTo(X(0), padT + ph);
     ctx.closePath();
     const grad = ctx.createLinearGradient(0, padT, 0, padT + ph);
@@ -11254,6 +11358,7 @@ function drawPerf(cfg){
     var lg = ctx.createLinearGradient(padL, 0, w - padR, 0);
     lg.addColorStop(0, '#3B4EE0'); lg.addColorStop(1, accent);
     line(d.pf, lg, 2.6, 1);
+    if(UPTO < d.pf.length - 1) chartHead(ctx, X(UPTO), Y(d.pf[UPTO]), accent);
 
     /* x labels */
     ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = muted;
@@ -11277,9 +11382,10 @@ function drawPerf(cfg){
     }
   }
 
-  render(null);
+  animateChart(cv, d.pf.length, function(u){ UPTO = u; render(null); });
 
   cv.onmousemove = function(e){
+    if(cv._busy) return;
     const r = cv.getBoundingClientRect();
     let i = Math.round(((e.clientX - r.left) - padL) / pw * (d.pf.length - 1));
     i = Math.max(0, Math.min(d.pf.length - 1, i));
@@ -11524,7 +11630,7 @@ function renderPeriodTable(){
    means anything on the American page, so it is replaced there. */
 function perfBlockForMarket(){
   if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
-    return comingSoon('Curve');
+    return '<div class="perf perf-split">' + trioSoon('Model Portfolio', MP_ACCENT) + '</div>';
   }
   return renderPerfBlock();
 }
