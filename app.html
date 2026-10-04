@@ -5174,7 +5174,95 @@ function trioSoon(name, accent){
   '</div>';
 }
 
+/* ---------- US record ----------
+   Weekly curve rebuilt from the closed stock trades in the US account,
+   Nov 2025 to Oct 2026 (options, dividends and fees left out). Each
+   trade's entry-to-exit return is spread over the days it was held and
+   weighted by the money in it, then compounded — the same method as
+   the Indian book. Shown for both US books until each has its own. */
+var US_CURVE_START = '2025-11-04';
+var US_CURVE = [100.0, 99.41, 96.17, 96.19, 98.35, 99.24, 99.74, 100.65, 101.29, 102.29, 103.6, 104.58, 106.1, 107.16, 108.24, 107.81, 107.41, 107.49, 107.6, 108.05, 108.4, 108.57, 108.66, 109.25, 109.97, 110.68, 111.3, 112.2, 112.5, 112.7, 113.67, 114.31, 115.89, 115.27, 114.04, 112.92, 112.73, 112.15, 111.36, 110.56, 109.8, 108.35, 106.47, 104.66, 104.13, 103.66, 104.0, 105.32, 105.87];
+var US_RANGE = 'max';
+var US_RANGES = [['3m', 13], ['6m', 26], ['max', 0]];
+
+function usSlice(){
+  var w = 0;
+  US_RANGES.forEach(function(r){ if(r[0] === US_RANGE) w = r[1]; });
+  var from = w && w < US_CURVE.length ? US_CURVE.length - w - 1 : 0;
+  var seg = US_CURVE.slice(from), base = seg[0];
+  var t0 = new Date(US_CURVE_START).getTime(), WEEK = 7 * 864e5;
+  return {
+    pf: seg.map(function(v){ return v / base * 100; }),
+    bm: null,
+    dates: seg.map(function(_, i){ return new Date(t0 + (from + i) * WEEK); })
+  };
+}
+
+function setUsRange(r, key){
+  US_RANGE = r;
+  document.querySelectorAll('#usPerf-' + key + ' .perf-btn').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-r') === r);
+  });
+  paintUsWindow(key);
+  drawPerf(USPERF_CFG[key]);
+}
+
+var USPERF_CFG = {};
+
+function paintUsWindow(key){
+  var d = usSlice(), pf = d.pf;
+  var ret = pf[pf.length - 1] - 100;
+  var peak = -Infinity, dd = 0;
+  pf.forEach(function(v){ peak = Math.max(peak, v); dd = Math.min(dd, v / peak - 1); });
+  var el = document.getElementById('usWin-' + key);
+  if(!el) return;
+  var fmt = function(x){ return x.toLocaleDateString('en-US', { month:'short', year:'numeric' }); };
+  el.innerHTML =
+    '<div><div class="perf-k-l">Return<span class="perf-k-p" style="color:' + (ret >= 0 ? 'var(--green)' : 'var(--red)') + '">' +
+      (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%</span></div>' +
+      '<div class="perf-k-v">$' + (100000 * pf[pf.length - 1] / 100).toLocaleString('en-US', { maximumFractionDigits:0 }) + '</div>' +
+      '<div class="cap-note">$100,000 put in ' + fmt(d.dates[0]) + '</div></div>' +
+    '<div><div class="perf-k-l">Deepest fall</div><div class="perf-k-v" style="color:var(--red)">' + (dd * 100).toFixed(1) + '%</div>' +
+      '<div class="cap-note">peak to trough, weekly closes</div></div>' +
+    '<div><div class="perf-k-l">Span</div><div class="perf-k-v">' + fmt(d.dates[0]) + ' \u2013 ' + fmt(d.dates[d.dates.length - 1]) + '</div>' +
+      '<div class="cap-note">' + (pf.length - 1) + ' weeks</div></div>';
+}
+
+function renderUsPerf(key, name, accent){
+  var id = 'usTrio-' + key;
+  USPERF_CFG[key] = { canvas:'usCanvas-' + key, tip:'usTip-' + key, slice:usSlice, accent:accent, label:name };
+  setTimeout(function(){
+    trioInit(id, trioWeekly(US_CURVE, US_CURVE_START), { accent:accent, name:name, startAmount:100000 });
+    paintUsWindow(key);
+    drawPerf(USPERF_CFG[key]);
+  }, 20);
+  var btns = US_RANGES.map(function(r){
+    return '<button class="perf-btn' + (r[0] === US_RANGE ? ' on' : '') + '" data-r="' + r[0] +
+      '" onclick="setUsRange(\'' + r[0] + '\',\'' + key + '\')">' + r[0] + '</button>';
+  }).join('');
+  return '<div class="perf perf-split" id="usPerf-' + key + '">' +
+    trioHTML(id, accent,
+      '<div class="perf-hd"><div><span class="perf-ttl">' + name + ' Performance</span> ' +
+        '<span class="perf-tag">Nov 2025 \u2013 Oct 2026</span></div>' +
+        '<div class="perf-ctl">' + btns + '</div></div>' +
+      '<div class="perf-legend"><span><i style="background:' + accent + '"></i>' + name + '</span></div>' +
+      '<div class="perf-canvas-wrap"><canvas id="usCanvas-' + key + '"></canvas>' +
+        '<div class="perf-tip" id="usTip-' + key + '"></div></div>') +
+    '<div class="perf-card perf-sidec perf-wide">' +
+      '<div class="yb-ttl">This window</div>' +
+      '<div class="perf-tops" id="usWin-' + key + '"></div>' +
+      '<div class="perf-foot">Rebuilt from the closed stock trades in the US account, November 2025 to October 2026. ' +
+        'Each trade\u2019s return is spread over the days it was held and weighted by the money in it; options, ' +
+        'dividends and fees are left out, and open positions do not move the line until they close. A short record \u2014 ' +
+        'read it as a start, not a track record. Past performance does not guarantee future returns.</div>' +
+    '</div>' +
+  '</div>';
+}
+
 function ltYoungBook(){
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US' && !ltIsSeg()){
+    return renderUsPerf('lt', 'Long Term', LT_ACCENT);
+  }
   var name = ltIsSeg() ? segMeta(LT_BOOK)[1] : 'Long Term';
   var hue = ltIsSeg() ? segMeta(LT_BOOK)[2] : LT_ACCENT;
   return '<div class="perf perf-split">' + trioSoon(name, hue) + '</div>';
@@ -11392,7 +11480,8 @@ function drawPerf(cfg){
     render(i);
     if(tip){
       const dt = d.dates[i].toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-      let html = '<b>' + dt + '</b><br>' + seriesLabel + ' \u20b9' + d.pf[i].toFixed(2);
+      const cur$ = (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') ? '$' : '\u20b9';
+      let html = '<b>' + dt + '</b><br>' + seriesLabel + ' ' + cur$ + d.pf[i].toFixed(2);
       if(d.bm && d.bm[i] != null) html += '<br>' + PF_BENCH_LABEL + ' \u20b9' + d.bm[i].toFixed(2);
       tip.innerHTML = html;
       tip.style.display = 'block';
@@ -11630,7 +11719,7 @@ function renderPeriodTable(){
    means anything on the American page, so it is replaced there. */
 function perfBlockForMarket(){
   if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
-    return '<div class="perf perf-split">' + trioSoon('Model Portfolio', MP_ACCENT) + '</div>';
+    return renderUsPerf('mp', 'Model Portfolio', MP_ACCENT);
   }
   return renderPerfBlock();
 }
