@@ -3101,6 +3101,78 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 .pure-scope .pu-day{max-width:26px}
 .pure-scope .pu-day.live i{outline:2px dashed rgba(234,247,239,.5);outline-offset:1px}
 .pure-scope .pu-legend em.pu-cashseg{border:1px solid var(--pu-line)}
+/* ---------- Tighter data pages ----------
+   The data tabs had marketing spacing: tall section padding, a big
+   gap under every heading, generous table rows and cards that kept a
+   fixed height whether or not they had anything to fill it with.
+   Pulled in so a page reads as one block, not islands in white. */
+#ltab-screener .sec,#ltab-model .sec,#ltab-longterm .sec,#ltab-ready .sec,
+#ltab-calls .sec,#ltab-bigbets .sec,#ltab-ask .sec,#ltab-account .sec,#ltab-pricing .sec{
+  padding-top:22px!important;padding-bottom:36px}
+#ltab-screener .sec-head,#ltab-model .sec-head,#ltab-longterm .sec-head,#ltab-ready .sec-head,
+#ltab-calls .sec-head,#ltab-bigbets .sec-head,#ltab-ask .sec-head,#ltab-account .sec-head,#ltab-pricing .sec-head{
+  margin-bottom:16px;max-width:none}
+#ltab-screener .sec-head h2,#ltab-model .sec-head h2,#ltab-longterm .sec-head h2,#ltab-ready .sec-head h2,
+#ltab-calls .sec-head h2,#ltab-bigbets .sec-head h2,#ltab-ask .sec-head h2,#ltab-account .sec-head h2,#ltab-pricing .sec-head h2{
+  font-size:clamp(22px,2.4vw,28px);line-height:1.2;margin:4px 0 6px}
+#ltab-screener .sec-head p,#ltab-model .sec-head p,#ltab-longterm .sec-head p,#ltab-ready .sec-head p,
+#ltab-calls .sec-head p,#ltab-bigbets .sec-head p,#ltab-ask .sec-head p,#ltab-account .sec-head p,#ltab-pricing .sec-head p{
+  font-size:14px;line-height:1.5;max-width:90ch;margin:0}
+.seg-bar{margin-bottom:12px}
+.cm-sub{margin-bottom:14px}
+.cm-sub button{padding:9px 2px}
+.scr-top{padding:14px 18px}
+.scr-table .tbl td{padding:8px 14px;height:38px}
+.scr-table .tbl th{padding:8px 14px}
+.tbl td{height:38px}
+.mp-sec{margin-top:16px}
+.mp-sec-head{margin-bottom:10px}
+.mp-sec-t{font-size:19px}
+.scorecard .sc-cell{padding:13px 16px}
+.sc-note{margin-top:8px}
+.hold-grid,.call-grid{gap:12px}
+.hold{padding:15px 17px 13px}
+.hold-main{margin:10px 0}
+.hold-track{margin-bottom:10px}
+.call{padding:16px 18px 14px}
+.slot-strip{padding:14px 18px;margin-bottom:14px}
+.rb-figs{margin-bottom:12px;gap:10px}
+.rb-figs > div{padding:11px 14px}
+.trio{gap:12px;margin-bottom:12px}
+.trio-card{padding:15px 17px 13px}
+.recb-card,.trio-card,.sr-trio .trio-card{min-height:0}
+.trio-bars .yb{min-height:170px}
+.dash-scope .perf.perf-split,.perf.perf-split{gap:12px}
+.dash-scope .perf-split .perf-card,.dash-scope .perf-split .perf-tops>div{padding:15px 17px}
+.dash-scope .card-grid{gap:8px;margin-bottom:0}
+.dash-scope .card{padding:12px 14px}
+.pure-scope .pu-sec{margin-top:16px}
+.pure-scope .pu-trio{margin:14px 0 4px}
+.fresh-line{margin:2px 0 8px}
+/* "This window" and the summary cards share a row instead of each
+   taking the full width with half of it empty. */
+.dash-scope .perf.perf-split{display:grid!important;grid-template-columns:minmax(260px,1fr) 2fr;align-items:stretch}
+.dash-scope .perf.perf-split > *{grid-column:1 / -1}
+.dash-scope .perf.perf-split > .perf-sidec.perf-wide{grid-column:1}
+.dash-scope .perf.perf-split > .perf-cardsc{grid-column:2}
+.dash-scope .perf.perf-split:not(:has(.perf-cardsc)) > .perf-sidec.perf-wide{grid-column:1 / -1}
+.dash-scope .perf.perf-split:has(.perf-cardsc) .perf-sidec.perf-wide .perf-tops{flex-direction:column!important;gap:12px!important}
+.dash-scope .perf-cardsc .card-grid{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){
+  .dash-scope .perf.perf-split > .perf-sidec.perf-wide,.dash-scope .perf.perf-split > .perf-cardsc{grid-column:1 / -1}
+  .dash-scope .perf-cardsc .card-grid{grid-template-columns:repeat(2,1fr)}
+}
+/* every start year as a chip, so the calculator card has no dead space */
+.tr-yrs{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:5px;margin-top:6px}
+.tr-yrs button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:8px;
+  border:1px solid var(--line-soft);background:var(--panel-2);font-size:10.5px;color:var(--muted);cursor:pointer}
+.tr-yrs button b{font-size:12.5px;color:var(--text)}
+.tr-yrs button.on{background:#E8590C;border-color:#E8590C;color:#fff}
+.tr-yrs button.on b{color:#fff}
+.trio .tc3 .rb-vs{margin-top:12px!important}
+/* the tab row fits on one line on a laptop screen */
+.ltab-btn{padding:8px 12px}
+.nav-in{gap:12px}
 </style>
 </head>
 <body class="s-light">
@@ -5604,7 +5676,8 @@ function renderLtNotes(){
    glance. --- */
 var LT_RANGE = 'max';
 var LT_RANGES = [['1y', 52], ['3y', 156], ['5y', 260], ['10y', 522], ['max', 0]];
-var LT_ACCENT = 'var(--r70)';
+var LT_ACCENT = '#B45309';   /* amber, like the ALL segment; dark enough to read on white */
+var MP_ACCENT = '#0E8FA0';   /* teal for the Model Portfolio */
 
 /* Nifty starts 43 weeks into the long term curve. Both are weekly,
    so one offset lines them up for the whole overlap. */
@@ -5737,7 +5810,7 @@ function ltSlice(){
 
 function drawLtPerf(){
   drawPerf({ canvas: 'ltPerfCanvas', tip: 'ltPerfTip',
-             slice: ltSlice, accent: '--r70', label: 'Long Term' });
+             slice: ltSlice, accent: LT_ACCENT, label: 'Long Term' });
 }
 
 function ltSvg(st){
@@ -11109,19 +11182,27 @@ function drawPerf(cfg){
 
   const themeEl = dashRoot() || document.body;
   const cs = getComputedStyle(themeEl);
-  const accent = cs.getPropertyValue(cfg.accent || '--purple').trim() || '#8b7fe0';
+  const accent = (cfg.accent && cfg.accent.charAt(0) === '#') ? cfg.accent
+    : cfg.accent ? (cs.getPropertyValue(cfg.accent).trim() || MP_ACCENT) : MP_ACCENT;
   const muted  = cs.getPropertyValue('--muted').trim()  || '#888';
   const bcol   = cs.getPropertyValue('--b1').trim()     || '#333';
 
   const all = (d.bm ? d.pf.concat(d.bm) : d.pf).filter(v => v != null);
-  let lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
-  const pad = (hi - lo) * 0.08 || 1;
+  const rawLo = Math.min.apply(null, all), rawHi = Math.max.apply(null, all);
+  /* A book that has grown many times over is unreadable on a straight
+     axis — the early years flatten into the floor. Log, like the
+     segment books, so equal moves take equal height. */
+  const useLog = rawLo > 0 && rawHi / rawLo > 8;
+  const T = v => useLog ? Math.log10(v) : v;
+  let lo = T(rawLo), hi = T(rawHi);
+  const pad = (hi - lo) * 0.06 || 1;
   lo -= pad; hi += pad;
+  if(!useLog && rawLo >= 0 && lo < 0) lo = 0;
 
   const padL = 46, padR = 10, padT = 10, padB = 22;
   const pw = w - padL - padR, ph = h - padT - padB;
   const X = i => padL + (i / (d.pf.length - 1)) * pw;
-  const Y = v => padT + ph * (1 - (v - lo) / (hi - lo));
+  const Y = v => padT + ph * (1 - (T(v) - lo) / (hi - lo));
 
   function render(hover){
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -11132,12 +11213,12 @@ function drawPerf(cfg){
     /* horizontal grid + y labels */
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     for(let k = 0; k <= 4; k++){
-      const v = lo + (hi - lo) * k / 4, y = Y(v);
+      const tv = lo + (hi - lo) * k / 4, v = useLog ? Math.pow(10, tv) : tv, y = Y(v);
       ctx.strokeStyle = bcol; ctx.globalAlpha = .45; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
       ctx.globalAlpha = 1;
       ctx.fillStyle = muted;
-      ctx.fillText(Math.round(v), padL - 7, y);
+      ctx.fillText(v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : Math.round(v), padL - 7, y);
     }
 
     function line(arr, color, width, alpha){
@@ -11493,6 +11574,8 @@ function trioHTML(id, accent, chartInner){
         '<div class="rb-vsbar"><i id="' + id + '-va"></i><span id="' + id + '-val">This book</span></div>' +
         '<div class="rb-vsbar fd"><i id="' + id + '-vb"></i><span id="' + id + '-vbl">7% fixed deposit</span></div>' +
       '</div>' +
+      '<div class="rb-l" style="margin-top:12px">Every start year, money multiplied</div>' +
+      '<div class="tr-yrs" id="' + id + '-ys"></div>' +
     '</article>' +
   '</div>';
 }
@@ -11624,6 +11707,17 @@ function trioInit(id, pts, o){
     var grow = last.v / pts[i0].v, held = (last.t - pts[i0].t) / (365.25 * 864e5);
     var today = amt * grow, fd = amt * Math.pow(1 + (o.fdRate || 0.07), held);
     $('y').textContent = y;
+    var ysEl = $('ys');
+    if(ysEl){
+      ysEl.innerHTML = picks.map(function(py, k){
+        var g = last.v / pts[idxOfYear(py)].v;
+        return '<button class="' + (k === yi ? 'on' : '') + '" data-k="' + k + '">\u2019' + String(py).slice(2) +
+          '<b>' + (g >= 10 ? g.toFixed(0) : g.toFixed(1)) + '\u00d7</b></button>';
+      }).join('');
+      ysEl.querySelectorAll('button').forEach(function(b){
+        b.onclick = function(){ stop(); yi = +b.getAttribute('data-k'); paintCalc(); };
+      });
+    }
     count($('x'), today);
     $('xs').textContent = grow.toFixed(1) + '\u00d7 your money in ' + held.toFixed(1) + ' years';
     $('val').textContent = (o.name || 'This book') + ': ' + money(today);
@@ -11704,16 +11798,16 @@ function renderPerfBlock(){
 
   /* In parts: three tiles (your money, the book, the index), then the
      chart in its own card, then the drawdown and the full record. */
-  setTimeout(function(){ trioInit('mpTrio', trioWeekly(PF_WEEKLY, PF_START), { accent:'#7C3AED', name:'Model Portfolio', startAmount:100000 }); }, 0);
+  setTimeout(function(){ trioInit('mpTrio', trioWeekly(PF_WEEKLY, PF_START), { accent:MP_ACCENT, name:'Model Portfolio', startAmount:100000 }); }, 0);
   return '<div class="perf perf-split">' +
-    trioHTML('mpTrio', '#7C3AED',
+    trioHTML('mpTrio', MP_ACCENT,
     '<div class="perf-hd">' +
       '<div><span class="perf-ttl">Model Portfolio Performance</span> ' +
       '<span class="perf-tag" id="perfSpan"></span></div>' +
       '<div class="perf-ctl">' + btns + '</div>' +
     '</div>' +
     '<div class="perf-legend">' +
-      '<span><i style="background:var(--purple)"></i>Model Portfolio</span>' +
+      '<span><i style="background:' + MP_ACCENT + '"></i>Model Portfolio</span>' +
       '<span id="perfBmLeg" style="display:none"><i style="background:var(--muted)"></i>' + PF_BENCH_LABEL + '</span>' +
     '</div>' +
     '<div class="perf-canvas-wrap">' +
@@ -11721,7 +11815,7 @@ function renderPerfBlock(){
       '<div class="perf-tip" id="perfTip"></div>' +
     '</div>' +
       '') +
-    '<div class="perf-card perf-sidec perf-wide" style="--yb-best:#7C3AED">' +
+    '<div class="perf-card perf-sidec perf-wide" style="--yb-best:' + MP_ACCENT + '">' +
       '<div class="yb-ttl">This window</div>' +
     '<div class="perf-tops">' +
       '<div class="perf-lede">' +
@@ -11734,7 +11828,7 @@ function renderPerfBlock(){
         '<div class="cap-out">would be worth <b id="perfRupee"></b> today <span class="cap-gain" id="perfGain"></span></div>' +
         '<div class="cap-note">Percentages below are for the selected window.</div>' +
       '</div>' +
-      '<div><div class="perf-k-l" style="color:var(--purple)">Model Portfolio' +
+      '<div><div class="perf-k-l" style="color:' + MP_ACCENT + '">Model Portfolio' +
         '<span class="perf-k-p" id="perfPfPct"></span></div>' +
         '<div class="perf-k-v" id="perfPfVal">\u2014</div></div>' +
       '<div id="perfBmWrap" style="display:none"><div class="perf-k-l" style="color:var(--muted)">' +
