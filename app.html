@@ -3292,6 +3292,23 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 @media(max-width:900px){ .pure-scope .pi-grid{grid-template-columns:1fr 1fr} }
 @media(max-width:560px){ .pure-scope .pi-grid{grid-template-columns:1fr} }
 body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.pure-scope .pu-t th{background:transparent!important;color:var(--pu-mute)!important;border-bottom:2px solid var(--pu-brass)!important}
+
+/* ---------- Day to day, three cards ---------- */
+.rf-trio .trio-card{min-height:300px}
+.rf{position:relative;flex:1;min-height:190px;margin:12px 0 8px;display:flex;gap:2px;align-items:stretch}
+.rf-zero{position:absolute;left:0;right:0;height:1px;background:var(--line);z-index:0}
+.rf-slot{position:relative;flex:1 1 0;min-width:2px;max-width:22px;margin:0 auto;cursor:default}
+.rf-slot i{position:absolute;left:0;right:0;border-radius:3px;animation:ybGrow .6s cubic-bezier(.2,.8,.2,1) both}
+.rf-slot.up i{background:linear-gradient(180deg,#34D399,#0E9F6E);transform-origin:bottom}
+.rf-slot.dn i{background:linear-gradient(180deg,#E5484D,#F87171);transform-origin:top}
+.rf-slot:hover i{filter:brightness(1.15) saturate(1.2);box-shadow:0 0 0 2px color-mix(in srgb,var(--text) 15%,transparent)}
+.rf-figs{grid-template-columns:1fr 1fr!important;gap:8px!important;margin:10px 0 0!important}
+.rf-figs > div{padding:10px 12px!important}
+.rf-figs b{font-size:20px!important}
+.rf-hit{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin-top:auto;padding-top:12px;font-size:12.5px;color:var(--muted)}
+.rf-hitbar{height:8px;border-radius:4px;background:color-mix(in srgb,var(--muted) 14%,transparent);overflow:hidden}
+.rf-hitbar i{display:block;height:100%;border-radius:4px;animation:srGrow .8s ease both;transform-origin:left}
+.rf-hit b{color:var(--text)}
 </style>
 </head>
 <body class="s-light">
@@ -5140,79 +5157,115 @@ function scrollRhythmToEnd(){
 }
 
 function repaintRhythm(){
-  if(typeof paintLongTerm === 'function' && document.querySelector('#ltBody .rb')) paintLongTerm();
+  if(typeof paintLongTerm === 'function' && document.querySelector('#ltBody .rf, #ltBody .rb')) paintLongTerm();
   var host = document.getElementById('mpGated');
-  if(host && host.querySelector('.rb') && typeof buildPublicModel === 'function') buildPublicModel();
+  if(host && host.querySelector('.rf, .rb') && typeof buildPublicModel === 'function') buildPublicModel();
   setTimeout(scrollRhythmToEnd, 20);
+}
+
+/* Day to day, in three cards: the daily bars, the weekly bars and the
+   numbers. Bars stretch to fill their card, so a short window is not a
+   cluster in the corner of a wide empty box. Every bar has a tooltip,
+   and the figures count up when the card is drawn. */
+function fitBars(rows, labelFn){
+  if(!rows.length) return '<div class="yb-empty">Not enough history yet.</div>';
+  var hi = 0, lo = 0;
+  rows.forEach(function(r){ hi = Math.max(hi, r.pct); lo = Math.min(lo, r.pct); });
+  var span = (hi - lo) || 1, top = hi / span * 100;
+  return '<div class="rf">' +
+    '<div class="rf-zero" style="top:' + top.toFixed(2) + '%"></div>' +
+    rows.map(function(r, i){
+      var up = r.pct >= 0, h = Math.max(1.5, Math.abs(r.pct) / span * 100);
+      return '<div class="rf-slot ' + (up ? 'up' : 'dn') + '" title="' + labelFn(r) + '  ' +
+        (up ? '+' : '') + r.pct.toFixed(2) + '%">' +
+        '<i style="top:' + (up ? (top - h) : top).toFixed(2) + '%;height:' + h.toFixed(2) + '%;animation-delay:' +
+          Math.min(i * 18, 600) + 'ms"></i></div>';
+    }).join('') +
+  '</div>';
 }
 
 function renderRhythm(hist, curve, accent){
   var daily = dailyReturns(hist, RB_DAYS);
-  /* Roughly the same span in weeks, so the two charts describe the
-     same stretch of time rather than two unrelated ones. */
-  var weekly = weeklyReturns(curve || [], Math.max(4, Math.round(RB_DAYS / 5)));
+  var weeks = Math.max(4, Math.round(RB_DAYS / 5));
+  var weekly = weeklyReturns(curve || [], weeks);
 
+  /* No account curve (segment and US books): build the weeks from the
+     daily moves, Monday to Friday, compounded. */
+  if(!weekly.length && daily.length){
+    var wk = {}, order = [];
+    dailyReturns(hist, 0).forEach(function(r){
+      var d = new Date(String(r.date).slice(0, 10) + 'T00:00:00');
+      var mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      var k = mon.toISOString().slice(0, 10);
+      if(!wk[k]){ wk[k] = 1; order.push(k); }
+      wk[k] *= 1 + r.pct / 100;
+    });
+    weekly = order.slice(-weeks).map(function(k){ return { date: k, pct: (wk[k] - 1) * 100 }; });
+  }
   if(!daily.length && !weekly.length) return '';
 
   var today = daily.length ? daily[daily.length - 1] : null;
   var thisWeek = weekly.length ? weekly[weekly.length - 1] : null;
-  var last5 = daily.slice(-5);
-  var last4w = weekly.slice(-4);
+  var last5 = daily.slice(-5), last4w = weekly.slice(-4);
+  var ups = daily.filter(function(r){ return r.pct > 0; });
+  var dns = daily.filter(function(r){ return r.pct < 0; });
+  var bestD = daily.reduce(function(a, r){ return !a || r.pct > a.pct ? r : a; }, null);
+  var worstD = daily.reduce(function(a, r){ return !a || r.pct < a.pct ? r : a; }, null);
+  var avgUp = ups.length ? ups.reduce(function(a, r){ return a + r.pct; }, 0) / ups.length : null;
+  var avgDn = dns.length ? dns.reduce(function(a, r){ return a + r.pct; }, 0) / dns.length : null;
+  var dd = function(x){ return x ? new Date(String(x).slice(0, 10)).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) : ''; };
 
-  function fig(v){
-    if(v == null) return '<span class="dim">\u2014</span>';
-    var c = v >= 0 ? accent : 'var(--red)';
-    return '<b style="color:' + c + '">' + (v >= 0 ? '+' : '') + v.toFixed(2) + '%</b>';
+  function fig(label, v, sub){
+    var body = v == null ? '<b class="dim">\u2014</b>'
+      : '<b style="color:' + (v >= 0 ? accent : 'var(--red)') + '">' + (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(2) + '%</b>';
+    return '<div><span>' + label + '</span>' + body + '<em>' + (sub || '') + '</em></div>';
   }
+  function cap(n, word){ return n + ' ' + word + (n === 1 ? '' : 's'); }
 
   return '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Day to day</div>' +
       '<div class="rb-range">' +
-        '<input id="rbSlider" class="rb-slider" type="range" min="1" max="180" step="1" ' +
-          'value="' + RB_DAYS + '" aria-label="Days to show" ' +
-          'oninput="nudgeRbDays(this.value)">' +
-        '<span class="rb-out" id="rbOut">' + RB_DAYS +
-          (RB_DAYS === 1 ? ' day' : ' days') + '</span>' +
+        '<input id="rbSlider" class="rb-slider" type="range" min="5" max="180" step="1" ' +
+          'value="' + RB_DAYS + '" aria-label="Days to show" oninput="nudgeRbDays(this.value)">' +
+        '<span class="rb-out" id="rbOut">' + RB_DAYS + ' days</span>' +
       '</div>' +
     '</div>' +
-
-    '<div class="rb-figs">' +
-      '<div><span>Latest session</span>' + fig(today ? today.pct : null) +
-        '<em>' + (today ? new Date(today.date).toLocaleDateString('en-IN',
-          { day:'numeric', month:'short' }) : '') + '</em></div>' +
-      '<div><span>Last five sessions</span>' + fig(last5.length ? sumPct(last5) : null) +
-        '<em>compounded</em></div>' +
-      '<div><span>Latest week</span>' + fig(thisWeek ? thisWeek.pct : null) +
-        '<em>week on week</em></div>' +
-      '<div><span>Last four weeks</span>' + fig(last4w.length ? sumPct(last4w) : null) +
-        '<em>compounded</em></div>' +
+    '<div class="trio rf-trio">' +
+      '<article class="trio-card tc1" style="border-top-color:' + accent + '">' +
+        '<div class="yb-ttl">Every session</div>' +
+        '<div class="yb-head"><b>' + ups.length + '</b> up \u00b7 <b>' + dns.length + '</b> down \u00b7 last ' +
+          cap(daily.length, 'session') + (daily.length < RB_DAYS ? ' (all there is)' : '') + '</div>' +
+        fitBars(daily, function(r){ return dd(r.date); }) +
+        '<div class="yb-foot"><span>Best <b style="color:' + accent + '">' + (bestD ? dd(bestD.date) + ' +' + bestD.pct.toFixed(2) + '%' : '\u2014') + '</b></span>' +
+          '<span>Worst <b style="color:var(--red)">' + (worstD ? dd(worstD.date) + ' ' + worstD.pct.toFixed(2) + '%' : '\u2014') + '</b></span></div>' +
+      '</article>' +
+      '<article class="trio-card tc2">' +
+        '<div class="yb-ttl">Every week</div>' +
+        '<div class="yb-head"><b>' + weekly.filter(function(r){ return r.pct > 0; }).length + '</b> of <b>' + weekly.length +
+          '</b> weeks up</div>' +
+        fitBars(weekly, function(r){ return r.date ? 'Week of ' + dd(r.date) : 'Week'; }) +
+        '<div class="yb-foot"><span>Latest week <b style="color:' + ((thisWeek && thisWeek.pct >= 0) ? accent : 'var(--red)') + '">' +
+          (thisWeek ? (thisWeek.pct >= 0 ? '+' : '') + thisWeek.pct.toFixed(2) + '%' : '\u2014') + '</b></span>' +
+          '<span>4 weeks <b style="color:' + (last4w.length && sumPct(last4w) >= 0 ? accent : 'var(--red)') + '">' +
+          (last4w.length ? (sumPct(last4w) >= 0 ? '+' : '') + sumPct(last4w).toFixed(2) + '%' : '\u2014') + '</b></span></div>' +
+      '</article>' +
+      '<article class="trio-card tc3">' +
+        '<div class="yb-ttl">The numbers</div>' +
+        '<div class="rb-figs rf-figs">' +
+          fig('Latest session', today ? today.pct : null, today ? dd(today.date) : '') +
+          fig('Last five sessions', last5.length ? sumPct(last5) : null, 'compounded') +
+          fig('Latest week', thisWeek ? thisWeek.pct : null, 'week on week') +
+          fig('Last four weeks', last4w.length ? sumPct(last4w) : null, 'compounded') +
+          fig('Average up day', avgUp, cap(ups.length, 'day')) +
+          fig('Average down day', avgDn, cap(dns.length, 'day')) +
+        '</div>' +
+        '<div class="rf-hit"><span>Sessions up</span><div class="rf-hitbar"><i style="width:' +
+          (daily.length ? (ups.length / daily.length * 100).toFixed(0) : 0) + '%;background:' + accent + '"></i></div>' +
+          '<b>' + (daily.length ? (ups.length / daily.length * 100).toFixed(0) : 0) + '%</b></div>' +
+      '</article>' +
     '</div>' +
-
-    (daily.length
-      ? '<div class="rb-block">' +
-          '<div class="rb-cap">Daily, last ' + daily.length + ' session' +
-            (daily.length === 1 ? '' : 's') +
-            (daily.length < RB_DAYS
-              ? ' <span class="rb-short">all the history there is</span>' : '') +
-            '<span class="rb-key">' +
-              '<span><i style="background:var(--tier-sb)"></i>up</span>' +
-              '<span><i style="background:var(--red)"></i>down</span>' +
-            '</span></div>' +
-          returnBars(daily) +
-        '</div>'
-      : '') +
-
-    (weekly.length
-      ? '<div class="rb-block">' +
-          '<div class="rb-cap">Weekly, last ' + weekly.length + ' weeks</div>' +
-          returnBars(weekly) +
-        '</div>'
-      : '') +
-
-    '<p class="rb-note">Longer windows scroll; the newest sessions are on the ' +
-    'right. Daily is the equal-weighted move of the open positions ' +
-    'between one close and the next. Weekly is the change in the account value ' +
-    'that drives the curve above.</p>' +
+    '<p class="rb-note">Daily is the equal-weighted move of the open positions between one close and the next. ' +
+    'Weekly is the change in the account over the week. Hover any bar for its date and value.</p>' +
   '</div>';
 }
 
@@ -7244,7 +7297,7 @@ function pureExtraNotes(d, last){
     document.body.appendChild(tip);
     return tip;
   }
-  var BAR = '.rb-slot, .yb-c, .pu-day, .nb-row, .sr-sec, .sr-row, .tr-yrs button';
+  var BAR = '.rb-slot, .rf-slot, .yb-c, .pu-day, .nb-row, .sr-sec, .sr-row, .tr-yrs button';
   document.addEventListener('mouseover', function(e){
     var el = e.target.closest && e.target.closest(BAR);
     if(!el){ if(tip) tip.style.display = 'none'; return; }
