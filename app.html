@@ -3246,8 +3246,9 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
   border-top:4px solid #F2B632}
 .pure-scope .pu-sec-ledger{--pu-deep:#1E262B;--pu-line:#38464F;--pu-paper:#ECF1F4;--pu-mute:#AAB8C0;--pu-brass:#7CC4FF;--pu-hover:#2A363D;
   border-top:4px solid #7CC4FF}
-.pure-scope .pu-sec-cm{--pu-deep:#271633;--pu-line:#4A2E5E;--pu-paper:#F7ECFA;--pu-mute:#CDB5D8;--pu-brass:#F5A3D3;--pu-hover:#36204A;
-  border-top:4px solid #F5A3D3}
+.pure-scope .pu-sec-cm{--pu-deep:#F7F3EA;--pu-line:#E4DCC8;--pu-paper:#1B2A24;--pu-mute:#6B7A72;--pu-brass:#B7791F;--pu-hover:#EFE8D8;
+  border-top:4px solid #B7791F;box-shadow:0 10px 30px -18px rgba(0,0,0,.45)}
+.pure-scope .pu-sec-cm h4{color:#1B2A24}
 .pure-scope .pu-sec-hold .pu-tw,.pure-scope .pu-sec-wait .pu-tw,.pure-scope .pu-sec-trade .pu-tw,.pure-scope .pu-sec-ledger .pu-tw{background:transparent}
 .pure-scope .pu-sec-hold .pu-t tbody tr:hover td,.pure-scope .pu-sec-wait .pu-t tbody tr:hover td,
 .pure-scope .pu-sec-trade .pu-t tbody tr:hover td,.pure-scope .pu-sec-ledger .pu-t tbody tr:hover td,
@@ -3256,35 +3257,38 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
   background:var(--pu-hover)!important;color:var(--pu-paper)}
 .pure-scope .pu-sec-wait .pu-sym button,.pure-scope .pu-sec-wait .pu-t td:first-child{color:#C9D1FF}
 .pure-scope .pu-sec-trade .pu-sym button{color:#FFD27A}
-.pure-scope .pu-sec-cm .pu-filt button{background:#1D0F27}
-.pure-scope .pu-sec-cm .pu-filt button.on{background:#F5A3D3;border-color:#F5A3D3;color:#271633}
-.pure-scope .pu-sec-cm .pu-filt button.on span{color:#271633}
+.pure-scope .pu-sec-cm .pu-filt button{background:#fff;color:#1B2A24;border-color:#E4DCC8}
+.pure-scope .pu-sec-cm .pu-filt button span{color:#6B7A72}
+.pure-scope .pu-sec-cm .pu-filt button.on{background:#0F3D2E;border-color:#0F3D2E;color:#fff}
+.pure-scope .pu-sec-cm .pu-filt button.on span{color:#F2B632}
 
-/* insight cards */
+/* insight cards: white tiles on warm paper, one quiet colour each */
 .pure-scope .pi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 14px}
-.pure-scope .pi-card{padding:13px 14px;border-radius:12px;border:1px solid color-mix(in srgb,var(--h) 40%,transparent);
-  border-left:4px solid var(--h);background:color-mix(in srgb,var(--h) 12%,#1D0F27)}
-.pure-scope .pi-card small{display:block;font-size:11.5px;font-weight:700;color:var(--h);text-transform:uppercase;letter-spacing:.04em}
-.pure-scope .pi-card b{display:block;font-size:22px;font-weight:800;color:#fff;margin:4px 0 2px}
-.pure-scope .pi-card p{margin:0;font-size:12.5px;line-height:1.5;color:#E9DCEE}
-.pure-scope .pi-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:8px;overflow:hidden}
+.pure-scope .pi-card{padding:13px 15px;border-radius:12px;background:#fff;border:1px solid #E4DCC8;border-top:3px solid var(--h)}
+.pure-scope .pi-card small{display:block;font-size:11px;font-weight:700;color:var(--h);text-transform:uppercase;letter-spacing:.05em}
+.pure-scope .pi-card b{display:block;font-size:22px;font-weight:800;color:#1B2A24;margin:4px 0 2px}
+.pure-scope .pi-card p{margin:0;font-size:12.5px;line-height:1.5;color:#4A5852}
+.pure-scope .pi-bar{height:6px;border-radius:3px;background:#EFE8D8;margin-top:8px;overflow:hidden}
 .pure-scope .pi-bar i{display:block;height:100%;background:var(--h);border-radius:3px;animation:srGrow .7s ease both;transform-origin:left}
 
-/* notes as coloured cards */
-.pure-scope .pu-sec-cm .pu-note{--k:#F2B632;border-bottom:0;margin:7px 0;padding:11px 12px;border-radius:10px;
-  background:color-mix(in srgb,var(--k) 11%,#1D0F27);border-left:4px solid var(--k)}
-.pure-scope .pu-sec-cm .pu-note.k-buy{--k:#5AA2FF}
-.pure-scope .pu-sec-cm .pu-note.k-sell{--k:#FF7A6B}
-.pure-scope .pu-sec-cm .pu-note.k-free{--k:#5CF0A5}
-.pure-scope .pu-sec-cm .pu-note.k-day{--k:#F2B632}
-.pure-scope .pu-sec-cm .pu-note.k-funds{--k:#B9C7D1}
-.pure-scope .pu-sec-cm .pu-note.k-week{--k:#C7A6FF}
-.pure-scope .pu-sec-cm .pu-note.k-snap{--k:#6FE3D1}
-.pure-scope .pu-sec-cm .pu-kind{background:var(--k)!important;color:#1D0F27!important}
-.pure-scope .pu-sec-cm .pu-ntitle{color:#fff;font-weight:700}
-.pure-scope .pu-sec-cm .pu-nbody{color:#E9DCEE}
-.pure-scope .pu-sec-cm .pu-nbody b{color:var(--k)}
-.pure-scope .pu-sec-cm .pu-daycap{color:#F5A3D3;border-bottom-color:#4A2E5E}
+/* notes: white cards, colour only on the edge and the badge */
+.pure-scope .pu-sec-cm .pu-note{--k:#B7791F;border-bottom:0;margin:7px 0;padding:11px 13px;border-radius:10px;
+  background:#fff;border:1px solid #E4DCC8;border-left:4px solid var(--k)}
+.pure-scope .pu-sec-cm .pu-note.k-buy{--k:#1F6FD1}
+.pure-scope .pu-sec-cm .pu-note.k-sell{--k:#D9483B}
+.pure-scope .pu-sec-cm .pu-note.k-free{--k:#0E8A5F}
+.pure-scope .pu-sec-cm .pu-note.k-day{--k:#B7791F}
+.pure-scope .pu-sec-cm .pu-note.k-funds{--k:#5B6B75}
+.pure-scope .pu-sec-cm .pu-note.k-week{--k:#7C4DCC}
+.pure-scope .pu-sec-cm .pu-note.k-snap{--k:#0E8A8A}
+.pure-scope .pu-sec-cm .pu-kind{background:color-mix(in srgb,var(--k) 12%,#fff)!important;color:var(--k)!important;
+  border:1px solid color-mix(in srgb,var(--k) 35%,#fff)}
+.pure-scope .pu-sec-cm .pu-ntitle{color:#1B2A24;font-weight:700}
+.pure-scope .pu-sec-cm .pu-nbody{color:#4A5852}
+.pure-scope .pu-sec-cm .pu-nbody b{color:#1B2A24}
+.pure-scope .pu-sec-cm .pu-nbody .pu-up{color:#0E8A5F!important}
+.pure-scope .pu-sec-cm .pu-nbody .pu-dn{color:#D9483B!important}
+.pure-scope .pu-sec-cm .pu-daycap{color:#0F3D2E;border-bottom-color:#E4DCC8}
 @media(max-width:900px){ .pure-scope .pi-grid{grid-template-columns:1fr 1fr} }
 @media(max-width:560px){ .pure-scope .pi-grid{grid-template-columns:1fr} }
 body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.pure-scope .pu-t th{background:transparent!important;color:var(--pu-mute)!important;border-bottom:2px solid var(--pu-brass)!important}
@@ -7310,7 +7314,7 @@ function pureInsights(d, last){
       return { s: h.symbol, v: px * (+h.qty || 0) };
     }).sort(function(a, b){ return b.v - a.v; });
     var top3 = vals.slice(0, 3).reduce(function(a, x){ return a + x.v; }, 0) / acct * 100;
-    card('#7CC4FF', 'Concentration', top3.toFixed(0) + '%',
+    card('#1F6FD1', 'Concentration', top3.toFixed(0) + '%',
       'of the account sits in the three largest: ' + vals.slice(0, 3).map(function(x){ return x.s; }).join(', ') + '.',
       '<div class="pi-bar"><i style="width:' + Math.min(100, top3).toFixed(0) + '%"></i></div>');
   }
@@ -7321,7 +7325,7 @@ function pureInsights(d, last){
       .sort(function(a, b){ return b.r - a.r; });
     var tot = risk.reduce(function(a, x){ return a + x.r; }, 0) || 1;
     var free = hold.filter(function(h){ return (+h.stop_loss || 0) >= (+h.avg_price || 0) && +h.avg_price > 0; }).length;
-    card('#FF8A6B', 'Risk at the stops', pureInr(tot),
+    card('#D9483B', 'Risk at the stops', pureInr(tot),
       'Biggest single risk: ' + risk[0].s + ' (' + (risk[0].r / tot * 100).toFixed(0) + '% of it). ' +
       (free ? free + ' position' + (free === 1 ? ' is' : 's are') + ' already risk-free.' : 'None is risk-free yet.'));
   }
@@ -7333,11 +7337,11 @@ function pureInsights(d, last){
     var losses = sells.filter(function(t){ return +t.pnl_pct <= 0; });
     var avgW = wins.length ? wins.reduce(function(a, t){ return a + +t.pnl_pct; }, 0) / wins.length : 0;
     var avgL = losses.length ? losses.reduce(function(a, t){ return a + +t.pnl_pct; }, 0) / losses.length : 0;
-    card('#5CF0A5', 'Closed trades', (wins.length / sells.length * 100).toFixed(0) + '% won',
+    card('#0E8A5F', 'Closed trades', (wins.length / sells.length * 100).toFixed(0) + '% won',
       sells.length + ' closed \u00b7 average win ' + pc(avgW) + ', average loss ' + pc(avgL) +
       (avgL ? ' \u00b7 payoff ' + (avgW / Math.abs(avgL)).toFixed(1) + '\u00d7' : '') + '.');
   } else {
-    card('#5CF0A5', 'Closed trades', 'None yet',
+    card('#0E8A5F', 'Closed trades', 'None yet',
       'Every position bought is still open. The first exit comes when a close breaks a trailing stop.');
   }
 
@@ -7349,7 +7353,7 @@ function pureInsights(d, last){
       why[r] = (why[r] || 0) + 1;
     });
     var top = Object.keys(why).sort(function(a, b){ return why[b] - why[a]; });
-    card('#C7A6FF', 'The queue', String(queue.length),
+    card('#7C4DCC', 'The queue', String(queue.length),
       'names qualify but are not held. Most common reason: ' + top[0].toLowerCase() + ' (' + why[top[0]] + ').');
   }
 
@@ -7363,13 +7367,13 @@ function pureInsights(d, last){
     var bd = moves.reduce(function(x, m){ return !x || m.p > x.p ? m : x; }, null);
     var wd = moves.reduce(function(x, m){ return !x || m.p < x.p ? m : x; }, null);
     var ups = moves.filter(function(m){ return m.p > 0; }).length;
-    card('#F2B632', 'Sessions', ups + ' of ' + moves.length + ' up',
+    card('#B7791F', 'Sessions', ups + ' of ' + moves.length + ' up',
       'Best ' + pureDay(bd.d) + ' ' + pc(bd.p, 2) + ', worst ' + pureDay(wd.d) + ' ' + pc(wd.p, 2) + '.');
   }
 
   /* 6. cash and what charges have cost */
   var cashPct = (+last.cash || 0) / acct * 100;
-  card('#6FE3D1', 'Cash and costs', cashPct.toFixed(1) + '% cash',
+  card('#0E8A8A', 'Cash and costs', cashPct.toFixed(1) + '% cash',
     pureInr(last.cash) + ' idle, not at risk. Charges so far ' + pureInr(last.charges) + ' \u2014 ' +
     ((+last.charges || 0) / ((+last.capital || acct)) * 100).toFixed(2) + '% of capital.');
 
