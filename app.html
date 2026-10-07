@@ -3207,6 +3207,31 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 .trio-soon .soon-vs i:last-child{width:45%;background:color-mix(in srgb,#94A3B8 30%,transparent)}
 .trio-soon .soon-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:5px;margin-top:6px}
 .trio-soon .soon-chips i{height:38px;border-radius:8px;background:color-mix(in srgb,var(--muted) 12%,transparent);animation:soonPulse 1.6s ease-in-out infinite}
+
+/* ---------- richer commentary ---------- */
+.nd-facts.nd-facts-wide{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px 18px;
+  padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--muted) 7%,transparent)}
+.nb-bars{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.nb-row{display:grid;grid-template-columns:96px 1fr 62px;align-items:center;gap:10px;font-size:12px}
+.nb-sym{font-weight:700;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nb-track{position:relative;height:10px;border-radius:5px;background:color-mix(in srgb,var(--muted) 10%,transparent)}
+.nb-track::before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line)}
+.nb-track i{position:absolute;top:0;bottom:0;border-radius:4px;animation:srGrow .5s ease both}
+.nb-track i.u{left:50%;transform-origin:left}
+.nb-track i.d{right:50%;transform-origin:right}
+.nb-row b{text-align:right;font-variant-numeric:tabular-nums}
+.nb-row:hover{background:color-mix(in srgb,var(--muted) 8%,transparent);border-radius:6px}
+.nb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.nb-chips span{padding:4px 10px;border-radius:999px;font-size:12px;background:color-mix(in srgb,var(--tier-w) 14%,transparent);
+  border:1px solid color-mix(in srgb,var(--tier-w) 40%,transparent)}
+.nb-chips b{color:var(--tier-w)}
+
+.bar-tip{position:fixed;z-index:2000;display:none;pointer-events:none;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;
+  background:#0B1220;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.25);white-space:nowrap}
+.pure-scope .pu-hov line{stroke:rgba(234,247,239,.45);stroke-width:1;stroke-dasharray:3 3}
+.pure-scope .pu-hov circle{fill:#5CF0A5;stroke:#0A2C21;stroke-width:2}
+.yb-c:hover i,.pu-day:hover i,.rb-slot:hover .rb-half i{filter:brightness(1.18) saturate(1.2)}
+.yb-c{cursor:default}
 </style>
 </head>
 <body class="s-light">
@@ -5666,6 +5691,169 @@ function toggleLtNote(i){
   if(el) el.classList.toggle('open', LT_NOTES_OPEN[i]);
 }
 
+/* ============================================================
+   RICHER DAILY COMMENTARY — shared by every book
+   From the day-by-day snapshots of open positions: each session's
+   move with its breadth, median, spread, streak and the last five
+   sessions, every name drawn as a bar, the names sitting close to
+   their stop, and a weekly round-up. Nothing here is typed by hand.
+   ============================================================ */
+function dailyBookNotes(hist, upHue){
+  var byDay = {};
+  (hist || []).forEach(function(r){
+    if(!r || !r.as_of) return;
+    var k = String(r.as_of).slice(0, 10);
+    (byDay[k] = byDay[k] || []).push(r);
+  });
+  var asc = Object.keys(byDay).sort();
+  var sessions = [];
+
+  for(var i = 1; i < asc.length; i++){
+    var prevBy = {};
+    byDay[asc[i - 1]].forEach(function(r){ prevBy[r.symbol] = r; });
+    var moves = [];
+    byDay[asc[i]].forEach(function(r){
+      var was = prevBy[r.symbol];
+      if(!was || !was.curr_price || !r.curr_price) return;
+      var chg = (r.curr_price - was.curr_price) / was.curr_price * 100;
+      if(Math.abs(chg) < 0.005) return;
+      var stop = +r.stop_loss || 0, px = +r.curr_price;
+      moves.push({ symbol: r.symbol, chg: chg, pnl: +r.pnl_pct || 0,
+                   room: stop > 0 ? (px - stop) / px * 100 : null });
+    });
+    if(!moves.length) continue;
+    moves.sort(function(a, b){ return b.chg - a.chg; });
+    var net = moves.reduce(function(a, m){ return a + m.chg; }, 0) / moves.length;
+    var mid = moves.length % 2 ? moves[(moves.length - 1) / 2].chg
+            : (moves[moves.length / 2 - 1].chg + moves[moves.length / 2].chg) / 2;
+    sessions.push({ date: asc[i], net: net, median: mid, moves: moves,
+                    up: moves.filter(function(m){ return m.chg > 0; }).length,
+                    dn: moves.filter(function(m){ return m.chg < 0; }).length });
+  }
+
+  function pc(v, dp){ return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(dp == null ? 2 : dp) + '%'; }
+  function hue(v){ return v >= 0 ? upHue : 'var(--red)'; }
+  function fact(label, value, colour){
+    return '<div><span>' + label + '</span><b' + (colour ? ' style="color:' + colour + '"' : '') + '>' + value + '</b></div>';
+  }
+
+  var notes = [];
+  sessions.forEach(function(s, idx){
+    if(idx < sessions.length - 30) return;
+
+    /* streak and the last five sessions, up to and including this one */
+    var streak = 0, dir = s.net >= 0;
+    for(var j = idx; j >= 0 && (sessions[j].net >= 0) === dir; j--) streak++;
+    var five = sessions.slice(Math.max(0, idx - 4), idx + 1)
+      .reduce(function(a, x){ return a * (1 + x.net / 100); }, 1);
+    five = (five - 1) * 100;
+
+    var best = s.moves[0], worst = s.moves[s.moves.length - 1];
+    var breadth = s.up / s.moves.length * 100;
+    var mx = Math.max.apply(null, s.moves.map(function(m){ return Math.abs(m.chg); })) || 1;
+    var near = s.moves.filter(function(m){ return m.room != null && m.room < 5; })
+      .sort(function(a, b){ return a.room - b.room; });
+
+    var bars = '<div class="nb-bars">' + s.moves.slice(0, 40).map(function(m){
+      var w = Math.max(2, Math.abs(m.chg) / mx * 50);
+      return '<div class="nb-row" title="' + m.symbol + ' ' + pc(m.chg) + '">' +
+        '<span class="nb-sym">' + m.symbol + '</span>' +
+        '<span class="nb-track">' +
+          '<i class="' + (m.chg >= 0 ? 'u' : 'd') + '" style="width:' + w.toFixed(1) + '%;background:' + hue(m.chg) + '"></i>' +
+        '</span>' +
+        '<b style="color:' + hue(m.chg) + '">' + pc(m.chg) + '</b></div>';
+    }).join('') + '</div>';
+
+    var line = (dir ? 'Up' : 'Down') + ' ' + streak + (streak === 1 ? ' session' : ' sessions in a row');
+    var read = s.net >= 0
+      ? (breadth >= 60 ? 'A broad advance \u2014 most of the book moved up together.'
+         : breadth >= 45 ? 'A narrow gain: the winners outweighed a near-even split.'
+         : 'Up on the average, but carried by a few names \u2014 most of the book fell.')
+      : (breadth <= 40 ? 'A broad pullback \u2014 most of the book gave ground.'
+         : breadth <= 55 ? 'A small loss on an even split; nothing broke.'
+         : 'More names rose than fell, but the losers were heavier.');
+
+    notes.push({
+      date: s.date, kind: 'day', hue: hue(s.net),
+      title: 'The book ' + (s.net >= 0 ? 'gained' : 'gave back') + ' ' + Math.abs(s.net).toFixed(2) + '% \u00b7 ' +
+             s.up + ' up, ' + s.dn + ' down',
+      summary: 'Best ' + best.symbol + ' ' + pc(best.chg, 1) + ' \u00b7 worst ' + worst.symbol + ' ' + pc(worst.chg, 1) +
+               ' \u00b7 ' + line.toLowerCase() + ' \u00b7 5 sessions ' + pc(five, 1),
+      detail:
+        '<p class="nd-p">' + read + '</p>' +
+        '<div class="nd-facts nd-facts-wide">' +
+          fact('Average move', pc(s.net), hue(s.net)) +
+          fact('Median move', pc(s.median), hue(s.median)) +
+          fact('Breadth', breadth.toFixed(0) + '% up') +
+          fact('Spread', (best.chg - worst.chg).toFixed(1) + ' pts') +
+          fact('Streak', line) +
+          fact('Last 5 sessions', pc(five), hue(five)) +
+        '</div>' +
+        '<div class="nd-h" style="margin-top:14px">Every name, best to worst</div>' + bars +
+        (near.length
+          ? '<div class="nd-h" style="margin-top:12px">Close to the stop (under 5% of room)</div>' +
+            '<div class="nb-chips">' + near.slice(0, 12).map(function(m){
+              return '<span>' + m.symbol + ' <b>' + m.room.toFixed(1) + '%</b></span>';
+            }).join('') + '</div>'
+          : '')
+    });
+  });
+
+  /* weekly round-up, Monday to Friday */
+  var weeks = {};
+  sessions.forEach(function(s){
+    var d = new Date(s.date + 'T00:00:00');
+    var mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    var k = mon.toISOString().slice(0, 10);
+    (weeks[k] = weeks[k] || []).push(s);
+  });
+  Object.keys(weeks).sort().slice(-8).forEach(function(k){
+    var w = weeks[k];
+    if(w.length < 2) return;
+    var ret = (w.reduce(function(a, s){ return a * (1 + s.net / 100); }, 1) - 1) * 100;
+    var upDays = w.filter(function(s){ return s.net >= 0; }).length;
+    var bestD = w.reduce(function(a, s){ return s.net > a.net ? s : a; });
+    var worstD = w.reduce(function(a, s){ return s.net < a.net ? s : a; });
+    var bySym = {};
+    w.forEach(function(s){ s.moves.forEach(function(m){
+      bySym[m.symbol] = (bySym[m.symbol] || 1) * (1 + m.chg / 100);
+    }); });
+    var syms = Object.keys(bySym).map(function(x){ return { s: x, r: (bySym[x] - 1) * 100 }; })
+      .sort(function(a, b){ return b.r - a.r; });
+    var day = function(x){ return new Date(x.date).toLocaleDateString('en-IN', { weekday:'short' }); };
+    var top = syms.slice(0, 5), bot = syms.slice(-5).reverse();
+    function list(arr){
+      return arr.map(function(x){
+        return '<div class="nd-row"><button class="tkr as-link" onclick="event.stopPropagation();openChart(\'' + x.s + '\')">' + x.s +
+          '</button><span class="num" style="color:' + hue(x.r) + '">' + pc(x.r, 1) + '</span></div>';
+      }).join('');
+    }
+    notes.push({
+      date: w[w.length - 1].date, kind: 'week', hue: hue(ret),
+      title: 'Week of ' + new Date(k).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ': ' +
+             (ret >= 0 ? 'up ' : 'down ') + Math.abs(ret).toFixed(2) + '%',
+      summary: upDays + ' of ' + w.length + ' sessions up \u00b7 best day ' + day(bestD) + ' ' + pc(bestD.net, 1) +
+               ' \u00b7 worst day ' + day(worstD) + ' ' + pc(worstD.net, 1),
+      detail:
+        '<div class="nd-facts nd-facts-wide">' +
+          fact('Week', pc(ret), hue(ret)) +
+          fact('Sessions up', upDays + ' of ' + w.length) +
+          fact('Best day', day(bestD) + ' ' + pc(bestD.net), hue(bestD.net)) +
+          fact('Worst day', day(worstD) + ' ' + pc(worstD.net), hue(worstD.net)) +
+          (syms.length ? fact('Best name', syms[0].s + ' ' + pc(syms[0].r, 1), hue(syms[0].r)) : '') +
+          (syms.length ? fact('Weakest name', syms[syms.length - 1].s + ' ' + pc(syms[syms.length - 1].r, 1),
+                              hue(syms[syms.length - 1].r)) : '') +
+        '</div>' +
+        '<div class="nd-cols" style="margin-top:14px">' +
+          '<div><div class="nd-h">Led the week</div>' + list(top) + '</div>' +
+          '<div><div class="nd-h">Dragged on it</div>' + list(bot) + '</div>' +
+        '</div>'
+    });
+  });
+
+  return notes;
+}
+
 function buildLtNotes(){
   var lt = ltCurrent();
   var hist = lt.history || [];
@@ -5680,33 +5868,7 @@ function buildLtNotes(){
   });
   var days = Object.keys(byDay).sort().reverse();
 
-  for(var i = 0; i < days.length - 1 && i < 30; i++){
-    var today = byDay[days[i]], prevBy = {};
-    byDay[days[i + 1]].forEach(function(r){ prevBy[r.symbol] = r; });
-
-    var moves = [];
-    today.forEach(function(r){
-      var was = prevBy[r.symbol];
-      if(!was || !was.curr_price || !r.curr_price) return;
-      var chg = (r.curr_price - was.curr_price) / was.curr_price * 100;
-      if(Math.abs(chg) < 0.01) return;
-      moves.push({ symbol: r.symbol, chg: chg });
-    });
-    if(!moves.length) continue;
-
-    var net = moves.reduce(function(a, m){ return a + m.chg; }, 0) / moves.length;
-    moves.sort(function(a, b){ return b.chg - a.chg; });
-    notes.push({
-      date: days[i], kind: 'day',
-      hue: net >= 0 ? LT_ACCENT : 'var(--red)',
-      title: 'The book ' + (net >= 0 ? 'gained' : 'gave back') + ' ' +
-             Math.abs(net).toFixed(2) + '% today',
-      summary: moves.filter(function(m){ return m.chg > 0; }).length + ' up, ' +
-               moves.filter(function(m){ return m.chg < 0; }).length + ' down',
-      detail: renderDayDetail(moves.filter(function(m){ return m.chg > 0; }),
-                              moves.filter(function(m){ return m.chg < 0; }), net)
-    });
-  }
+  notes = notes.concat(dailyBookNotes(hist, LT_ACCENT));
 
   jnl.slice(0, 80).forEach(function(e){
     if(!e.date) return;
@@ -5783,12 +5945,12 @@ function buildLtNotes(){
   });
 
   notes.sort(function(a, b){ return b.date.localeCompare(a.date); });
-  return notes.slice(0, 60);
+  return notes.slice(0, 90);
 }
 
 var LT_CM_TABS = [
   ['all',  'All'], ['in', 'Additions'], ['out', 'Removals'],
-  ['stop', 'Stops raised'], ['day', 'Daily reports']
+  ['stop', 'Stops raised'], ['day', 'Daily reports'], ['week', 'Weekly']
 ];
 
 function renderLtNotes(){
@@ -6410,7 +6572,7 @@ function paintPure(body){
   }
   if(LT_TAB === 'commentary'){
     body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
-      renderPureNotes(d.notes || []) + '</div>';
+      renderPureNotes((d.notes || []).concat(pureExtraNotes(d, last))) + '</div>';
     return;
   }
   if(LT_TAB === 'mirror' && pureIsOwner()){
@@ -6514,7 +6676,9 @@ function paintPure(body){
       '<small>Account value</small>' +
       '<b class="pu-tbig">' + pureInr(lastV) + '</b>' +
       '<p class="' + pureCls(chgAll) + '">' + purePct(chgAll) + ' since ' + pureDay(daily[0].as_of) + '</p>' +
-      '<svg class="pu-sq" viewBox="0 0 ' + S + ' ' + S + '" preserveAspectRatio="none">' +
+      '<svg class="pu-sq" viewBox="0 0 ' + S + ' ' + S + '" preserveAspectRatio="none" data-lo="' + lo + '" data-hi="' + hi +
+        '" data-v=\'' + JSON.stringify(vals.map(function(v){ return Math.round(v); })) + '\' data-d=\'' +
+        JSON.stringify(series.map(function(r){ return r.live ? 'now, live' : pureDay(r.d); })) + '\'>' +
         '<defs><linearGradient id="puLn" x1="0" x2="1" y1="0" y2="0">' +
           '<stop offset="0" stop-color="#F2B632"/><stop offset="1" stop-color="#5CF0A5"/></linearGradient>' +
         '<linearGradient id="puAr" x1="0" x2="0" y1="0" y2="1">' +
@@ -6893,9 +7057,180 @@ var PURE_KINDS = {
   sell:  ['Sold',      'k-sell'],
   free:  ['Risk-free', 'k-free'],
   day:   ['Account',   'k-day'],
-  funds: ['Funds',     'k-funds']
+  funds: ['Funds',     'k-funds'],
+  week:  ['Weekly',    'k-day'],
+  snap:  ['Snapshot',  'k-free']
 };
-var PURE_CM_TABS = [['all','All'], ['buy','Bought'], ['sell','Sold'], ['free','Risk-free'], ['day','Daily'], ['funds','Funds']];
+var PURE_CM_TABS = [['all','All'], ['snap','Snapshot'], ['buy','Bought'], ['sell','Sold'], ['free','Risk-free'],
+                    ['day','Daily'], ['week','Weekly'], ['funds','Funds']];
+
+/* Two notes built on the page from figures already loaded: where the
+   book stands right now, and a weekly round-up of the account. */
+function pureExtraNotes(d, last){
+  var out = [];
+  var hold = d.holdings || [];
+  var live = (typeof pureLiveMap === 'function') ? pureLiveMap() : {};
+  var today = new Date().toISOString().slice(0, 10);
+  if(hold.length){
+    var rows = hold.map(function(h){
+      var px = live[h.symbol] > 0 ? live[h.symbol] : (+h.ltp || +h.avg_price || 0);
+      var avg = +h.avg_price || 0, stop = +h.stop_loss || 0;
+      return { s: h.symbol, pnl: avg ? (px / avg - 1) * 100 : 0, room: (px && stop) ? (px - stop) / px * 100 : null,
+               locked: stop >= avg && avg > 0 };
+    }).sort(function(a, b){ return b.pnl - a.pnl; });
+    var inProfit = rows.filter(function(r){ return r.pnl > 0; }).length;
+    var near = rows.filter(function(r){ return r.room != null && r.room < 5; });
+    var locked = rows.filter(function(r){ return r.locked; }).length;
+    var avgP = rows.reduce(function(a, r){ return a + r.pnl; }, 0) / rows.length;
+    var pc = function(v){ return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(1) + '%'; };
+    out.push({
+      note_date: today, kind: 'snap',
+      title: inProfit + ' of ' + rows.length + ' holdings in profit \u00b7 average ' + pc(avgP),
+      body: 'Leading: ' + rows.slice(0, 3).map(function(r){ return '<b>' + r.s + '</b> ' + pc(r.pnl); }).join(', ') +
+            '. Lagging: ' + rows.slice(-3).reverse().map(function(r){ return '<b>' + r.s + '</b> ' + pc(r.pnl); }).join(', ') + '. ' +
+            (near.length ? near.length + ' sit within 5% of their stop (' +
+              near.map(function(r){ return r.s + ' ' + r.room.toFixed(1) + '%'; }).join(', ') + '). '
+              : 'None is within 5% of its stop. ') +
+            (locked ? locked + ' already have the stop at or above cost, so they cannot lose money. ' : '') +
+            'Open risk is ' + pureInr(last.open_risk) + ', ' + (+last.open_risk_pct || 0).toFixed(2) + '% of the account.'
+    });
+  }
+
+  var daily = d.daily || [], weeks = {};
+  daily.forEach(function(r){
+    var dt = new Date(String(r.as_of).slice(0, 10) + 'T00:00:00');
+    var mon = new Date(dt); mon.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+    (weeks[mon.toISOString().slice(0, 10)] = weeks[mon.toISOString().slice(0, 10)] || []).push(r);
+  });
+  var keys = Object.keys(weeks).sort(), prevEnd = null;
+  keys.forEach(function(k){
+    var w = weeks[k];
+    var start = prevEnd != null ? prevEnd : +w[0].account_value || 0;
+    var end = +w[w.length - 1].account_value || 0;
+    prevEnd = end;
+    if(!start || w.length < 1) return;
+    var ret = (end / start - 1) * 100;
+    var hi = Math.max.apply(null, w.map(function(r){ return +r.account_value || 0; }));
+    out.push({
+      note_date: String(w[w.length - 1].as_of).slice(0, 10), kind: 'week',
+      title: 'Week of ' + new Date(k).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ': account ' +
+             (ret >= 0 ? 'up ' : 'down ') + Math.abs(ret).toFixed(2) + '%',
+      body: pureInr(start) + ' \u2192 ' + pureInr(end) + ' (' + (ret >= 0 ? '+' : '\u2212') + pureInr(Math.abs(end - start)) + '). ' +
+            'Highest close of the week ' + pureInr(hi) + '. ' + w.length + ' session' + (w.length === 1 ? '' : 's') + ' recorded. ' +
+            'Open risk at the end of the week ' + (+w[w.length - 1].open_risk_pct || 0).toFixed(2) + '% across ' +
+            (w[w.length - 1].positions || 0) + ' positions.'
+    });
+  });
+  return out;
+}
+
+
+/* ============================================================
+   NUMBERS IN MOTION
+   1. Figures count up to their value when a panel is drawn.
+   2. Any bar in a bar chart shows its date and value on hover.
+   3. The Pure account curve follows the cursor.
+   ============================================================ */
+(function(){
+  var SEL = '.sc-v, .card-v, .perf-k-v, .rb-figs b, .pu-stats b, .pu-tbig, .slot-k, .th-pnl, .hold-pnl';
+
+  function countUp(el){
+    if(el.__cu || el.children.length) return;
+    var txt = el.textContent.trim();
+    var m = /^([^\d\-\u2212]*)([\-\u2212]?)([\d,]+(?:\.\d+)?)(.*)$/.exec(txt);
+    if(!m) return;
+    var raw = m[3].replace(/,/g, ''), to = parseFloat(raw);
+    if(!isFinite(to) || to === 0) return;
+    el.__cu = true;
+    var dec = (raw.split('.')[1] || '').length;
+    var indian = /\d,\d\d,\d/.test(m[3]) || m[1].indexOf('\u20b9') !== -1;
+    var grouped = m[3].indexOf(',') !== -1 || to >= 10000;
+    var pre = m[1] + m[2], post = m[4];
+    function fmt(v){
+      return grouped ? v.toLocaleString(indian ? 'en-IN' : 'en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })
+                     : v.toFixed(dec);
+    }
+    if(REDUCED) return;
+    var t0 = performance.now(), DUR = 900;
+    (function f(now){
+      var p = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = pre + fmt(to * e) + post;
+      if(p < 1) requestAnimationFrame(f); else el.textContent = txt;
+    })(t0);
+  }
+
+  function scan(node){
+    if(!node || node.nodeType !== 1) return;
+    if(node.matches && node.matches(SEL)) countUp(node);
+    if(node.querySelectorAll) node.querySelectorAll(SEL).forEach(countUp);
+  }
+
+  function start(){
+    var root = document.getElementById('view-landing');
+    if(!root || !('MutationObserver' in window)) return;
+    new MutationObserver(function(list){
+      list.forEach(function(m){ m.addedNodes.forEach(scan); });
+    }).observe(root, { childList: true, subtree: true });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+
+  /* --- one floating tip for every bar --- */
+  var tip = null;
+  function ensureTip(){
+    if(tip) return tip;
+    tip = document.createElement('div');
+    tip.className = 'bar-tip';
+    document.body.appendChild(tip);
+    return tip;
+  }
+  var BAR = '.rb-slot, .yb-c, .pu-day, .nb-row, .sr-sec, .sr-row, .tr-yrs button';
+  document.addEventListener('mouseover', function(e){
+    var el = e.target.closest && e.target.closest(BAR);
+    if(!el){ if(tip) tip.style.display = 'none'; return; }
+    if(el.title){ el.setAttribute('data-tip', el.title); el.removeAttribute('title'); }
+    var t = el.getAttribute('data-tip');
+    if(!t){ if(tip) tip.style.display = 'none'; return; }
+    ensureTip().textContent = t;
+    tip.style.display = 'block';
+  });
+  document.addEventListener('mousemove', function(e){
+    if(!tip || tip.style.display !== 'block') return;
+    var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+    tip.style.left = x + 'px';
+    tip.style.top = (e.clientY - tip.offsetHeight - 12) + 'px';
+  });
+
+  /* --- the Pure curve follows the cursor --- */
+  document.addEventListener('mousemove', function(e){
+    var svg = e.target.closest && e.target.closest('svg.pu-sq');
+    document.querySelectorAll('svg.pu-sq').forEach(function(s){
+      if(s !== svg){ var g = s.querySelector('.pu-hov'); if(g) g.style.display = 'none'; }
+    });
+    if(!svg) return;
+    var vals = JSON.parse(svg.getAttribute('data-v') || '[]'), dates = JSON.parse(svg.getAttribute('data-d') || '[]');
+    if(vals.length < 2) return;
+    var r = svg.getBoundingClientRect(), S = 300, P = 10;
+    var fx = (e.clientX - r.left) / r.width * S;
+    var i = Math.max(0, Math.min(vals.length - 1, Math.round((fx - P) / (S - 2 * P) * (vals.length - 1))));
+    var lo = +svg.getAttribute('data-lo'), hi = +svg.getAttribute('data-hi');
+    var x = P + i * (S - 2 * P) / (vals.length - 1);
+    var y = S - P - (vals[i] - lo) / (hi - lo) * (S - 2 * P);
+    var g = svg.querySelector('.pu-hov');
+    if(!g){
+      g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'pu-hov');
+      g.innerHTML = '<line y1="0" y2="300" vector-effect="non-scaling-stroke"/><circle r="6"/>';
+      svg.appendChild(g);
+    }
+    g.style.display = '';
+    g.querySelector('line').setAttribute('x1', x); g.querySelector('line').setAttribute('x2', x);
+    g.querySelector('circle').setAttribute('cx', x); g.querySelector('circle').setAttribute('cy', y);
+    var first = vals[0];
+    ensureTip().textContent = (dates[i] || 'now') + ' \u00b7 ' + pureInr(vals[i]) + ' \u00b7 ' +
+      ((vals[i] / first - 1) * 100 >= 0 ? '+' : '') + ((vals[i] / first - 1) * 100).toFixed(2) + '%';
+    tip.style.display = 'block';
+  });
+})();
 
 function renderPureNotes(all){
   var counts = { all: all.length };
@@ -6909,7 +7244,7 @@ function renderPureNotes(all){
 
   if(!list.length) return filters + '<div class="pu-empty">Nothing in this group yet.</div>';
 
-  var order = { day: 1, sell: 2, buy: 3, free: 4, funds: 5 };
+  var order = { snap: 0, day: 1, week: 1.5, sell: 2, buy: 3, free: 4, funds: 5 };
   list = list.slice().sort(function(a, b){
     var c = String(b.note_date).localeCompare(String(a.note_date));
     return c || ((order[a.kind] || 9) - (order[b.kind] || 9));
@@ -12354,37 +12689,8 @@ function buildNotes(){
   });
   var days = Object.keys(byDay).sort().reverse();
 
-  /* --- what the book did each day --- */
-  for(var i = 0; i < days.length - 1 && i < 30; i++){
-    var today = byDay[days[i]], prev = byDay[days[i + 1]];
-    var prevBy = {};
-    prev.forEach(function(r){ prevBy[r.symbol] = r; });
-
-    var moves = [];
-    today.forEach(function(r){
-      var was = prevBy[r.symbol];
-      if(!was || !was.curr_price || !r.curr_price) return;
-      var chg = (r.curr_price - was.curr_price) / was.curr_price * 100;
-      if(Math.abs(chg) < 0.01) return;
-      moves.push({ symbol: r.symbol, chg: chg });
-    });
-    if(!moves.length) continue;
-
-    var net = moves.reduce(function(a, m){ return a + m.chg; }, 0) / moves.length;
-    moves.sort(function(a, b){ return b.chg - a.chg; });
-    var up = moves.filter(function(m){ return m.chg > 0; });
-    var dn = moves.filter(function(m){ return m.chg < 0; });
-
-    notes.push({
-      date: days[i],
-      kind: 'day',
-      hue: net >= 0 ? 'var(--tier-sb)' : 'var(--red)',
-      title: 'The book ' + (net >= 0 ? 'gained' : 'gave back') + ' ' +
-             Math.abs(net).toFixed(2) + '% today',
-      summary: up.length + ' up, ' + dn.length + ' down',
-      detail: renderDayDetail(up, dn, net)
-    });
-  }
+  /* --- what the book did each day, and each week --- */
+  notes = notes.concat(dailyBookNotes(hist, 'var(--tier-sb)'));
 
   /* --- entries and exits --- */
   events.slice(0, 60).forEach(function(e){
@@ -12412,7 +12718,7 @@ function buildNotes(){
   });
 
   notes.sort(function(a, b){ return b.date.localeCompare(a.date); });
-  return notes.slice(0, 40);
+  return notes.slice(0, 90);
 }
 
 function renderDayDetail(up, dn, net){
@@ -12489,7 +12795,8 @@ var CM_TABS = [
   ['all',      'All'],
   ['in',       'Additions'],
   ['out',      'Removals'],
-  ['day',      'Daily reports']
+  ['day',      'Daily reports'],
+  ['week',     'Weekly']
 ];
 
 function renderNotes(){
