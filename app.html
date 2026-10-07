@@ -3232,6 +3232,62 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 .pure-scope .pu-hov circle{fill:#5CF0A5;stroke:#0A2C21;stroke-width:2}
 .yb-c:hover i,.pu-day:hover i,.rb-slot:hover .rb-half i{filter:brightness(1.18) saturate(1.2)}
 .yb-c{cursor:default}
+
+/* ---------- Pure: each section in its own colour ----------
+   The tokens are re-pointed per section, so its table, text, rules
+   and hover all follow. */
+.pure-scope .pu-sec-hold,.pure-scope .pu-sec-wait,.pure-scope .pu-sec-trade,.pure-scope .pu-sec-ledger,.pure-scope .pu-sec-cm{
+  padding:16px 18px 18px;border-radius:16px;background:var(--pu-deep);border:1px solid var(--pu-line);color:var(--pu-paper)}
+.pure-scope .pu-sec-hold{--pu-deep:#0B3326;--pu-line:#1F6A4E;--pu-paper:#EAF7EF;--pu-mute:#9CC4B1;--pu-brass:#5CF0A5;--pu-hover:#14503B;
+  border-top:4px solid #5CF0A5}
+.pure-scope .pu-sec-wait{--pu-deep:#17204A;--pu-line:#2E3B7A;--pu-paper:#E8ECFF;--pu-mute:#A9B4E8;--pu-brass:#9AA8FF;--pu-hover:#24306A;
+  border-top:4px solid #9AA8FF}
+.pure-scope .pu-sec-trade{--pu-deep:#2A2312;--pu-line:#54461F;--pu-paper:#FFF4DC;--pu-mute:#D9C79F;--pu-brass:#F2B632;--pu-hover:#3D3218;
+  border-top:4px solid #F2B632}
+.pure-scope .pu-sec-ledger{--pu-deep:#1E262B;--pu-line:#38464F;--pu-paper:#ECF1F4;--pu-mute:#AAB8C0;--pu-brass:#7CC4FF;--pu-hover:#2A363D;
+  border-top:4px solid #7CC4FF}
+.pure-scope .pu-sec-cm{--pu-deep:#271633;--pu-line:#4A2E5E;--pu-paper:#F7ECFA;--pu-mute:#CDB5D8;--pu-brass:#F5A3D3;--pu-hover:#36204A;
+  border-top:4px solid #F5A3D3}
+.pure-scope .pu-sec-hold .pu-tw,.pure-scope .pu-sec-wait .pu-tw,.pure-scope .pu-sec-trade .pu-tw,.pure-scope .pu-sec-ledger .pu-tw{background:transparent}
+.pure-scope .pu-sec-hold .pu-t tbody tr:hover td,.pure-scope .pu-sec-wait .pu-t tbody tr:hover td,
+.pure-scope .pu-sec-trade .pu-t tbody tr:hover td,.pure-scope .pu-sec-ledger .pu-t tbody tr:hover td,
+.dash-scope .pure-scope .pu-sec-hold .pu-t tbody tr:hover td,.dash-scope .pure-scope .pu-sec-wait .pu-t tbody tr:hover td,
+.dash-scope .pure-scope .pu-sec-trade .pu-t tbody tr:hover td,.dash-scope .pure-scope .pu-sec-ledger .pu-t tbody tr:hover td{
+  background:var(--pu-hover)!important;color:var(--pu-paper)}
+.pure-scope .pu-sec-wait .pu-sym button,.pure-scope .pu-sec-wait .pu-t td:first-child{color:#C9D1FF}
+.pure-scope .pu-sec-trade .pu-sym button{color:#FFD27A}
+.pure-scope .pu-sec-cm .pu-filt button{background:#1D0F27}
+.pure-scope .pu-sec-cm .pu-filt button.on{background:#F5A3D3;border-color:#F5A3D3;color:#271633}
+.pure-scope .pu-sec-cm .pu-filt button.on span{color:#271633}
+
+/* insight cards */
+.pure-scope .pi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 14px}
+.pure-scope .pi-card{padding:13px 14px;border-radius:12px;border:1px solid color-mix(in srgb,var(--h) 40%,transparent);
+  border-left:4px solid var(--h);background:color-mix(in srgb,var(--h) 12%,#1D0F27)}
+.pure-scope .pi-card small{display:block;font-size:11.5px;font-weight:700;color:var(--h);text-transform:uppercase;letter-spacing:.04em}
+.pure-scope .pi-card b{display:block;font-size:22px;font-weight:800;color:#fff;margin:4px 0 2px}
+.pure-scope .pi-card p{margin:0;font-size:12.5px;line-height:1.5;color:#E9DCEE}
+.pure-scope .pi-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:8px;overflow:hidden}
+.pure-scope .pi-bar i{display:block;height:100%;background:var(--h);border-radius:3px;animation:srGrow .7s ease both;transform-origin:left}
+
+/* notes as coloured cards */
+.pure-scope .pu-sec-cm .pu-note{--k:#F2B632;border-bottom:0;margin:7px 0;padding:11px 12px;border-radius:10px;
+  background:color-mix(in srgb,var(--k) 11%,#1D0F27);border-left:4px solid var(--k)}
+.pure-scope .pu-sec-cm .pu-note.k-buy{--k:#5AA2FF}
+.pure-scope .pu-sec-cm .pu-note.k-sell{--k:#FF7A6B}
+.pure-scope .pu-sec-cm .pu-note.k-free{--k:#5CF0A5}
+.pure-scope .pu-sec-cm .pu-note.k-day{--k:#F2B632}
+.pure-scope .pu-sec-cm .pu-note.k-funds{--k:#B9C7D1}
+.pure-scope .pu-sec-cm .pu-note.k-week{--k:#C7A6FF}
+.pure-scope .pu-sec-cm .pu-note.k-snap{--k:#6FE3D1}
+.pure-scope .pu-sec-cm .pu-kind{background:var(--k)!important;color:#1D0F27!important}
+.pure-scope .pu-sec-cm .pu-ntitle{color:#fff;font-weight:700}
+.pure-scope .pu-sec-cm .pu-nbody{color:#E9DCEE}
+.pure-scope .pu-sec-cm .pu-nbody b{color:var(--k)}
+.pure-scope .pu-sec-cm .pu-daycap{color:#F5A3D3;border-bottom-color:#4A2E5E}
+@media(max-width:900px){ .pure-scope .pi-grid{grid-template-columns:1fr 1fr} }
+@media(max-width:560px){ .pure-scope .pi-grid{grid-template-columns:1fr} }
+body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.pure-scope .pu-t th{background:transparent!important;color:var(--pu-mute)!important;border-bottom:2px solid var(--pu-brass)!important}
 </style>
 </head>
 <body class="s-light">
@@ -6572,7 +6628,8 @@ function paintPure(body){
   }
   if(LT_TAB === 'commentary'){
     body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
-      renderPureNotes((d.notes || []).concat(pureExtraNotes(d, last))) + '</div>';
+      '<section class="pu-sec pu-sec-cm"><h4>Commentary</h4>' + pureInsights(d, last) +
+      renderPureNotes((d.notes || []).concat(pureExtraNotes(d, last))) + '</section></div>';
     return;
   }
   if(LT_TAB === 'mirror' && pureIsOwner()){
@@ -6771,7 +6828,7 @@ function paintPure(body){
     '</tr>';
   }).join('');
 
-  var holdings = '<section class="pu-sec"><h4>Holdings <span>' + hold.length + '</span></h4>' +
+  var holdings = '<section class="pu-sec pu-sec-hold"><h4>Holdings <span>' + hold.length + '</span></h4>' +
     (liveHits ? '<p class="pu-livenote">LTP is live for ' + liveHits + ' of ' + hold.length +
       ', refreshed every 15 minutes in market hours. Stops update after the evening run.</p>' : '') +
     (hold.length
@@ -6790,7 +6847,7 @@ function paintPure(body){
   /* --- waiting --- */
   var q = d.queue || [];
   var queue = q.length
-    ? '<section class="pu-sec"><h4>Waiting <span>' + q.length + '</span></h4>' +
+    ? '<section class="pu-sec pu-sec-wait"><h4>Waiting <span>' + q.length + '</span></h4>' +
         '<div class="pu-tw"><table class="pu-t" data-tbl="queue"><thead><tr>' +
         '<th>Instrument</th><th>Price</th><th>Trailing stop</th><th>Stop distance</th>' +
         '<th>Planned qty</th><th class="pu-l">Why not bought</th></tr></thead><tbody>' +
@@ -6805,7 +6862,7 @@ function paintPure(body){
   /* --- tradebook --- */
   var tr = d.trades || [];
   var trades = tr.length
-    ? '<section class="pu-sec"><h4>Tradebook</h4>' +
+    ? '<section class="pu-sec pu-sec-trade"><h4>Tradebook</h4>' +
         '<div class="pu-tw"><table class="pu-t" data-tbl="trades"><thead><tr>' +
         '<th class="pu-l">Date</th><th>Instrument</th><th>Type</th><th>Qty</th><th>Price</th>' +
         '<th>Value</th><th>Charges</th><th>P&amp;L</th></tr></thead><tbody>' +
@@ -6824,7 +6881,7 @@ function paintPure(body){
   /* --- funds ledger --- */
   var lg = d.ledger || [];
   var ledger = lg.length
-    ? '<section class="pu-sec"><h4>Funds ledger</h4>' +
+    ? '<section class="pu-sec pu-sec-ledger"><h4>Funds ledger</h4>' +
         '<div class="pu-tw"><table class="pu-t" data-tbl="ledger"><thead><tr>' +
         '<th class="pu-l">Date</th><th class="pu-l">Particulars</th><th>Debit</th><th>Credit</th>' +
         '<th>Balance</th></tr></thead><tbody>' +
@@ -7058,8 +7115,8 @@ var PURE_KINDS = {
   free:  ['Risk-free', 'k-free'],
   day:   ['Account',   'k-day'],
   funds: ['Funds',     'k-funds'],
-  week:  ['Weekly',    'k-day'],
-  snap:  ['Snapshot',  'k-free']
+  week:  ['Weekly',    'k-week'],
+  snap:  ['Snapshot',  'k-snap']
 };
 var PURE_CM_TABS = [['all','All'], ['snap','Snapshot'], ['buy','Bought'], ['sell','Sold'], ['free','Risk-free'],
                     ['day','Daily'], ['week','Weekly'], ['funds','Funds']];
@@ -7086,8 +7143,8 @@ function pureExtraNotes(d, last){
     out.push({
       note_date: today, kind: 'snap',
       title: inProfit + ' of ' + rows.length + ' holdings in profit \u00b7 average ' + pc(avgP),
-      body: 'Leading: ' + rows.slice(0, 3).map(function(r){ return '<b>' + r.s + '</b> ' + pc(r.pnl); }).join(', ') +
-            '. Lagging: ' + rows.slice(-3).reverse().map(function(r){ return '<b>' + r.s + '</b> ' + pc(r.pnl); }).join(', ') + '. ' +
+      body: 'Leading: ' + rows.slice(0, 3).map(function(r){ return '<b>' + r.s + '</b> <span class="' + (r.pnl >= 0 ? 'pu-up' : 'pu-dn') + '">' + pc(r.pnl) + '</span>'; }).join(', ') +
+            '. Lagging: ' + rows.slice(-3).reverse().map(function(r){ return '<b>' + r.s + '</b> <span class="' + (r.pnl >= 0 ? 'pu-up' : 'pu-dn') + '">' + pc(r.pnl) + '</span>'; }).join(', ') + '. ' +
             (near.length ? near.length + ' sit within 5% of their stop (' +
               near.map(function(r){ return r.s + ' ' + r.room.toFixed(1) + '%'; }).join(', ') + '). '
               : 'None is within 5% of its stop. ') +
@@ -7231,6 +7288,93 @@ function pureExtraNotes(d, last){
     tip.style.display = 'block';
   });
 })();
+
+/* ---------- Pure: insight cards over the commentary ----------
+   Six readings of the account, each in its own colour, worked out
+   from the holdings, trades, queue and daily rows already loaded. */
+function pureInsights(d, last){
+  var hold = d.holdings || [], trades = d.trades || [], queue = d.queue || [], daily = d.daily || [];
+  var live = (typeof pureLiveMap === 'function') ? pureLiveMap() : {};
+  var acct = +last.account_value || 1;
+  var cards = [];
+  function pc(v, dp){ return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(dp == null ? 1 : dp) + '%'; }
+  function card(hue, label, big, line, extra){
+    cards.push('<div class="pi-card" style="--h:' + hue + '"><small>' + label + '</small><b>' + big + '</b>' +
+      '<p>' + line + '</p>' + (extra || '') + '</div>');
+  }
+
+  /* 1. how concentrated */
+  if(hold.length){
+    var vals = hold.map(function(h){
+      var px = live[h.symbol] > 0 ? live[h.symbol] : (+h.ltp || +h.avg_price || 0);
+      return { s: h.symbol, v: px * (+h.qty || 0) };
+    }).sort(function(a, b){ return b.v - a.v; });
+    var top3 = vals.slice(0, 3).reduce(function(a, x){ return a + x.v; }, 0) / acct * 100;
+    card('#7CC4FF', 'Concentration', top3.toFixed(0) + '%',
+      'of the account sits in the three largest: ' + vals.slice(0, 3).map(function(x){ return x.s; }).join(', ') + '.',
+      '<div class="pi-bar"><i style="width:' + Math.min(100, top3).toFixed(0) + '%"></i></div>');
+  }
+
+  /* 2. where the risk sits */
+  if(hold.length){
+    var risk = hold.map(function(h){ return { s: h.symbol, r: Math.max(0, -(+h.stop_pnl || 0)) }; })
+      .sort(function(a, b){ return b.r - a.r; });
+    var tot = risk.reduce(function(a, x){ return a + x.r; }, 0) || 1;
+    var free = hold.filter(function(h){ return (+h.stop_loss || 0) >= (+h.avg_price || 0) && +h.avg_price > 0; }).length;
+    card('#FF8A6B', 'Risk at the stops', pureInr(tot),
+      'Biggest single risk: ' + risk[0].s + ' (' + (risk[0].r / tot * 100).toFixed(0) + '% of it). ' +
+      (free ? free + ' position' + (free === 1 ? ' is' : 's are') + ' already risk-free.' : 'None is risk-free yet.'));
+  }
+
+  /* 3. the closed-trade record */
+  var sells = trades.filter(function(t){ return String(t.side).toUpperCase() === 'SELL' && t.pnl_pct != null; });
+  if(sells.length){
+    var wins = sells.filter(function(t){ return +t.pnl_pct > 0; });
+    var losses = sells.filter(function(t){ return +t.pnl_pct <= 0; });
+    var avgW = wins.length ? wins.reduce(function(a, t){ return a + +t.pnl_pct; }, 0) / wins.length : 0;
+    var avgL = losses.length ? losses.reduce(function(a, t){ return a + +t.pnl_pct; }, 0) / losses.length : 0;
+    card('#5CF0A5', 'Closed trades', (wins.length / sells.length * 100).toFixed(0) + '% won',
+      sells.length + ' closed \u00b7 average win ' + pc(avgW) + ', average loss ' + pc(avgL) +
+      (avgL ? ' \u00b7 payoff ' + (avgW / Math.abs(avgL)).toFixed(1) + '\u00d7' : '') + '.');
+  } else {
+    card('#5CF0A5', 'Closed trades', 'None yet',
+      'Every position bought is still open. The first exit comes when a close breaks a trailing stop.');
+  }
+
+  /* 4. why names are waiting */
+  if(queue.length){
+    var why = {};
+    queue.forEach(function(q){
+      var r = String(q.reason || 'Waiting').replace(/\(.*\)/, '').replace(/\d+(\.\d+)?%/, 'x%').trim();
+      why[r] = (why[r] || 0) + 1;
+    });
+    var top = Object.keys(why).sort(function(a, b){ return why[b] - why[a]; });
+    card('#C7A6FF', 'The queue', String(queue.length),
+      'names qualify but are not held. Most common reason: ' + top[0].toLowerCase() + ' (' + why[top[0]] + ').');
+  }
+
+  /* 5. the best and worst day so far */
+  if(daily.length >= 2){
+    var moves = [];
+    for(var i = 1; i < daily.length; i++){
+      var a = +daily[i - 1].account_value, b = +daily[i].account_value;
+      if(a) moves.push({ d: daily[i].as_of, p: (b / a - 1) * 100 });
+    }
+    var bd = moves.reduce(function(x, m){ return !x || m.p > x.p ? m : x; }, null);
+    var wd = moves.reduce(function(x, m){ return !x || m.p < x.p ? m : x; }, null);
+    var ups = moves.filter(function(m){ return m.p > 0; }).length;
+    card('#F2B632', 'Sessions', ups + ' of ' + moves.length + ' up',
+      'Best ' + pureDay(bd.d) + ' ' + pc(bd.p, 2) + ', worst ' + pureDay(wd.d) + ' ' + pc(wd.p, 2) + '.');
+  }
+
+  /* 6. cash and what charges have cost */
+  var cashPct = (+last.cash || 0) / acct * 100;
+  card('#6FE3D1', 'Cash and costs', cashPct.toFixed(1) + '% cash',
+    pureInr(last.cash) + ' idle, not at risk. Charges so far ' + pureInr(last.charges) + ' \u2014 ' +
+    ((+last.charges || 0) / ((+last.capital || acct)) * 100).toFixed(2) + '% of capital.');
+
+  return '<div class="pi-grid">' + cards.join('') + '</div>';
+}
 
 function renderPureNotes(all){
   var counts = { all: all.length };
