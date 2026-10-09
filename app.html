@@ -3309,6 +3309,56 @@ body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.
 .rf-hitbar{height:8px;border-radius:4px;background:color-mix(in srgb,var(--muted) 14%,transparent);overflow:hidden}
 .rf-hitbar i{display:block;height:100%;border-radius:4px;animation:srGrow .8s ease both;transform-origin:left}
 .rf-hit b{color:var(--text)}
+
+/* ---------- rotating insights ---------- */
+.ins{position:relative;margin:4px 0 16px;padding:16px 20px 14px;border-radius:16px;background:var(--panel);
+  border:1px solid var(--line-soft);border-left:5px solid var(--ia);overflow:hidden;
+  box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+.pure-scope .ins{background:#fff;border-color:#E4DCC8;border-left-color:var(--ia)}
+.ins-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ins-dot{width:8px;height:8px;border-radius:50%;background:var(--ia);animation:beat 2s ease-in-out infinite}
+.ins-ttl{font-weight:800;font-size:14px;color:var(--text)}
+.pure-scope .ins-ttl{color:#1B2A24}
+.ins-cat{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;color:var(--c);
+  background:color-mix(in srgb,var(--c) 12%,transparent);border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
+.ins-n{margin-left:auto;font-size:12px;color:var(--muted)}
+.ins-btn{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:5px 11px;
+  font-size:12.5px;font-weight:700;cursor:pointer}
+.pure-scope .ins-btn{color:#1B2A24;border-color:#E4DCC8}
+.ins-btn.ins-next{background:var(--ia);border-color:var(--ia);color:#fff}
+.ins-txt{min-height:52px;margin-top:12px;font-size:17px;line-height:1.5;color:var(--text);opacity:0;transform:translateY(6px)}
+.pure-scope .ins-txt{color:#1B2A24}
+.ins-txt.in{animation:insIn .55s cubic-bezier(.2,.8,.2,1) forwards}
+.ins-txt b{color:var(--ia)}
+.ins-prog{height:3px;border-radius:2px;background:color-mix(in srgb,var(--muted) 15%,transparent);margin-top:10px;overflow:hidden}
+.ins-prog i{display:block;height:100%;width:100%;background:var(--ia);transform-origin:left;animation:insBar 6.5s linear forwards}
+@keyframes insIn{0%{opacity:0;transform:translateY(8px);filter:blur(4px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes insBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ins-static{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:4px 0 12px}
+.ins-sc{padding:12px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line-soft);border-top:3px solid var(--h)}
+.ins-sc small{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--h)}
+.ins-sc b{display:block;font-size:20px;font-weight:800;color:var(--text);margin:4px 0 2px}
+.ins-sc p{margin:0;font-size:12.5px;color:var(--muted)}
+@media(prefers-reduced-motion:reduce){ .ins-txt{opacity:1;transform:none} .ins-txt.in{animation:none} .ins-prog i{animation:none} }
+
+/* ---------- commentary in three columns ---------- */
+.pure-scope .pu-sec-cm .pu-feed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+.pure-scope .pu-sec-cm .pu-daycap{grid-column:1 / -1;margin:8px 0 0}
+.pure-scope .pu-sec-cm .pu-note{margin:0;grid-template-columns:1fr;gap:6px;height:100%;align-content:start}
+.pure-scope .pu-sec-cm .pu-kind{justify-self:start;padding:2px 10px}
+.pure-scope .pu-sec-cm .pu-nbody{font-size:12.8px;line-height:1.5}
+.feed{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+.feed-item{height:100%}
+.feed-item.open{grid-column:1 / -1}
+.feed-head{flex-wrap:wrap;gap:6px 12px}
+.feed-head .feed-body{flex:1 1 100%;order:3}
+.feed-head .feed-when{order:1}
+.feed-head .feed-chev{order:2;margin-left:auto}
+.feed-sum{-webkit-line-clamp:3}
+@media(max-width:980px){ .pure-scope .pu-sec-cm .pu-feed,.feed{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:600px){ .pure-scope .pu-sec-cm .pu-feed,.feed{grid-template-columns:1fr} }
+
+.pure-scope .pi-card p b{display:inline;font-size:inherit;margin:0;font-weight:800}
 </style>
 </head>
 <body class="s-light">
@@ -6685,7 +6735,7 @@ function paintPure(body){
   }
   if(LT_TAB === 'commentary'){
     body.innerHTML = ltBookBar() + '<div class="pure-scope">' + pureHead(last) +
-      '<section class="pu-sec pu-sec-cm"><h4>Commentary</h4>' + pureInsights(d, last) +
+      '<section class="pu-sec pu-sec-cm"><h4>Commentary</h4>' + pureInsights(d, last) + insightPanel(pureInsightList(d, last), '#B7791F') +
       renderPureNotes((d.notes || []).concat(pureExtraNotes(d, last))) + '</section></div>';
     return;
   }
@@ -7433,6 +7483,341 @@ function pureInsights(d, last){
   return '<div class="pi-grid">' + cards.join('') + '</div>';
 }
 
+/* ============================================================
+   INSIGHTS — a rotating panel for every book's commentary
+   Up to a few hundred one-line readings, worked out from the book's
+   own positions, daily snapshots, closed trades and curve. One shows
+   at a time, typed in like the quote on the front page, and the next
+   arrives on its own every few seconds or on a click.
+   ============================================================ */
+var INS_DATA = {}, INS_N = 0;
+
+function insightsFor(o){
+  var out = [];
+  var P = o.positions || [], C = o.closed || [];
+  var money = o.money || function(v){ return pfMoney(v); };
+  function pc(v, dp){ return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(dp == null ? 1 : dp) + '%'; }
+  function add(cat, html){ out.push({ cat: cat, html: html }); }
+  function b(x){ return '<b>' + x + '</b>'; }
+  var meta = {};
+  ((SCR_DATA && SCR_DATA.tabs && SCR_DATA.tabs.ALL) || []).forEach(function(x){ if(x && x.symbol) meta[x.symbol] = x; });
+
+  /* per-symbol daily moves from the snapshots */
+  var moves = {};
+  if(o.hist && o.hist.length){
+    var byDay = {};
+    o.hist.forEach(function(r){ if(r && r.as_of){ var k = String(r.as_of).slice(0, 10); (byDay[k] = byDay[k] || {})[r.symbol] = +r.curr_price; } });
+    var days = Object.keys(byDay).sort();
+    for(var i = 1; i < days.length; i++){
+      Object.keys(byDay[days[i]]).forEach(function(sym){
+        var a = byDay[days[i - 1]][sym], c = byDay[days[i]][sym];
+        if(a && c) (moves[sym] = moves[sym] || []).push({ d: days[i], p: (c / a - 1) * 100 });
+      });
+    }
+  }
+
+  /* --- positions --- */
+  if(P.length){
+    var sorted = P.slice().sort(function(a, c){ return c.pnl - a.pnl; });
+    var inP = P.filter(function(p){ return p.pnl > 0; }).length;
+    var avg = P.reduce(function(a, p){ return a + p.pnl; }, 0) / P.length;
+    var med = sorted[Math.floor(sorted.length / 2)].pnl;
+    add('Book', b(inP + ' of ' + P.length) + ' open positions are in profit right now.');
+    add('Book', 'The average open position is ' + b(pc(avg)) + '; the median is ' + b(pc(med)) + '.');
+    add('Book', b(sorted[0].s) + ' leads the book at ' + b(pc(sorted[0].pnl)) + '; ' + b(sorted[sorted.length - 1].s) +
+      ' trails at ' + b(pc(sorted[sorted.length - 1].pnl)) + '.');
+    var withRoom = P.filter(function(p){ return p.room != null; });
+    if(withRoom.length){
+      var avgRoom = withRoom.reduce(function(a, p){ return a + p.room; }, 0) / withRoom.length;
+      var tight = withRoom.slice().sort(function(a, c){ return a.room - c.room; });
+      add('Risk', 'On average a position has ' + b(avgRoom.toFixed(1) + '%') + ' of room above its trailing stop.');
+      add('Risk', b(tight[0].s) + ' is the closest to its stop, with only ' + b(tight[0].room.toFixed(1) + '%') + ' of room.');
+      var under5 = withRoom.filter(function(p){ return p.room < 5; });
+      add('Risk', under5.length ? b(under5.length) + ' position' + (under5.length === 1 ? ' is' : 's are') + ' within 5% of the stop: ' +
+        under5.map(function(p){ return p.s; }).join(', ') + '.' : 'No position is within 5% of its stop today.');
+    }
+    var free = P.filter(function(p){ return p.stop && p.entry && p.stop >= p.entry; });
+    if(free.length) add('Risk', b(free.length) + ' position' + (free.length === 1 ? ' has' : 's have') +
+      ' a stop at or above cost \u2014 they can no longer turn into a loss: ' + free.map(function(p){ return p.s; }).join(', ') + '.');
+    var byAge = P.filter(function(p){ return p.days != null; }).sort(function(a, c){ return c.days - a.days; });
+    if(byAge.length){
+      add('Book', 'The longest-held name is ' + b(byAge[0].s) + ', in the book for ' + b(byAge[0].days + ' days') + '.');
+      add('Book', 'The newest arrival is ' + b(byAge[byAge.length - 1].s) + ', added ' + b(byAge[byAge.length - 1].days + ' days') + ' ago.');
+      var avgAge = byAge.reduce(function(a, p){ return a + p.days; }, 0) / byAge.length;
+      add('Book', 'Positions have been held ' + b(Math.round(avgAge) + ' days') + ' on average.');
+    }
+    var secs = {};
+    P.forEach(function(p){ var sct = (meta[p.s] || {}).sector; if(sct && sct !== 'Other') (secs[sct] = secs[sct] || []).push(p); });
+    Object.keys(secs).sort(function(a, c){ return secs[c].length - secs[a].length; }).slice(0, 6).forEach(function(sct){
+      var g = secs[sct], ga = g.reduce(function(a, p){ return a + p.pnl; }, 0) / g.length;
+      add('Sector', b(g.length) + ' position' + (g.length === 1 ? ' is' : 's are') + ' in ' + b(sct) + ', averaging ' + b(pc(ga)) + '.');
+    });
+
+    P.forEach(function(p){
+      var m = meta[p.s] || {};
+      add('Position', b(p.s) + ' is ' + b(pc(p.pnl)) + ' from its entry at ' + money(p.entry) +
+        (p.days != null ? ', held ' + p.days + ' days' : '') + '.');
+      if(p.room != null && p.stop) add('Position', b(p.s) + ' would close below ' + money(p.stop) + ' \u2014 ' + b(p.room.toFixed(1) + '%') + ' under today\u2019s price.');
+      if(m.rank != null) add('Position', b(p.s) + ' ranks ' + b(Math.round(m.rank)) + ' on relative strength' +
+        (m.ret3m != null ? ', ' + pc(+m.ret3m) + ' over three months' : '') + '.');
+      var mv = moves[p.s];
+      if(mv && mv.length >= 5){
+        var last5 = mv.slice(-5).reduce(function(a, x){ return a * (1 + x.p / 100); }, 1);
+        var upDays = mv.slice(-10).filter(function(x){ return x.p > 0; }).length;
+        add('Momentum', b(p.s) + ' moved ' + b(pc((last5 - 1) * 100)) + ' over its last five sessions.');
+        add('Momentum', b(p.s) + ' closed higher on ' + b(upDays + ' of the last ' + Math.min(10, mv.length)) + ' sessions.');
+        var big = mv.reduce(function(a, x){ return Math.abs(x.p) > Math.abs(a.p) ? x : a; });
+        add('Momentum', b(p.s) + '\u2019s biggest single day lately was ' + b(pc(big.p, 2)) + ' on ' +
+          new Date(big.d).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + '.');
+      }
+    });
+  }
+
+  /* --- closed trades --- */
+  if(C.length){
+    var w = C.filter(function(t){ return t.pnl > 0; }), l = C.filter(function(t){ return t.pnl <= 0; });
+    var aw = w.length ? w.reduce(function(a, t){ return a + t.pnl; }, 0) / w.length : 0;
+    var al = l.length ? l.reduce(function(a, t){ return a + t.pnl; }, 0) / l.length : 0;
+    add('Record', b(C.length.toLocaleString('en-IN')) + ' trades closed so far; ' + b((w.length / C.length * 100).toFixed(0) + '%') + ' of them made money.');
+    add('Record', 'The average winner made ' + b(pc(aw)) + ' and the average loser gave back ' + b(pc(al)) +
+      (al ? ' \u2014 a payoff of ' + b((aw / Math.abs(al)).toFixed(1) + '\u00d7') : '') + '.');
+    var bw = C.reduce(function(a, t){ return t.pnl > a.pnl ? t : a; }), bl = C.reduce(function(a, t){ return t.pnl < a.pnl ? t : a; });
+    add('Record', 'The best trade on record is ' + b(bw.s) + ' at ' + b(pc(bw.pnl)) + '.');
+    add('Record', 'The worst trade on record is ' + b(bl.s) + ' at ' + b(pc(bl.pnl)) + ' \u2014 the stop kept it there.');
+    var hw = w.filter(function(t){ return t.held; }), hl = l.filter(function(t){ return t.held; });
+    if(hw.length && hl.length){
+      add('Record', 'Winners were held ' + b(Math.round(hw.reduce(function(a, t){ return a + t.held; }, 0) / hw.length) + ' days') +
+        ' on average; losers only ' + b(Math.round(hl.reduce(function(a, t){ return a + t.held; }, 0) / hl.length) + ' days') + '. Cut short, let run.');
+    }
+    var big2 = C.filter(function(t){ return t.pnl >= 50; }).length;
+    if(big2) add('Record', b(big2) + ' trade' + (big2 === 1 ? '' : 's') + ' more than ' + b('+50%') + '. A handful of these pays for many small stops.');
+    var small = C.filter(function(t){ return t.pnl < 0 && t.pnl > -10; }).length;
+    if(small) add('Record', b(small) + ' losing trades were kept under ' + b('\u221210%') + '.');
+    var byYear = {};
+    C.forEach(function(t){ if(t.date){ var y = String(t.date).slice(0, 4); (byYear[y] = byYear[y] || []).push(t); } });
+    Object.keys(byYear).sort().slice(-8).forEach(function(y){
+      var g = byYear[y], gw = g.filter(function(t){ return t.pnl > 0; }).length;
+      add('Record', 'In ' + b(y) + ': ' + g.length + ' trades closed, ' + b((gw / g.length * 100).toFixed(0) + '%') + ' winners, best ' +
+        g.reduce(function(a, t){ return t.pnl > a.pnl ? t : a; }).s + '.');
+    });
+    C.slice().sort(function(a, c){ return String(c.date).localeCompare(String(a.date)); }).slice(0, 12).forEach(function(t){
+      add('Exit', b(t.s) + ' closed ' + b(pc(t.pnl)) + (t.held ? ' after ' + t.held + ' days' : '') +
+        (t.date ? ' on ' + new Date(t.date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '') + '.');
+    });
+  }
+
+  /* --- the curve --- */
+  if(o.weekly && o.weekly.series && o.weekly.series.length > 10){
+    var S = o.weekly.series, t0 = new Date(o.weekly.start).getTime(), WK = 7 * 864e5;
+    var yr = {};
+    S.forEach(function(v, i){ yr[new Date(t0 + i * WK).getFullYear()] = v; });
+    var ys = Object.keys(yr).map(Number).sort(), prev = S[0];
+    var rows = ys.map(function(y){ var r = (yr[y] / prev - 1) * 100; prev = yr[y]; return { y: y, r: r }; });
+    var upY = rows.filter(function(x){ return x.r > 0; }).length;
+    var mult = S[S.length - 1] / S[0], years = (S.length - 1) / 52.18;
+    add('Curve', b(upY + ' of ' + rows.length) + ' calendar years ended higher.');
+    if(years > 1) add('Curve', 'Compounded ' + b(pc((Math.pow(mult, 1 / years) - 1) * 100)) + ' a year over ' + years.toFixed(1) + ' years.');
+    add('Curve', 'Money put in at the start would now be ' + b(mult.toFixed(1) + '\u00d7') + ' \u2014 ' + money(100000 * mult) + ' from ' + money(100000) + '.');
+    var bY = rows.reduce(function(a, x){ return x.r > a.r ? x : a; }), wY = rows.reduce(function(a, x){ return x.r < a.r ? x : a; });
+    add('Curve', 'Best year ' + b(bY.y + ' ' + pc(bY.r)) + '; weakest ' + b(wY.y + ' ' + pc(wY.r)) + '.');
+    var peak = -Infinity, dd = 0;
+    S.forEach(function(v){ peak = Math.max(peak, v); dd = Math.min(dd, v / peak - 1); });
+    add('Curve', 'The deepest fall from a high was ' + b((dd * 100).toFixed(1) + '%') + ', on weekly closes.');
+    var nowDD = (S[S.length - 1] / Math.max.apply(null, S) - 1) * 100;
+    add('Curve', nowDD > -0.5 ? 'The curve is at an ' + b('all-time high') + ' right now.' : 'The curve is ' + b(Math.abs(nowDD).toFixed(1) + '%') + ' below its high.');
+    rows.forEach(function(x){ add('Curve', 'In ' + b(x.y) + ' the book returned ' + b(pc(x.r)) + '.'); });
+    var w52 = S.length > 52 ? (S[S.length - 1] / S[S.length - 53] - 1) * 100 : null;
+    if(w52 != null) add('Curve', 'Over the last 52 weeks: ' + b(pc(w52)) + '.');
+    var w13 = S.length > 13 ? (S[S.length - 1] / S[S.length - 14] - 1) * 100 : null;
+    if(w13 != null) add('Curve', 'Over the last 13 weeks: ' + b(pc(w13)) + '.');
+  }
+
+  /* --- the queue --- */
+  (o.queue || []).slice(0, 15).forEach(function(q){
+    if(q.s) add('Queue', b(q.s) + ' is waiting' + (q.why ? ': ' + String(q.why).toLowerCase() : '') + '.');
+  });
+
+  (o.extra || []).forEach(function(x){ add(x[0], x[1]); });
+
+  /* interleave by category so the rotation does not run ten of a kind in a row */
+  var cats = {}, order = [];
+  out.forEach(function(x){ if(!cats[x.cat]){ cats[x.cat] = []; order.push(x.cat); } cats[x.cat].push(x); });
+  var mixed = [];
+  for(var k = 0; mixed.length < out.length; k++){
+    order.forEach(function(c){ if(cats[c][k]) mixed.push(cats[c][k]); });
+  }
+  return mixed;
+}
+
+var INS_HUE = { Book:'#1F6FD1', Risk:'#D9483B', Position:'#0E8A8A', Momentum:'#7C4DCC', Sector:'#B7791F',
+                Record:'#0E8A5F', Exit:'#5B6B75', Curve:'#E8590C', Queue:'#9A5BD6', Account:'#B7791F' };
+
+function insightPanel(list, accent){
+  if(!list || !list.length) return '';
+  var id = 'ins' + (++INS_N);
+  INS_DATA[id] = { list: list, i: 0, timer: null, paused: false };
+  setTimeout(function(){ insShow(id); insRun(id); }, 40);
+  return '<div class="ins" id="' + id + '" style="--ia:' + (accent || '#1F6FD1') + '" ' +
+      'onmouseenter="insPause(\'' + id + '\',true)" onmouseleave="insPause(\'' + id + '\',false)">' +
+    '<div class="ins-top"><span class="ins-dot"></span><span class="ins-ttl">Insights</span>' +
+      '<span class="ins-cat" id="' + id + '-c"></span>' +
+      '<span class="ins-n" id="' + id + '-n"></span>' +
+      '<button class="ins-btn" onclick="insStep(\'' + id + '\',-1)" aria-label="Previous">\u2039</button>' +
+      '<button class="ins-btn ins-next" onclick="insStep(\'' + id + '\',1)">Next insight \u203A</button></div>' +
+    '<div class="ins-txt" id="' + id + '-t"></div>' +
+    '<div class="ins-prog"><i id="' + id + '-p"></i></div>' +
+  '</div>';
+}
+
+function insShow(id){
+  var st = INS_DATA[id], box = document.getElementById(id + '-t');
+  if(!st || !box) return;
+  var it = st.list[st.i % st.list.length];
+  var cat = document.getElementById(id + '-c'), n = document.getElementById(id + '-n');
+  if(cat){ cat.textContent = it.cat; cat.style.setProperty('--c', INS_HUE[it.cat] || '#1F6FD1'); }
+  if(n) n.textContent = (st.i % st.list.length + 1) + ' of ' + st.list.length;
+  box.classList.remove('in');
+  void box.offsetWidth;
+  box.innerHTML = it.html;
+  box.classList.add('in');
+  var p = document.getElementById(id + '-p');
+  if(p){ p.style.animation = 'none'; void p.offsetWidth; p.style.animation = st.paused || REDUCED ? 'none' : ''; }
+}
+
+function insRun(id){
+  var st = INS_DATA[id];
+  if(!st) return;
+  clearInterval(st.timer);
+  if(REDUCED) return;
+  st.timer = setInterval(function(){
+    if(!document.getElementById(id)){ clearInterval(st.timer); delete INS_DATA[id]; return; }
+    if(st.paused || document.hidden) return;
+    st.i = (st.i + 1) % st.list.length;
+    insShow(id);
+  }, 6500);
+}
+
+function insStep(id, d){
+  var st = INS_DATA[id];
+  if(!st) return;
+  st.i = (st.i + d + st.list.length) % st.list.length;
+  insShow(id);
+  insRun(id);
+}
+
+function insPause(id, on){
+  var st = INS_DATA[id];
+  if(!st) return;
+  st.paused = on;
+  var p = document.getElementById(id + '-p');
+  if(p) p.style.animationPlayState = on ? 'paused' : 'running';
+}
+
+/* Static cards for the few readings that should always be in view. */
+function insightStatic(cards){
+  return '<div class="ins-static">' + cards.map(function(c){
+    return '<div class="ins-sc" style="--h:' + c[0] + '"><small>' + c[1] + '</small><b>' + c[2] + '</b><p>' + c[3] + '</p></div>';
+  }).join('') + '</div>';
+}
+
+/* ---------- wiring the insights into each book ---------- */
+function ltInsightsBlock(){
+  var lt = ltCurrent();
+  var pos = (lt.positions || []).map(function(p){
+    return { s: p.symbol, pnl: +p.pnlPct || 0, room: p.roomPct != null ? +p.roomPct : null, days: heldDays(p),
+             entry: +p.entryPrice || 0, price: +p.currPrice || 0, stop: +p.stopLoss || 0 };
+  });
+  var jnl = lt.journal || [], entryAt = {};
+  jnl.slice().sort(function(a, c){ return String(a.date).localeCompare(String(c.date)); }).forEach(function(j){
+    if(j.action === 'ENTRY') entryAt[j.symbol] = String(j.date).slice(0, 10);
+  });
+  var closed = jnl.filter(function(j){ return j.action === 'TRAIL EXIT'; }).map(function(j){
+    var a = entryAt[j.symbol];
+    return { s: j.symbol, pnl: +j.pnlPct || 0, date: j.date,
+             held: a ? Math.max(0, Math.round((new Date(j.date) - new Date(a)) / 864e5)) : null };
+  });
+  var us = (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
+  var weekly = null;
+  if(!us && ltIsSeg() && typeof ltSegHasCurve === 'function' && ltSegHasCurve(LT_BOOK))
+    weekly = { series: LT_SEG_CURVE[LT_BOOK], start: LT_SEG_START };
+  else if(!us && !ltIsSeg()) weekly = { series: LT_CURVE, start: LT_CURVE_START };
+  else if(us && !ltIsSeg() && typeof US_CURVE !== 'undefined') weekly = { series: US_CURVE, start: US_CURVE_START };
+  var list = insightsFor({ positions: pos, hist: lt.history, closed: closed, weekly: weekly,
+    queue: (lt.queue || []).map(function(q){ return { s: q.symbol, why: q.state === 'READY' ? 'ready for the next free slot' : 'queued until a slot opens' }; }) });
+  return bookStaticCards(pos, closed, weekly, LT_ACCENT) + insightPanel(list, LT_ACCENT);
+}
+
+function mpInsightsBlock(pos0){
+  var pos = (pos0 || []).map(function(p){
+    var px = +p.currPrice || 0, st = +p.stopLoss || 0;
+    return { s: p.symbol, pnl: +p.pnlPct || 0, room: (px && st) ? (px - st) / px * 100 : null, days: heldDays(p),
+             entry: +p.entryPrice || 0, price: px, stop: st };
+  });
+  var closed = [];
+  var us = (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
+  if(!us && typeof PF_TRADES !== 'undefined'){
+    PF_TRADES.forEach(function(t){
+      closed.push({ s: t[0], pnl: +t[5] || 0, date: t[3], held: Math.round((new Date(t[3]) - new Date(t[1])) / 864e5) });
+    });
+  }
+  ((D.modelPortfolio || {}).journal || []).forEach(function(j){
+    if(j.action === 'TARGET HIT' || j.action === 'STOPPED OUT') closed.push({ s: j.symbol, pnl: +j.pnlPct || 0, date: j.date });
+  });
+  var weekly = us ? (typeof US_CURVE !== 'undefined' ? { series: US_CURVE, start: US_CURVE_START } : null)
+                  : { series: PF_WEEKLY, start: PF_START };
+  var list = insightsFor({ positions: pos, hist: (D || {}).history, closed: closed, weekly: weekly,
+    queue: (((SCR_DATA || {}).waitlist || {}).rows || []).map(function(r){ return { s: r.symbol, why: (r.state || '').toLowerCase() === 'ready' ? 'ready for the next slot' : 'queued, quality ' + r.quality }; }) });
+  return bookStaticCards(pos, closed, weekly, MP_ACCENT) + insightPanel(list, MP_ACCENT);
+}
+
+/* The four readings that stay put above the rotation. */
+function bookStaticCards(pos, closed, weekly, accent){
+  var cards = [];
+  if(pos.length){
+    var inP = pos.filter(function(p){ return p.pnl > 0; }).length;
+    var avg = pos.reduce(function(a, p){ return a + p.pnl; }, 0) / pos.length;
+    cards.push(['#1F6FD1', 'Open book', inP + ' of ' + pos.length + ' in profit', 'average position ' + (avg >= 0 ? '+' : '') + avg.toFixed(1) + '%']);
+    var r = pos.filter(function(p){ return p.room != null; });
+    if(r.length){
+      var t = r.slice().sort(function(a, c){ return a.room - c.room; })[0];
+      cards.push(['#D9483B', 'Closest to its stop', t.s, t.room.toFixed(1) + '% of room left']);
+    }
+  }
+  if(closed.length){
+    var w = closed.filter(function(c){ return c.pnl > 0; }).length;
+    cards.push(['#0E8A5F', 'Closed trades', (w / closed.length * 100).toFixed(0) + '% won', closed.length.toLocaleString('en-IN') + ' trades on record']);
+  }
+  if(weekly && weekly.series && weekly.series.length > 10){
+    var S = weekly.series, yrs = (S.length - 1) / 52.18, m = S[S.length - 1] / S[0];
+    cards.push(['#E8590C', yrs > 1 ? 'Compounded' : 'Since the start', yrs > 1 ? '+' + ((Math.pow(m, 1 / yrs) - 1) * 100).toFixed(1) + '% a year'
+      : (m >= 1 ? '+' : '') + ((m - 1) * 100).toFixed(1) + '%', yrs.toFixed(1) + ' years of record']);
+  }
+  return cards.length ? insightStatic(cards) : '';
+}
+
+function pureInsightList(d, last){
+  var live = (typeof pureLiveMap === 'function') ? pureLiveMap() : {};
+  var pos = (d.holdings || []).map(function(h){
+    var px = live[h.symbol] > 0 ? live[h.symbol] : (+h.ltp || +h.avg_price || 0);
+    var avg = +h.avg_price || 0, st = +h.stop_loss || 0;
+    return { s: h.symbol, pnl: avg ? (px / avg - 1) * 100 : 0, room: (px && st) ? (px - st) / px * 100 : null,
+             days: h.days_held != null ? +h.days_held : null, entry: avg, price: px, stop: st };
+  });
+  var closed = (d.trades || []).filter(function(t){ return String(t.side).toUpperCase() === 'SELL' && t.pnl_pct != null; })
+    .map(function(t){ return { s: t.symbol, pnl: +t.pnl_pct, date: t.trade_date }; });
+  var acct = +last.account_value || 1, extra = [];
+  (d.holdings || []).forEach(function(h){
+    var px = live[h.symbol] > 0 ? live[h.symbol] : (+h.ltp || 0), v = px * (+h.qty || 0);
+    extra.push(['Account', '<b>' + h.symbol + '</b> is ' + (v / acct * 100).toFixed(1) + '% of the account and carries ' +
+      pureInr(Math.max(0, -(+h.stop_pnl || 0))) + ' of risk down to its stop.']);
+  });
+  extra.push(['Account', 'Every new position is sized to lose about <b>' + (+last.risk_pct || 0.75) + '%</b> of the account if its stop is hit.']);
+  extra.push(['Account', 'Open risk across the book is <b>' + (+last.open_risk_pct || 0).toFixed(2) + '%</b> of the account.']);
+  extra.push(['Account', 'Charges so far: <b>' + pureInr(last.charges) + '</b>.']);
+  return insightsFor({ positions: pos, closed: closed, money: pureInr,
+    queue: (d.queue || []).map(function(q){ return { s: q.symbol, why: q.reason }; }), extra: extra });
+}
+
 function renderPureNotes(all){
   var counts = { all: all.length };
   all.forEach(function(n){ counts[n.kind] = (counts[n.kind] || 0) + 1; });
@@ -7712,7 +8097,7 @@ function paintLongTerm(){
   '</div>';
 
   if(LT_TAB === 'commentary'){
-    body.innerHTML = subTabs + ltBookBar() + renderLtNotes();
+    body.innerHTML = subTabs + ltBookBar() + ltInsightsBlock() + renderLtNotes();
     return;
   }
 
@@ -13283,7 +13668,7 @@ function renderMpTables(){
       '<button class="' + (MP_VIEW === 'commentary' ? 'on' : '') +
         '" onclick="setMpView(\'commentary\')">Commentary</button>' +
     '</div>' +
-    (MP_VIEW === 'commentary' ? renderNotes() : portfolioView);
+    (MP_VIEW === 'commentary' ? mpInsightsBlock(pos) + renderNotes() : portfolioView);
 }
 
 function renderModel(){
