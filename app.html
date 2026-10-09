@@ -3359,6 +3359,32 @@ body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.
 @media(max-width:600px){ .pure-scope .pu-sec-cm .pu-feed,.feed{grid-template-columns:1fr} }
 
 .pure-scope .pi-card p b{display:inline;font-size:inherit;margin:0;font-weight:800}
+
+/* ---------- open-book trio ---------- */
+.bk-sq{display:block;width:100%;aspect-ratio:1/1;max-height:300px;margin:10px 0 4px}
+.bk-grid{stroke:color-mix(in srgb,var(--muted) 18%,transparent);stroke-width:1;vector-effect:non-scaling-stroke}
+.bk-base{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4;opacity:.6}
+.bk-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:puDraw 1.7s cubic-bezier(.3,.7,.2,1) forwards}
+.bk-sq .pu-areain{opacity:0;animation:puFade .9s ease .7s forwards}
+.bk-sq .pu-dotin{opacity:0;animation:puFade .4s ease 1.6s forwards}
+.bk-hov line{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.bk-hov circle{fill:var(--panel);stroke:#3B4EE0;stroke-width:2.5}
+.bk-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.bk-days{flex:1;display:flex;align-items:stretch;justify-content:center;gap:3px;min-height:220px;margin:12px 0 8px;position:relative}
+.bk-days::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
+.bk-day{flex:1;max-width:22px;height:100%;display:flex;flex-direction:column;min-width:0;cursor:default}
+.bk-day span{flex:1;display:flex;min-height:0}
+.bk-day .t{align-items:flex-end}
+.bk-day .b{align-items:flex-start}
+.bk-day i{display:block;width:100%;animation:ybGrow .6s cubic-bezier(.2,.8,.2,1) both}
+.bk-day.up i{background:linear-gradient(180deg,#34D399,#0E9F6E);border-radius:3px 3px 0 0;transform-origin:bottom}
+.bk-day.dn i{background:linear-gradient(180deg,#E5484D,#F87171);border-radius:0 0 3px 3px;transform-origin:top}
+.bk-day:hover i{filter:brightness(1.15) saturate(1.2)}
+.bk-c3 .scorecard{grid-template-columns:1fr 1fr!important;gap:8px;background:none!important;border:0!important;box-shadow:none!important;margin-top:10px}
+.bk-c3 .sc-cell{border:1px solid var(--line-soft);border-radius:10px;padding:10px 12px}
+.bk-c3 .sc-v{font-size:22px}
+.bk-c3 .sc-note{font-size:11.5px}
+@media(prefers-reduced-motion:reduce){ .bk-draw{animation:none;stroke-dashoffset:0} }
 </style>
 </head>
 <body class="s-light">
@@ -5234,6 +5260,113 @@ function fitBars(rows, labelFn){
   '</div>';
 }
 
+/* ---------- The open book, in three cards ----------
+   1. a square curve of the open positions, compounded day by day
+   2. every session as a bar, newest on the right
+   3. today's figures for the book
+   Drawn from the daily snapshots; the curve draws itself in and
+   follows the cursor, the bars show their day and value on hover. */
+function bookPulse(hist, accent, statsHTML){
+  var moves = dailyReturns(hist, 0);
+  var card1, card2;
+  if(moves.length >= 2){
+    var v = [100], d = [moves[0].date];
+    moves.forEach(function(m){ v.push(v[v.length - 1] * (1 + m.pct / 100)); d.push(m.date); });
+    var S = 300, P = 10;
+    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+    if(hi === lo) hi = lo + 1;
+    var X = function(i){ return P + i * (S - 2 * P) / (v.length - 1); };
+    var Y = function(x){ return S - P - (x - lo) / (hi - lo) * (S - 2 * P); };
+    var pts = v.map(function(x, i){ return X(i).toFixed(1) + ',' + Y(x).toFixed(1); }).join(' ');
+    var area = 'M' + X(0).toFixed(1) + ',' + S + ' L' + pts.split(' ').join(' L') + ' L' + X(v.length - 1).toFixed(1) + ',' + S + ' Z';
+    var grid = '';
+    for(var g = 1; g < 4; g++){
+      grid += '<line x1="0" x2="' + S + '" y1="' + (S * g / 4) + '" y2="' + (S * g / 4) + '" class="bk-grid"/>' +
+              '<line y1="0" y2="' + S + '" x1="' + (S * g / 4) + '" x2="' + (S * g / 4) + '" class="bk-grid"/>';
+    }
+    var tot = v[v.length - 1] - 100, gid = 'bk' + Math.random().toString(36).slice(2, 7);
+    var fmt = function(x){ return new Date(String(x).slice(0, 10)).toLocaleDateString('en-IN', { day:'numeric', month:'short' }); };
+    card1 = '<article class="trio-card tc1" style="border-top-color:' + accent + '">' +
+      '<div class="yb-ttl">The open book</div>' +
+      '<div class="yb-head">' + (tot >= 0 ? '+' : '\u2212') + Math.abs(tot).toFixed(2) + '% over ' + moves.length +
+        ' sessions, compounded</div>' +
+      '<svg class="bk-sq" viewBox="0 0 ' + S + ' ' + S + '" preserveAspectRatio="none" data-lo="' + lo + '" data-hi="' + hi +
+        '" data-v=\'' + JSON.stringify(v.map(function(x){ return +x.toFixed(3); })) + '\' data-d=\'' +
+        JSON.stringify(d.map(fmt)) + '\'>' +
+        '<defs><linearGradient id="' + gid + 'l" x1="0" x2="1"><stop offset="0" stop-color="#3B4EE0"/><stop offset="1" stop-color="' + accent + '"/></linearGradient>' +
+        '<linearGradient id="' + gid + 'a" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3B4EE0" stop-opacity=".18"/>' +
+          '<stop offset="1" stop-color="#3B4EE0" stop-opacity="0"/></linearGradient></defs>' +
+        grid +
+        '<line x1="0" x2="' + S + '" y1="' + Y(100).toFixed(1) + '" y2="' + Y(100).toFixed(1) + '" class="bk-base" vector-effect="non-scaling-stroke"/>' +
+        '<path d="' + area + '" fill="url(#' + gid + 'a)" class="pu-areain"/>' +
+        '<polyline points="' + pts + '" fill="none" stroke="url(#' + gid + 'l)" stroke-width="2.6" pathLength="1" class="bk-draw" ' +
+          'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+        '<circle cx="' + X(v.length - 1).toFixed(1) + '" cy="' + Y(v[v.length - 1]).toFixed(1) + '" r="5" fill="' + accent + '" class="pu-dotin"/>' +
+      '</svg>' +
+      '<div class="bk-axis"><span>' + fmt(d[0]) + '</span><span>dashed: start</span><span>' + fmt(d[d.length - 1]) + '</span></div>' +
+    '</article>';
+
+    var last = moves.slice(-30);
+    var mx = Math.max.apply(null, last.map(function(m){ return Math.abs(m.pct); }).concat([0.01]));
+    var ups = last.filter(function(m){ return m.pct > 0; }).length;
+    var best = last.reduce(function(a, m){ return !a || m.pct > a.pct ? m : a; }, null);
+    var worst = last.reduce(function(a, m){ return !a || m.pct < a.pct ? m : a; }, null);
+    card2 = '<article class="trio-card tc2">' +
+      '<div class="yb-ttl">Day by day</div>' +
+      '<div class="yb-head"><b>' + ups + '</b> of <b>' + last.length + '</b> sessions up</div>' +
+      '<div class="bk-days">' + last.map(function(m, i){
+        var h = Math.max(4, Math.abs(m.pct) / mx * 100).toFixed(1);
+        var bar = '<i style="height:' + h + '%;animation-delay:' + (i * 30) + 'ms"></i>';
+        return '<div class="bk-day ' + (m.pct >= 0 ? 'up' : 'dn') + '" title="' + fmt(m.date) + ': ' +
+          (m.pct >= 0 ? '+' : '') + m.pct.toFixed(2) + '%">' +
+          '<span class="t">' + (m.pct >= 0 ? bar : '') + '</span><span class="b">' + (m.pct < 0 ? bar : '') + '</span></div>';
+      }).join('') + '</div>' +
+      '<div class="yb-foot"><span>Best <b style="color:var(--tier-sb)">' + fmt(best.date) + ' +' + best.pct.toFixed(2) + '%</b></span>' +
+        '<span>Worst <b style="color:var(--red)">' + fmt(worst.date) + ' ' + worst.pct.toFixed(2) + '%</b></span></div>' +
+    '</article>';
+  } else {
+    card1 = '<article class="trio-card tc1"><div class="yb-ttl">The open book</div>' +
+      '<div class="yb-empty">The curve starts after two sessions of history.</div></article>';
+    card2 = '<article class="trio-card tc2"><div class="yb-ttl">Day by day</div>' +
+      '<div class="yb-empty">Bars start after two sessions of history.</div></article>';
+  }
+  return '<div class="trio bk-trio">' + card1 + card2 +
+    '<article class="trio-card tc3 bk-c3"><div class="yb-ttl">The book today</div>' + statsHTML + '</article>' +
+  '</div>';
+}
+
+/* the open-book curve follows the cursor */
+document.addEventListener('mousemove', function(e){
+  var svg = e.target.closest && e.target.closest('svg.bk-sq');
+  document.querySelectorAll('svg.bk-sq .bk-hov').forEach(function(g){
+    if(!svg || g.parentNode !== svg) g.style.display = 'none';
+  });
+  var tip = document.querySelector('.bar-tip');
+  if(!svg){ return; }
+  var vals = JSON.parse(svg.getAttribute('data-v') || '[]'), dates = JSON.parse(svg.getAttribute('data-d') || '[]');
+  if(vals.length < 2) return;
+  var r = svg.getBoundingClientRect(), S = 300, P = 10;
+  var i = Math.max(0, Math.min(vals.length - 1, Math.round(((e.clientX - r.left) / r.width * S - P) / (S - 2 * P) * (vals.length - 1))));
+  var lo = +svg.getAttribute('data-lo'), hi = +svg.getAttribute('data-hi');
+  var x = P + i * (S - 2 * P) / (vals.length - 1), y = S - P - (vals[i] - lo) / (hi - lo) * (S - 2 * P);
+  var g = svg.querySelector('.bk-hov');
+  if(!g){
+    g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'bk-hov');
+    g.innerHTML = '<line y1="0" y2="300" vector-effect="non-scaling-stroke"/><circle r="5.5"/>';
+    svg.appendChild(g);
+  }
+  g.style.display = '';
+  g.querySelector('line').setAttribute('x1', x); g.querySelector('line').setAttribute('x2', x);
+  g.querySelector('circle').setAttribute('cx', x); g.querySelector('circle').setAttribute('cy', y);
+  if(!tip){ tip = document.createElement('div'); tip.className = 'bar-tip'; document.body.appendChild(tip); }
+  var pct = vals[i] - 100;
+  tip.textContent = dates[i] + ' \u00b7 ' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '% since start';
+  tip.style.display = 'block';
+  tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px';
+  tip.style.top = (e.clientY - tip.offsetHeight - 12) + 'px';
+});
+
 function renderRhythm(hist, curve, accent){
   var daily = dailyReturns(hist, RB_DAYS);
   var weeks = Math.max(4, Math.round(RB_DAYS / 5));
@@ -6590,6 +6723,7 @@ function loadLtBook(b){
       }),
       history: lth
     };
+    applyLivePositions(out.positions);
     LT_SEG_CACHE[key] = out;
     return out;
   });
@@ -6691,14 +6825,48 @@ function pureSortWire(root){
 }
 
 /* symbol → latest price from the screener rows already on the page */
+/* ---------- Live quotes over every book ----------
+   The books and the screener are written once, after the close. The
+   live_quotes table carries a fresh price for every name during the
+   session, so the page puts it over price, P&L and room to the stop
+   everywhere a held name appears. */
+function liveQuote(sym){
+  var m = SCR_DATA && SCR_DATA.live;
+  var p = m ? m[String(sym || '').toUpperCase()] : null;
+  return p > 0 ? p : null;
+}
+function applyLivePositions(list){
+  (list || []).forEach(function(p){
+    var lp = liveQuote(p.symbol);
+    if(!lp) return;
+    p.currPrice = lp;
+    var e = +p.entryPrice, st = +p.stopLoss;
+    if(e > 0) p.pnlPct = Math.round((lp / e - 1) * 10000) / 100;
+    if(st > 0) p.roomPct = Math.round((lp - st) / lp * 10000) / 100;
+  });
+}
+function applyLiveQuotes(data){
+  if(!data || !data.live || !Object.keys(data.live).length) return;
+  Object.keys(data.tabs || {}).forEach(function(k){
+    (data.tabs[k] || []).forEach(function(r){
+      var lp = r && r.symbol ? liveQuote(r.symbol) : null;
+      if(lp) r.price = lp;
+    });
+  });
+  applyLivePositions(((data.modelPortfolio || {}).positions || []).filter(function(p){ return p.status === 'OPEN' || !p.status; }));
+  applyLivePositions((data.longTerm || {}).positions);
+}
+
 function pureLiveMap(){
   var out = {};
   try{
+    var lm = (SCR_DATA && SCR_DATA.live) || {};
+    Object.keys(lm).forEach(function(k){ out[k] = lm[k]; });
     var tabs = (typeof D !== 'undefined' && D.tabs) || {};
     Object.keys(tabs).forEach(function(k){
       (tabs[k] || []).forEach(function(r){
         var p = +r.price;
-        if(r && r.symbol && p > 0) out[r.symbol] = p;
+        if(r && r.symbol && p > 0 && !out[r.symbol]) out[r.symbol] = p;
       });
     });
   }catch(e){}
@@ -7347,7 +7515,7 @@ function pureExtraNotes(d, last){
     document.body.appendChild(tip);
     return tip;
   }
-  var BAR = '.rb-slot, .rf-slot, .yb-c, .pu-day, .nb-row, .sr-sec, .sr-row, .tr-yrs button';
+  var BAR = '.rb-slot, .rf-slot, .bk-day, .yb-c, .pu-day, .nb-row, .sr-sec, .sr-row, .tr-yrs button';
   document.addEventListener('mouseover', function(e){
     var el = e.target.closest && e.target.closest(BAR);
     if(!el){ if(tip) tip.style.display = 'none'; return; }
@@ -8111,7 +8279,7 @@ function paintLongTerm(){
     (showRecord ? renderLtPerf(closed)
       : ((typeof FEED_MARKET === 'undefined' || FEED_MARKET !== 'US') && ltIsSeg() && ltSegHasCurve(LT_BOOK)
           ? renderLtSegPerf(LT_BOOK) : ltYoungBook())) +
-    strip +
+    bookPulse(lt.history, LT_ACCENT, strip) +
     '<div class="mp-sec">' +
       '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
         freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
@@ -9024,7 +9192,10 @@ function ensureFeed(){
     db.from('calls').select('symbol, name, horizon, price, entry, target, stop, rationale, call_date').order('sort_order'),
     db.from('sync_log').select('dataset, pushed_at, rows, as_of'),
     db.from('mp_teaser_today').select('book, position, symbol, sector, pnl_pct, days_held').eq('market', FEED_MARKET).order('position'),
-    db.from('big_bets_today').select('position, symbol, company, sector, price, score, engine_rank, quality, newly_added, in_buy_range').eq('market', FEED_MARKET).order('position')
+    db.from('big_bets_today').select('position, symbol, company, sector, price, score, engine_rank, quality, newly_added, in_buy_range').eq('market', FEED_MARKET).order('position'),
+    /* Live quotes for every name in the universe, every 15 minutes in
+       market hours. Missing table or no rows: nothing changes. */
+    db.from('live_quotes').select('symbol, price, updated_at').eq('market', FEED_MARKET).limit(5000)
   ]).then(function(res){
     var scr = res[0].data || [];
     var tea = res[1].data || [];
@@ -9044,6 +9215,15 @@ function ensureFeed(){
     var sync  = res[12].data || [];
     var teas2 = res[13].data || [];
     var bbets = res[14].data || [];
+    var lq = (res[15] && !res[15].error && res[15].data) || [];
+    var LIVE = {}, liveAt = null;
+    lq.forEach(function(q){
+      var p = +q.price;
+      if(q.symbol && p > 0){
+        LIVE[String(q.symbol).toUpperCase()] = p;
+        if(!liveAt || q.updated_at > liveAt) liveAt = q.updated_at;
+      }
+    });
 
     /* The first date each symbol appeared in the queue. */
     var firstSeen = {};
@@ -9150,6 +9330,9 @@ function ensureFeed(){
       })
     };
 
+    SCR_DATA.live = LIVE;
+    SCR_DATA.liveAt = liveAt;
+    applyLiveQuotes(SCR_DATA);
     D = SCR_DATA;
     feedPending = null;
     return SCR_DATA;
@@ -13645,7 +13828,7 @@ function renderMpTables(){
      this tab for. */
   var portfolioView =
     freshLine('portfolio') +
-    renderScorecard(mpScorecard(pos, events)) +
+    bookPulse((D || {}).history, MP_ACCENT, renderScorecard(mpScorecard(pos, events))) +
     '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
       freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
