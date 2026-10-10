@@ -5291,6 +5291,45 @@ function paintBigBets(){
    so the two can never disagree. Weekly comes off the same baked
    curve the performance block draws. --- */
 
+/* ---------- Backtest + live ----------
+   Each baked curve stops where its backtest stopped. From there the
+   book's own daily snapshots carry it on: the equal-weighted move of
+   the open positions, day by day, compounded and sampled weekly, with
+   the latest day as the last point. Always rebuilt from the base. */
+function extendLive(series, startISO, hist){
+  if(!series || series.length < 2 || !hist || !hist.length) return series;
+  var WEEK = 7 * 864e5, t0 = new Date(startISO).getTime();
+  var lastT = t0 + (series.length - 1) * WEEK;
+  var moves = dailyReturns(hist, 0).filter(function(r){
+    return new Date(String(r.date).slice(0, 10)).getTime() > lastT;
+  });
+  if(!moves.length) return series;
+  var out = series.slice(), cur = out[out.length - 1], next = lastT + WEEK;
+  moves.forEach(function(m){
+    var t = new Date(String(m.date).slice(0, 10)).getTime();
+    while(t >= next){ out.push(+cur.toFixed(2)); next += WEEK; }
+    cur *= 1 + m.pct / 100;
+  });
+  out.push(+cur.toFixed(2));
+  return out;
+}
+var LT_CURVE_BASE = null, LT_SEG_BASE = {};
+function extendLtLive(){
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET !== 'NSE') return;
+  if(!LT_CURVE_BASE) LT_CURVE_BASE = LT_CURVE.slice();
+  var h = ((SCR_DATA || {}).longTerm || {}).history;
+  LT_CURVE = extendLive(LT_CURVE_BASE, LT_CURVE_START, h);
+  if(typeof paintRecordBars === 'function') paintRecordBars();
+}
+function extendSegLive(b, hist){
+  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET !== 'NSE') return;
+  if(!LT_SEG_CURVE || !LT_SEG_CURVE[b]) return;
+  if(!LT_SEG_BASE[b]) LT_SEG_BASE[b] = LT_SEG_CURVE[b].slice();
+  var sd = LT_SEG_START instanceof Date ? LT_SEG_START : new Date(LT_SEG_START);
+  var start = sd.getFullYear() + '-' + String(sd.getMonth() + 1).padStart(2, '0') + '-' + String(sd.getDate()).padStart(2, '0');
+  LT_SEG_CURVE[b] = extendLive(LT_SEG_BASE[b], start, hist);
+}
+
 function dailyReturns(hist, limit){
   var byDay = {};
   (hist || []).forEach(function(r){
@@ -6918,6 +6957,7 @@ function loadLtBook(b){
       history: lth
     };
     applyLivePositions(out.positions);
+    extendSegLive(b, out.history);
     LT_SEG_CACHE[key] = out;
     return out;
   });
@@ -9545,6 +9585,7 @@ function ensureFeed(){
     SCR_DATA.liveAt = liveAt;
     applyLiveQuotes(SCR_DATA);
     D = SCR_DATA;
+    try{ extendLtLive(); }catch(e){}
     setTimeout(function(){ if(typeof paintWinFlow === 'function') paintWinFlow(); }, 0);
     feedPending = null;
     return SCR_DATA;
@@ -12492,6 +12533,11 @@ function setPfCapital(v){
 var PF_WEEKLY = PF_BASE.slice();
 
 function extendFromJournal(){
+  extendFromJournalCore();
+  /* then carry on from the daily snapshots up to the latest close */
+  try{ PF_WEEKLY = extendLive(PF_WEEKLY, PF_START, (D || {}).history); }catch(e){}
+}
+function extendFromJournalCore(){
   var BASE = PF_BASE;
   PF_WEEKLY = BASE.slice();
 
