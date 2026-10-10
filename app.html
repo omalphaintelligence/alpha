@@ -3402,6 +3402,58 @@ body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.
 .pure-pill:hover{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(15,61,46,.7),inset 0 0 0 1px rgba(255,255,255,.5)}
 .pure-pill.on{background:linear-gradient(120deg,#0F3D2E,#1F6A4E);color:#F2B632;
   box-shadow:0 0 0 2px #F2B632,0 8px 20px -10px rgba(15,61,46,.8)}
+
+/* each point in its own colour, so a long note scans line by line */
+.note-pts li:nth-child(8n+1){color:#1F6FD1}
+.note-pts li:nth-child(8n+2){color:#0E8A8A}
+.note-pts li:nth-child(8n+3){color:#7C4DCC}
+.note-pts li:nth-child(8n+4){color:#B7791F}
+.note-pts li:nth-child(8n+5){color:#D9483B}
+.note-pts li:nth-child(8n+6){color:#0E8A5F}
+.note-pts li:nth-child(8n+7){color:#C2410C}
+.note-pts li:nth-child(8n+8){color:#BE185D}
+.note-pts li::marker{color:currentColor!important}
+.note-pts li b,.note-pts li strong{color:inherit}
+body:not(.s-light) .note-pts li:nth-child(8n+1){color:#7CB3FF}
+body:not(.s-light) .note-pts li:nth-child(8n+2){color:#5FD6D6}
+body:not(.s-light) .note-pts li:nth-child(8n+3){color:#C3A6FF}
+body:not(.s-light) .note-pts li:nth-child(8n+4){color:#F2C14E}
+body:not(.s-light) .note-pts li:nth-child(8n+5){color:#FF8A7A}
+body:not(.s-light) .note-pts li:nth-child(8n+6){color:#5CE0A0}
+body:not(.s-light) .note-pts li:nth-child(8n+7){color:#FFA45C}
+body:not(.s-light) .note-pts li:nth-child(8n+8){color:#FF8CC6}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+1){color:#1F6FD1}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+2){color:#0E8A8A}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+3){color:#7C4DCC}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+4){color:#B7791F}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+5){color:#D9483B}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+6){color:#0E8A5F}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+7){color:#C2410C}
+.pure-scope .pu-sec-cm .note-pts li:nth-child(8n+8){color:#BE185D}
+.pure-scope .pu-sec-cm .pu-nbody .note-pts li b{color:inherit}
+
+/* ---------- Wins in motion (front page) ---------- */
+.wf{margin:28px auto 6px;padding:16px 0 14px;border-radius:20px;overflow:hidden;position:relative;
+  background:linear-gradient(120deg,color-mix(in srgb,#3B4EE0 8%,var(--panel)),color-mix(in srgb,#0E9F6E 8%,var(--panel)) 55%,color-mix(in srgb,#E8590C 8%,var(--panel)));
+  border:1px solid var(--line-soft)}
+body.s-light .wf{box-shadow:0 1px 2px rgba(16,26,45,.05),0 14px 34px -22px rgba(16,26,45,.3)}
+.wf-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:0 22px 12px;font-family:var(--disp);font-size:18px;font-weight:700;color:var(--text)}
+.wf-head small{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted)}
+.wf-dot{width:9px;height:9px;border-radius:50%;background:#0E9F6E;align-self:center;animation:insBlink 1.4s ease-in-out infinite;--h:#0E9F6E}
+.wf-row{overflow:hidden;padding:5px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.wf-track{display:flex;gap:10px;width:max-content;animation:wfMove var(--dur,40s) linear infinite}
+.wf-right .wf-track{animation-direction:reverse}
+.wf:hover .wf-track{animation-play-state:paused}
+.wf-chip{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:9px 15px;border-radius:999px;font-size:14px;color:var(--text);
+  background:var(--panel);border:1px solid color-mix(in srgb,var(--h) 35%,var(--line-soft));
+  box-shadow:0 4px 14px -10px color-mix(in srgb,var(--h) 70%,transparent)}
+.wf-chip i{width:8px;height:8px;border-radius:50%;background:var(--h);flex:none}
+.wf-chip em{font-style:normal;font-weight:800;font-size:12.5px;color:color-mix(in srgb,var(--h) 78%,var(--text))}
+.wf-chip b{font-weight:800;color:color-mix(in srgb,var(--h) 70%,var(--text))}
+@keyframes wfMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){ .wf-track{animation:none;flex-wrap:wrap;width:auto} .wf-track > .wf-chip:nth-child(n+13){display:none} }
+@media(max-width:640px){ .wf-chip{font-size:13px;padding:8px 12px} .wf-head{font-size:16px} }
 </style>
 </head>
 <body class="s-light">
@@ -3436,6 +3488,8 @@ body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.
       </div>
     </div>
   </header>
+
+  <section class="wf wrap-x" id="winFlow" aria-label="Wins from every book"></section>
 
   <section class="recb wrap-x" id="record" aria-label="The record">
     <div class="recb-kick"><span class="recb-dot"></span>Thirteen years of the same rule · Long Term book, backtested</div>
@@ -9371,6 +9425,7 @@ function ensureFeed(){
     SCR_DATA.liveAt = liveAt;
     applyLiveQuotes(SCR_DATA);
     D = SCR_DATA;
+    setTimeout(function(){ if(typeof paintWinFlow === 'function') paintWinFlow(); }, 0);
     feedPending = null;
     return SCR_DATA;
   }).catch(function(e){
@@ -13098,6 +13153,157 @@ function trioInit(id, pts, o){
 }
 
 /* weekly series → points */
+/* ============================================================
+   WINS IN MOTION — the front page's flowing band of the best
+   facts from every book: compounding, best years, strongest
+   trades, and today's open books. Only positive readings are
+   shown; only figures already public are named. Two rows drift
+   in opposite directions; hover pauses them.
+   ============================================================ */
+function wfCurveStats(vals, startISO){
+  if(!vals || vals.length < 10) return null;
+  var t0 = new Date(startISO).getTime(), WEEK = 7 * 864e5;
+  var yEnd = {}, order = [];
+  vals.forEach(function(v, i){
+    var y = new Date(t0 + i * WEEK).getFullYear();
+    if(!(y in yEnd)) order.push(y);
+    yEnd[y] = v;
+  });
+  var years = [], prev = vals[0];
+  order.forEach(function(y){ years.push({ y: y, r: (yEnd[y] / prev - 1) * 100 }); prev = yEnd[y]; });
+  var nYrs = (vals.length - 1) / 52.18;
+  var cagr = nYrs > 0.9 ? (Math.pow(vals[vals.length - 1] / vals[0], 1 / nYrs) - 1) * 100 : null;
+  var full = years.slice(0, -1).length ? years.slice(0, -1) : years;
+  var best = full.reduce(function(a, x){ return !a || x.r > a.r ? x : a; }, null);
+  return { cagr: cagr, yrs: nYrs, mult: vals[vals.length - 1] / vals[0], years: full,
+           up: full.filter(function(x){ return x.r > 0; }).length, best: best,
+           startY: new Date(startISO).getFullYear() };
+}
+
+function wfMoney(v, usd){
+  if(usd) return '$' + Math.round(v).toLocaleString('en-US');
+  if(v >= 1e7) return '\u20b9' + (v / 1e7).toFixed(2) + ' crore';
+  if(v >= 1e5) return '\u20b9' + (v / 1e5).toFixed(1) + ' lakh';
+  return '\u20b9' + Math.round(v).toLocaleString('en-IN');
+}
+
+function wfItems(){
+  var it = [];
+  function add(book, hue, html){ it.push({ book: book, hue: hue, html: html }); }
+
+  /* Model Portfolio — the curve and the public trade archive */
+  try{
+    var mp = wfCurveStats(PF_WEEKLY, PF_START);
+    if(mp){
+      if(mp.cagr > 0) add('Model Portfolio', MP_ACCENT, 'compounded <b>' + mp.cagr.toFixed(1) + '% a year</b> since ' + mp.startY);
+      add('Model Portfolio', MP_ACCENT, '<b>' + mp.up + ' of ' + mp.years.length + '</b> calendar years up');
+      if(mp.best) add('Model Portfolio', MP_ACCENT, 'best year <b>' + mp.best.y + ': +' + mp.best.r.toFixed(0) + '%</b>');
+      add('Model Portfolio', MP_ACCENT, '\u20b91 lakh grew to <b>' + wfMoney(100000 * mp.mult) + '</b>');
+    }
+    if(typeof PF_TRADES !== 'undefined' && PF_TRADES.length){
+      var wins = PF_TRADES.filter(function(t){ return +t[5] > 0; });
+      var big = PF_TRADES.filter(function(t){ return +t[5] >= 50; });
+      var top = PF_TRADES.slice().sort(function(a, b){ return b[5] - a[5]; });
+      add('Model Portfolio', MP_ACCENT, '<b>' + Math.round(wins.length / PF_TRADES.length * 100) + '%</b> of ' + PF_TRADES.length + ' closed trades made money');
+      if(big.length) add('Model Portfolio', MP_ACCENT, '<b>' + big.length + ' trades</b> returned 50% or more');
+      top.slice(0, 3).forEach(function(t){
+        add('Model Portfolio', MP_ACCENT, '<b>' + t[0] + ' +' + (+t[5]).toFixed(0) + '%</b>, ' + String(t[1]).slice(0, 4) + '\u2013' + String(t[3]).slice(0, 4));
+      });
+    }
+  }catch(e){}
+
+  /* Long Term — the all-book curve */
+  try{
+    var lt = wfCurveStats(LT_CURVE, LT_CURVE_START);
+    if(lt){
+      add('Long Term', LT_ACCENT, wfMoney(LT_CURVE[0]) + ' in ' + lt.startY + ' became <b>' + wfMoney(LT_CURVE[LT_CURVE.length - 1]) + '</b>');
+      if(lt.cagr > 0) add('Long Term', LT_ACCENT, '<b>' + lt.cagr.toFixed(1) + '% a year</b>, compounded over ' + lt.yrs.toFixed(0) + ' years');
+      add('Long Term', LT_ACCENT, '<b>' + lt.up + ' of ' + lt.years.length + '</b> years up');
+      if(lt.best) add('Long Term', LT_ACCENT, 'best year <b>' + lt.best.y + ': +' + lt.best.r.toFixed(0) + '%</b>');
+    }
+  }catch(e){}
+
+  /* Every segment book with a backtest */
+  try{
+    Object.keys(LT_SEG_CURVE || {}).forEach(function(k){
+      var m = segMeta(k), st = wfCurveStats(LT_SEG_CURVE[k], LT_SEG_START);
+      if(!st) return;
+      var name = m[1], hue = m[2];
+      add(name, hue, '\u20b91 lakh in 2005 \u2192 <b>' + wfMoney(100000 * st.mult) + '</b>');
+      if(st.cagr > 0) add(name, hue, '<b>' + st.cagr.toFixed(1) + '% a year</b> for ' + st.yrs.toFixed(0) + ' years');
+      if(st.best) add(name, hue, 'best year <b>' + st.best.y + ': +' + st.best.r.toFixed(0) + '%</b>');
+      add(name, hue, '<b>' + st.up + ' of ' + st.years.length + '</b> years up');
+    });
+  }catch(e){}
+
+  /* US record, only while it is positive */
+  try{
+    if(typeof US_CURVE !== 'undefined' && US_CURVE.length > 1){
+      var u = (US_CURVE[US_CURVE.length - 1] / US_CURVE[0] - 1) * 100;
+      if(u > 0) add('US book', '#3B82F6', '<b>+' + u.toFixed(1) + '%</b> since November 2025');
+    }
+  }catch(e){}
+
+  /* Today's books, counts only — no names for visitors */
+  try{
+    var D0 = (typeof SCR_DATA !== 'undefined' && SCR_DATA) || {};
+    var ltp = ((D0.longTerm || {}).positions || []);
+    if(ltp.length){
+      var inP = ltp.filter(function(p){ return +p.pnlPct > 0; }).length;
+      if(inP / ltp.length >= 0.5) add('Long Term today', LT_ACCENT, '<b>' + inP + ' of ' + ltp.length + '</b> open positions in profit');
+      var bestOpen = Math.max.apply(null, ltp.map(function(p){ return +p.pnlPct || 0; }));
+      if(bestOpen > 15) add('Long Term today', LT_ACCENT, 'best open position <b>+' + bestOpen.toFixed(0) + '%</b>');
+    }
+    var mpp = ((D0.modelPortfolio || {}).positions || []).filter(function(p){ return !p.status || p.status === 'OPEN'; });
+    if(mpp.length){
+      var avg = mpp.reduce(function(a, p){ return a + (+p.pnlPct || 0); }, 0) / mpp.length;
+      if(avg > 0) add('Model Portfolio today', MP_ACCENT, 'average open position <b>+' + avg.toFixed(1) + '%</b>');
+    }
+    var all = ((D0.tabs || {}).ALL || []);
+    var sb = all.filter(function(r){ return r && r.signal === 'STRONG BUY'; }).length;
+    if(sb) add('Screener today', '#0E9F6E', '<b>' + sb + ' Strong Buy</b> signals in the ranking');
+  }catch(e){}
+
+  /* mix the books so one never runs long */
+  var byBook = {}, keys = [];
+  it.forEach(function(x){ if(!byBook[x.book]){ byBook[x.book] = []; keys.push(x.book); } byBook[x.book].push(x); });
+  var out = [], more = true;
+  while(more){
+    more = false;
+    keys.forEach(function(k){ if(byBook[k].length){ out.push(byBook[k].shift()); more = true; } });
+  }
+  return out;
+}
+
+var WF_SIG = '';
+function paintWinFlow(){
+  var host = document.getElementById('winFlow');
+  if(!host) return;
+  var items = wfItems();
+  var sig = items.map(function(x){ return x.html; }).join('|');
+  if(sig === WF_SIG) return;
+  WF_SIG = sig;
+  if(!items.length){ host.style.display = 'none'; return; }
+  host.style.display = '';
+  function chip(x){
+    return '<span class="wf-chip" style="--h:' + x.hue + '"><i></i><em>' + x.book + '</em>' + x.html + '</span>';
+  }
+  var half = Math.ceil(items.length / 2);
+  var rowA = items.slice(0, half), rowB = items.slice(half);
+  function track(list, cls){
+    if(!list.length) return '';
+    var html = list.map(chip).join('');
+    return '<div class="wf-row ' + cls + '" style="--dur:' + Math.max(30, list.length * 5) + 's">' +
+      '<div class="wf-track">' + html + html + '</div></div>';
+  }
+  host.innerHTML =
+    '<div class="wf-head"><span class="wf-dot"></span>Wins from every book' +
+      '<small>backtests, the public trade record and today\u2019s open books</small></div>' +
+    track(rowA, 'wf-left') + track(rowB, 'wf-right');
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(paintWinFlow, 50); });
+else setTimeout(paintWinFlow, 50);
+
 function trioWeekly(series, startISO){
   var t0 = new Date(startISO).getTime(), WEEK = 7 * 864e5;
   return (series || []).map(function(v, i){ return { t: t0 + i * WEEK, v: v }; });
