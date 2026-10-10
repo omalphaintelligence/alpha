@@ -3495,6 +3495,14 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
 .yb-c.yb-dv span i{position:static!important;width:100%;height:auto}
 .yb-c.yb-dv .b i{border-radius:0 0 4px 4px!important;transform-origin:top!important}
 .yb-c.yb-dv .t i{border-radius:4px 4px 0 0!important}
+
+/* the whole record, week by week or month by month, in a strip that
+   scrolls inside the card and opens on the latest bars */
+.yb-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px 4px;scrollbar-width:thin}
+.yb.yb-long{gap:1px;flex:none}
+.yb.yb-long .yb-c{flex:1 0 0;min-width:0}
+.yb.yb-long .yb-c small{overflow:visible;font-size:9px;text-align:left!important;width:0}
+.yb.yb-long .yb-c i{border-radius:1px!important;animation-delay:0ms!important}
 </style>
 </head>
 <body class="s-light">
@@ -13493,12 +13501,12 @@ function trioBarRows(pts, unit){
   var first = pts[0], last = pts[pts.length - 1];
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   if(unit === 'week'){
-    var w = pts.slice(-27);
-    return w.slice(1).map(function(p, k){
+    /* every week of the record */
+    return pts.slice(1).map(function(p, k){
       var d = new Date(p.t);
-      return { year: d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(),
-               label: d.getDate() + '/' + (d.getMonth() + 1), pct: (p.v / w[k].v - 1) * 100,
-               partial: k === w.length - 2 };
+      return { year: d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(), yr: d.getFullYear(),
+               label: '\u2019' + String(d.getFullYear()).slice(2), pct: (p.v / pts[k].v - 1) * 100,
+               partial: k === pts.length - 2 };
     });
   }
   var key = unit === 'month'
@@ -13509,12 +13517,13 @@ function trioBarRows(pts, unit){
   var rows = order.map(function(k, i){
     var from = i === 0 ? first.v : end[order[i - 1]];
     var lab, full;
-    if(unit === 'month'){ var y = Math.floor(k / 100), m = k % 100;
-      lab = MON[m].slice(0, 1) + (m === 0 ? '\u2019' + String(y).slice(2) : ''); full = MON[m] + ' ' + y; }
-    else { lab = '\u2019' + String(k).slice(2); full = String(k); }
-    return { year: full, label: lab, pct: (end[k] / from - 1) * 100, partial: k === key(last.t) };
+    var yr;
+    if(unit === 'month'){ var y = Math.floor(k / 100), m = k % 100; yr = y;
+      lab = '\u2019' + String(y).slice(2); full = MON[m] + ' ' + y; }
+    else { yr = k; lab = '\u2019' + String(k).slice(2); full = String(k); }
+    return { year: full, yr: yr, label: lab, pct: (end[k] / from - 1) * 100, partial: k === key(last.t) };
   });
-  return unit === 'month' ? rows.slice(-24) : rows;
+  return rows;   /* every month of the record */
 }
 
 function trioBarUnit(id, unit){
@@ -13525,6 +13534,8 @@ function trioBarUnit(id, unit){
     return '<button class="' + (u[0] === unit ? 'on' : '') + '" onclick="trioBarUnit(\'' + id + '\',\'' + u[0] + '\')">' + u[1] + '</button>';
   }).join('') + '</div>';
   el.innerHTML = tog + perfYearBars(trioBarRows(st.pts, unit), st.accent, unit);
+  var sc = el.querySelector('.yb-scroll');
+  if(sc) requestAnimationFrame(function(){ sc.scrollLeft = sc.scrollWidth; });
   var card = el.closest('.trio-card'), ttl = card && card.querySelector('.yb-ttl');
   if(ttl) ttl.textContent = unit === 'month' ? 'Month by month' : unit === 'week' ? 'Week by week' : 'Year by year';
 }
@@ -13543,23 +13554,31 @@ function perfYearBars(rows, accent, unit){
   var dp = unit === 'year' ? 0 : 1;
   fmt = function(x){ return (x >= 0 ? '+' : '\u2212') + Math.abs(x).toFixed(dp) + '%'; };
   var dense = rows.length > 16;
+  var long = rows.length > 40;
+  var slotW = unit === 'week' ? 5 : 11;
+  var showLab = function(r, i){
+    if(!long) return !(dense && i % 4 && i !== rows.length - 1);
+    return i === 0 || rows[i - 1].yr !== r.yr;
+  };
   var divide = unit !== 'year' && rows.some(function(r){ return r.pct < 0; });
   return '<div class="yb-head"><b>' + up + '</b> of <b>' + rows.length + '</b> ' + word + ' up</div>' +
-    '<div class="yb' + (divide ? ' yb-div' : '') + '" style="--yb:' + (accent || '#0E9F6E') + '">' + rows.map(function(r, i){
+    (long ? '<div class="yb-scroll">' : '') +
+    '<div class="yb' + (divide ? ' yb-div' : '') + (long ? ' yb-long' : '') + '" style="--yb:' + (accent || '#0E9F6E') +
+      (long ? ';width:' + (rows.length * slotW) + 'px' : '') + '">' + rows.map(function(r, i){
       var h = Math.max(4, Math.abs(r.pct) / max * 100);
       if(divide){
         var bar = '<i style="height:' + h.toFixed(1) + '%;animation-delay:' + Math.min(i * 30, 700) + 'ms"></i>';
         return '<div class="yb-c yb-dv' + (r.pct < 0 ? ' neg' : '') + (r === best ? ' best' : '') + '" title="' +
           r.year + ': ' + fmt(r.pct) + '">' +
           '<span class="t">' + (r.pct >= 0 ? bar : '') + '</span><span class="b">' + (r.pct < 0 ? bar : '') + '</span>' +
-          '<small>' + ((dense && i % 4 && i !== rows.length - 1) ? '&nbsp;' : (r.label || ('\u2019' + String(r.year).slice(2))) + (r.partial ? '*' : '')) + '</small></div>';
+          '<small>' + (!showLab(r, i) ? '&nbsp;' : (r.label || ('\u2019' + String(r.year).slice(2))) + (r.partial && !long ? '*' : '')) + '</small></div>';
       }
       return '<div class="yb-c' + (r.pct < 0 ? ' neg' : '') + (r === best ? ' best' : '') + '" title="' +
         r.year + ': ' + fmt(r.pct) + '">' +
         (dense ? '' : '<em>' + fmt(r.pct) + '</em>') +
         '<i style="height:' + h.toFixed(1) + '%;animation-delay:' + Math.min(i * 30, 700) + 'ms"></i>' +
-        '<small>' + ((dense && i % 4 && i !== rows.length - 1) ? '&nbsp;' : (r.label || ('\u2019' + String(r.year).slice(2))) + (r.partial ? '*' : '')) + '</small></div>';
-    }).join('') + '</div>' +
+        '<small>' + (!showLab(r, i) ? '&nbsp;' : (r.label || ('\u2019' + String(r.year).slice(2))) + (r.partial && !long ? '*' : '')) + '</small></div>';
+    }).join('') + '</div>' + (long ? '</div>' : '') +
     '<div class="yb-foot"><span>Best <b style="color:var(--yb-best,#0E9F6E)">' + best.year + ' ' + fmt(best.pct) + '</b></span>' +
     '<span>Worst <b style="color:' + (worst.pct < 0 ? '#E5484D' : 'var(--text)') + '">' + worst.year + ' ' + fmt(worst.pct) + '</b></span></div>';
 }
