@@ -3385,6 +3385,23 @@ body.s-light .dash-scope .pure-scope .pu-t th,.dash-scope .pure-scope .pu-t th,.
 .bk-c3 .sc-v{font-size:22px}
 .bk-c3 .sc-note{font-size:11.5px}
 @media(prefers-reduced-motion:reduce){ .bk-draw{animation:none;stroke-dashoffset:0} }
+
+/* ---------- notes as points ---------- */
+.note-pts{margin:4px 0 0;padding-left:18px!important;list-style:disc!important}
+.note-pts li{margin:3px 0;line-height:1.5}
+.note-pts li::marker{color:var(--muted)}
+.pure-scope .pu-sec-cm .note-pts li::marker{color:#B7791F}
+.feed-detail .note-pts{margin:0 0 12px;font-size:14px;color:var(--muted)}
+/* ---------- Pure as a special pill ---------- */
+.pure-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:999px;border:0;cursor:pointer;
+  font-family:'Manrope',sans-serif;font-size:13px;font-weight:800;letter-spacing:.01em;color:#0F3D2E;
+  background:linear-gradient(120deg,#F2B632 0%,#FFD976 45%,#5CF0A5 100%);
+  box-shadow:0 6px 16px -8px rgba(15,61,46,.55),inset 0 0 0 1px rgba(255,255,255,.35);
+  transition:transform .15s ease,box-shadow .15s ease}
+.pure-pill i{font-style:normal;font-size:12px}
+.pure-pill:hover{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(15,61,46,.7),inset 0 0 0 1px rgba(255,255,255,.5)}
+.pure-pill.on{background:linear-gradient(120deg,#0F3D2E,#1F6A4E);color:#F2B632;
+  box-shadow:0 0 0 2px #F2B632,0 8px 20px -10px rgba(15,61,46,.8)}
 </style>
 </head>
 <body class="s-light">
@@ -6283,7 +6300,7 @@ function renderLtNotes(){
         '</div>' +
         '<div class="feed-chev">\u203A</div>' +
       '</div>' +
-      '<div class="feed-detail">' + n.detail + '</div>' +
+      '<div class="feed-detail">' + pointifyDetail(n.detail) + '</div>' +
     '</div>';
   }).join('') + '</div>';
 }
@@ -6651,9 +6668,7 @@ function ltBookBar(){
   /* The US side has one Long Term book plus its own Pure account. */
   if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
     return '<div class="seg-bar"><button class="seg-btn' + (LT_BOOK !== 'PURE' ? ' on' : '') +
-      '" onclick="setLtBook(\'ALL\')">Long Term</button></div>' +
-      '<button class="pure-entry' + (LT_BOOK === 'PURE' ? ' on' : '') + '" onclick="setLtBook(\'PURE\')">' +
-      'Pure Portfolio<small>risk-sized account, Large + mid + small</small></button>';
+      '" onclick="setLtBook(\'ALL\')">Long Term</button>' + purePill() + '</div>';
   }
   /* Pure is an account, not a segment book, so it sits on its own
      line under the segment pills rather than among them. */
@@ -6661,9 +6676,14 @@ function ltBookBar(){
     return '<button class="seg-btn' + (b[0] === LT_BOOK ? ' on' : '') +
       '" style="--hue:' + segMeta(b[0])[2] + '" onclick="setLtBook(\'' + b[0] + '\')">' +
       b[1] + '</button>';
-  }).join('') + '</div>' +
-  '<button class="pure-entry' + (LT_BOOK === 'PURE' ? ' on' : '') + '" onclick="setLtBook(\'PURE\')">' +
-    'Pure Portfolio<small>risk-sized account, Large + mid + small</small></button>';
+  }).join('') + purePill() + '</div>';
+}
+
+/* Pure is an account, not a segment, so it gets its own small,
+   bright button at the end of the row rather than a full-width bar. */
+function purePill(){
+  return '<button class="pure-pill' + (LT_BOOK === 'PURE' ? ' on' : '') + '" onclick="setLtBook(\'PURE\')" ' +
+    'title="Risk-sized account, large + mid + small"><i>\u2726</i>Pure Portfolio</button>';
 }
 
 function setLtBook(b){
@@ -7986,6 +8006,23 @@ function pureInsightList(d, last){
     queue: (d.queue || []).map(function(q){ return { s: q.symbol, why: q.reason }; }), extra: extra });
 }
 
+/* A note written as one paragraph reads as a wall. Two or more
+   sentences become a list of points, one per sentence. */
+function notePoints(html){
+  var t = String(html || '').trim();
+  if(!t) return '';
+  var parts = t.replace(/([.!?])\s+(?=[A-Z\u20b9$\d<])/g, '$1\u0001').split('\u0001')
+    .map(function(x){ return x.trim(); }).filter(Boolean);
+  if(parts.length < 2) return t;
+  return '<ul class="note-pts">' + parts.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>';
+}
+function pointifyDetail(html){
+  return String(html || '').replace(/<p class="nd-p( nd-dim)?">([\s\S]*?)<\/p>/g, function(m, dim, inner){
+    var pts = notePoints(inner);
+    return pts.indexOf('<ul') === 0 ? pts : m;
+  });
+}
+
 function renderPureNotes(all){
   var counts = { all: all.length };
   all.forEach(function(n){ counts[n.kind] = (counts[n.kind] || 0) + 1; });
@@ -8017,7 +8054,7 @@ function renderPureNotes(all){
     out += '<div class="pu-note ' + k[1] + '">' +
       '<div class="pu-kind">' + k[0] + '</div>' +
       '<div><div class="pu-ntitle">' + n.title + '</div>' +
-      '<div class="pu-nbody">' + (n.body || '') + '</div></div>' +
+      '<div class="pu-nbody">' + notePoints(n.body || '') + '</div></div>' +
     '</div>';
   });
   return filters + '<div class="pu-feed">' + out + '</div>';
@@ -13604,7 +13641,7 @@ function renderNotes(){
           '</div>' +
           '<div class="feed-chev">\u203A</div>' +
         '</div>' +
-        '<div class="feed-detail">' + n.detail + '</div>' +
+        '<div class="feed-detail">' + pointifyDetail(n.detail) + '</div>' +
       '</div>';
     }).join('') + '</div>';
 }
