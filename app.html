@@ -3454,6 +3454,47 @@ body.s-light .wf{box-shadow:0 1px 2px rgba(16,26,45,.05),0 14px 34px -22px rgba(
 @keyframes wfMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){ .wf-track{animation:none;flex-wrap:wrap;width:auto} .wf-track > .wf-chip:nth-child(n+13){display:none} }
 @media(max-width:640px){ .wf-chip{font-size:13px;padding:8px 12px} .wf-head{font-size:16px} }
+
+.wf-head2{margin-top:12px;padding-top:12px;border-top:1px dashed color-mix(in srgb,var(--muted) 30%,transparent)}
+.wf-act{background:color-mix(in srgb,var(--h) 7%,var(--panel))}
+.wf-ic{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;flex:none;
+  font-size:12px;font-weight:800;color:#fff;background:var(--h)}
+
+/* ---------- The engine at work ---------- */
+.eng{margin:14px auto 8px}
+.eng-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 12px}
+.eng-head h3{margin:0;font-family:var(--disp);font-size:20px;color:var(--text)}
+.eng-head p{margin:0;font-size:13.5px;color:var(--muted);max-width:760px}
+.eng-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.eng-card{padding:15px 16px 13px;border-radius:16px;background:var(--panel);border:1px solid var(--line-soft);border-top:4px solid var(--h)}
+body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px rgba(16,26,45,.25)}
+.eng-t{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:color-mix(in srgb,var(--h) 75%,var(--text))}
+.eng-t i{width:9px;height:9px;border-radius:50%;background:var(--h);animation:insBlink 1.6s ease-in-out infinite}
+.eng-r{margin:5px 0 10px;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.eng-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+.eng-s{display:flex;flex-direction:column;gap:2px;min-width:0}
+.eng-s b{font-family:var(--fig);font-size:20px;font-weight:800;color:var(--text)}
+.eng-s span{font-size:11px;color:var(--muted)}
+.eng-foot{display:flex;flex-direction:column;gap:3px;margin-top:9px;font-size:12px;color:var(--muted)}
+.eng-foot b{color:var(--tier-sb)}
+@media(max-width:980px){ .eng-grid{grid-template-columns:1fr 1fr} }
+@media(max-width:620px){ .eng-grid{grid-template-columns:1fr} }
+
+.yb-tog{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--muted) 12%,transparent);margin:2px 0 8px}
+.yb-tog button{padding:4px 12px;border:0;border-radius:999px;background:transparent;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+.yb-tog button.on{background:var(--panel);color:var(--text);box-shadow:0 1px 3px rgba(16,26,45,.15)}
+.yb .yb-c small{white-space:nowrap}
+
+.yb.yb-div{position:relative;height:290px;flex:none;align-items:stretch}
+.yb.yb-div::after{content:'';position:absolute;left:0;right:0;top:calc((100% - 18px) / 2);height:1px;background:var(--line)}
+.yb-c.yb-dv{display:flex;flex-direction:column;justify-content:stretch;align-items:stretch}
+.yb-c.yb-dv small{text-align:center}
+.yb-c.yb-dv span{flex:1;display:flex;min-height:0}
+.yb-c.yb-dv .t{align-items:flex-end}
+.yb-c.yb-dv .b{align-items:flex-start}
+.yb-c.yb-dv span i{position:static!important;width:100%;height:auto}
+.yb-c.yb-dv .b i{border-radius:0 0 4px 4px!important;transform-origin:top!important}
+.yb-c.yb-dv .t i{border-radius:4px 4px 0 0!important}
 </style>
 </head>
 <body class="s-light">
@@ -7538,7 +7579,7 @@ function pureExtraNotes(d, last){
    3. The Pure account curve follows the cursor.
    ============================================================ */
 (function(){
-  var SEL = '.sc-v, .card-v, .perf-k-v, .rb-figs b, .pu-stats b, .pu-tbig, .slot-k, .th-pnl, .hold-pnl';
+  var SEL = '.sc-v, .card-v, .perf-k-v, .rb-figs b, .pu-stats b, .pu-tbig, .slot-k, .th-pnl, .hold-pnl, .eng-n';
 
   function countUp(el){
     if(el.__cu || el.children.length) return;
@@ -13006,16 +13047,9 @@ function trioInit(id, pts, o){
     $('dd').textContent = (dd * 100).toFixed(1) + '%';
   }
 
-  /* year by year */
-  var byYear = {};
-  pts.forEach(function(p){ byYear[new Date(p.t).getFullYear()] = p.v; });
-  var ys = Object.keys(byYear).map(Number).sort();
-  var nowYear = new Date(last.t).getFullYear();
-  var rows = ys.map(function(y, k){
-    var from = k === 0 ? first.v : byYear[ys[k - 1]];
-    return { year: y, pct: (byYear[y] / from - 1) * 100, partial: y === nowYear };
-  });
-  $('b').innerHTML = perfYearBars(rows, accent);
+  /* year by year, with month and week on a switch */
+  TRIO_PTS[id] = { pts: pts, accent: accent };
+  trioBarUnit(id, TRIO_UNIT[id] || 'year');
 
   /* curve, drawn once when first seen, value counting with it */
   var cv = $('c'), W, H, X, Y, lo, hi;
@@ -13072,6 +13106,8 @@ function trioInit(id, pts, o){
   }
 
   /* if you had started in… */
+  var nowYear = new Date(last.t).getFullYear();
+  var ys = []; pts.forEach(function(p){ var y = new Date(p.t).getFullYear(); if(ys.indexOf(y) < 0) ys.push(y); });
   var picks = ys.filter(function(y){ return y < nowYear; });
   if(!picks.length) picks = [ys[0]];
   var amts = o.amounts || [100000, 500000, 1000000];
@@ -13191,22 +13227,31 @@ function wfItems(){
   var it = [];
   function add(book, hue, html){ it.push({ book: book, hue: hue, html: html }); }
 
+  /* From a curve, keep only its strongest one or two readings. */
+  function strongest(book, hue, st, startLabel, startAmt, keep){
+    if(!st) return;
+    var c = [];
+    if(st.mult >= 3) c.push({ s: Math.log(st.mult) / Math.LN10 * (st.mult >= 10 ? 40 : 15),
+      h: startLabel + ' \u2192 <b>' + wfMoney(startAmt * st.mult) + '</b>' });
+    if(st.cagr >= 12) c.push({ s: st.cagr * 2.2,
+      h: '<b>' + st.cagr.toFixed(1) + '% a year</b>, compounded over ' + st.yrs.toFixed(0) + ' years' });
+    if(st.best && st.best.r >= 40) c.push({ s: st.best.r / 2.2, h: 'best year <b>' + st.best.y + ': +' + st.best.r.toFixed(0) + '%</b>' });
+    var ratio = st.years.length ? st.up / st.years.length : 0;
+    if(ratio >= 0.8 && st.years.length >= 5) c.push({ s: ratio * 75, h: '<b>' + st.up + ' of ' + st.years.length + '</b> years up' });
+    c.sort(function(a, b){ return b.s - a.s; }).slice(0, keep).forEach(function(x){ add(book, hue, x.h); });
+  }
+
   /* Model Portfolio — the curve and the public trade archive */
   try{
-    var mp = wfCurveStats(PF_WEEKLY, PF_START);
-    if(mp){
-      if(mp.cagr > 0) add('Model Portfolio', MP_ACCENT, 'compounded <b>' + mp.cagr.toFixed(1) + '% a year</b> since ' + mp.startY);
-      add('Model Portfolio', MP_ACCENT, '<b>' + mp.up + ' of ' + mp.years.length + '</b> calendar years up');
-      if(mp.best) add('Model Portfolio', MP_ACCENT, 'best year <b>' + mp.best.y + ': +' + mp.best.r.toFixed(0) + '%</b>');
-      add('Model Portfolio', MP_ACCENT, '\u20b91 lakh grew to <b>' + wfMoney(100000 * mp.mult) + '</b>');
-    }
+    strongest('Model Portfolio', MP_ACCENT, wfCurveStats(PF_WEEKLY, PF_START), '\u20b91 lakh in ' + String(PF_START).slice(0, 4), 100000, 2);
     if(typeof PF_TRADES !== 'undefined' && PF_TRADES.length){
       var wins = PF_TRADES.filter(function(t){ return +t[5] > 0; });
       var big = PF_TRADES.filter(function(t){ return +t[5] >= 50; });
       var top = PF_TRADES.slice().sort(function(a, b){ return b[5] - a[5]; });
-      add('Model Portfolio', MP_ACCENT, '<b>' + Math.round(wins.length / PF_TRADES.length * 100) + '%</b> of ' + PF_TRADES.length + ' closed trades made money');
-      if(big.length) add('Model Portfolio', MP_ACCENT, '<b>' + big.length + ' trades</b> returned 50% or more');
-      top.slice(0, 3).forEach(function(t){
+      if(wins.length / PF_TRADES.length >= 0.5)
+        add('Model Portfolio', MP_ACCENT, '<b>' + Math.round(wins.length / PF_TRADES.length * 100) + '%</b> of ' + PF_TRADES.length + ' closed trades made money');
+      if(big.length >= 3) add('Model Portfolio', MP_ACCENT, '<b>' + big.length + ' trades</b> returned 50% or more');
+      top.slice(0, 2).forEach(function(t){
         add('Model Portfolio', MP_ACCENT, '<b>' + t[0] + ' +' + (+t[5]).toFixed(0) + '%</b>, ' + String(t[1]).slice(0, 4) + '\u2013' + String(t[3]).slice(0, 4));
       });
     }
@@ -13214,27 +13259,20 @@ function wfItems(){
 
   /* Long Term — the all-book curve */
   try{
-    var lt = wfCurveStats(LT_CURVE, LT_CURVE_START);
-    if(lt){
-      add('Long Term', LT_ACCENT, wfMoney(LT_CURVE[0]) + ' in ' + lt.startY + ' became <b>' + wfMoney(LT_CURVE[LT_CURVE.length - 1]) + '</b>');
-      if(lt.cagr > 0) add('Long Term', LT_ACCENT, '<b>' + lt.cagr.toFixed(1) + '% a year</b>, compounded over ' + lt.yrs.toFixed(0) + ' years');
-      add('Long Term', LT_ACCENT, '<b>' + lt.up + ' of ' + lt.years.length + '</b> years up');
-      if(lt.best) add('Long Term', LT_ACCENT, 'best year <b>' + lt.best.y + ': +' + lt.best.r.toFixed(0) + '%</b>');
-    }
+    strongest('Long Term', LT_ACCENT, wfCurveStats(LT_CURVE, LT_CURVE_START),
+      wfMoney(LT_CURVE[0]) + ' in ' + String(LT_CURVE_START).slice(0, 4), LT_CURVE[0], 2);
   }catch(e){}
 
-  /* Every segment book with a backtest */
+  /* Every segment book: only its single strongest number */
   try{
     Object.keys(LT_SEG_CURVE || {}).forEach(function(k){
-      var m = segMeta(k), st = wfCurveStats(LT_SEG_CURVE[k], LT_SEG_START);
-      if(!st) return;
-      var name = m[1], hue = m[2];
-      add(name, hue, '\u20b91 lakh in 2005 \u2192 <b>' + wfMoney(100000 * st.mult) + '</b>');
-      if(st.cagr > 0) add(name, hue, '<b>' + st.cagr.toFixed(1) + '% a year</b> for ' + st.yrs.toFixed(0) + ' years');
-      if(st.best) add(name, hue, 'best year <b>' + st.best.y + ': +' + st.best.r.toFixed(0) + '%</b>');
-      add(name, hue, '<b>' + st.up + ' of ' + st.years.length + '</b> years up');
+      var m = segMeta(k);
+      strongest(m[1], m[2], wfCurveStats(LT_SEG_CURVE[k], LT_SEG_START), '\u20b91 lakh in 2005', 100000, 1);
     });
   }catch(e){}
+
+  /* What the engine did lately, counts only */
+  try{ engineChips(add); }catch(e){}
 
   /* US record, only while it is positive */
   try{
@@ -13275,12 +13313,140 @@ function wfItems(){
   return out;
 }
 
+/* The engine at work: the rules every book follows, and its recent
+   actions. Visitors see the rules and the public trade record;
+   subscribers also see the latest moves in their books by name. */
+/* The public window (Supabase view public_wins): winners still held
+   and recent swaps, readable by anyone. Loaded once per visit. */
+var WF_PUBLIC = null, WF_PUBLIC_ASKED = false;
+function loadPublicWins(){
+  if(WF_PUBLIC_ASKED || typeof db === 'undefined' || !db) return;
+  WF_PUBLIC_ASKED = true;
+  db.from('public_wins').select('market, book, kind, symbol, other, pct, on_date').limit(400).then(function(res){
+    if(res && !res.error && res.data){ WF_PUBLIC = res.data; WF_SIG = ''; paintWinFlow(); }
+  }, function(){});
+}
+
+function wfEngine(){
+  var it = [];
+  function add(book, hue, icon, html){ it.push({ book: book, hue: hue, icon: icon, html: html }); }
+
+  /* everyone: the public window */
+  (WF_PUBLIC || []).forEach(function(r){
+    var mkt = r.market === 'US' ? ' US' : '';
+    var name = r.book, hue = '#0E9F6E';
+    if(r.book === 'Long Term') hue = LT_ACCENT;
+    else if(r.book === 'Model Portfolio') hue = MP_ACCENT;
+    else if(r.book === 'Pure Portfolio') hue = '#B7791F';
+    else { var m = segMeta(r.book); if(m){ name = m[1]; hue = m[2]; } }
+    name += mkt;
+    var dt = r.on_date ? new Date(r.on_date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '';
+    if(r.kind === 'hold' && +r.pct > 0){
+      add(name, hue, '\u2191', 'still holding <b>' + r.symbol + '</b> after <b>+' + (+r.pct).toFixed(0) + '%</b>' + (dt ? ', taken ' + dt : ''));
+    } else if(r.kind === 'swap' && r.other){
+      add(name, hue, '\u21c4', '<b>' + r.other + '</b> replaced by <b>' + r.symbol + '</b>' + (dt ? ' on ' + dt : '') +
+        (r.pct != null && +r.pct > 0 ? ' \u2014 ' + r.other + ' left with <b>+' + (+r.pct).toFixed(0) + '%</b>' : ''));
+    }
+  });
+  var D0 = (typeof SCR_DATA !== 'undefined' && SCR_DATA) || {};
+  var day = function(x){
+    var d = new Date(String(x).slice(0, 10));
+    return isNaN(d) ? '' : d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  };
+  var pc = function(v){ return (v >= 0 ? '+' : '\u2212') + Math.abs(+v).toFixed(0) + '%'; };
+
+  /* 1. what was swapped for what, from the books' own journals */
+  function swaps(jnl, book, hue){
+    var byDate = {};
+    (jnl || []).forEach(function(j){
+      if(!j || !j.date || !j.symbol) return;
+      var k = String(j.date).slice(0, 10);
+      (byDate[k] = byDate[k] || { out: [], inn: [] });
+      if(j.action === 'ENTRY') byDate[k].inn.push(j);
+      else if(j.action && j.action !== 'STOP RAISED') byDate[k].out.push(j);
+    });
+    Object.keys(byDate).sort().reverse().slice(0, 6).forEach(function(k){
+      var g = byDate[k];
+      g.out.forEach(function(o, i){
+        var n = g.inn[i];
+        if(n) add(book, hue, '\u21c4', '<b>' + o.symbol + '</b> replaced by <b>' + n.symbol + '</b> on ' + day(k) +
+          (o.pnlPct != null && +o.pnlPct > 0 ? ' \u2014 ' + o.symbol + ' left with <b>' + pc(o.pnlPct) + '</b>' : ''));
+      });
+    });
+  }
+  swaps((D0.longTerm || {}).journal, 'Long Term', LT_ACCENT);
+  swaps((D0.modelPortfolio || {}).journal, 'Model Portfolio', MP_ACCENT);
+
+  /* Pure: its buy notes already say which name they replaced */
+  try{
+    Object.keys(PURE_CACHE || {}).forEach(function(mkt){
+      var d = PURE_CACHE[mkt] || {};
+      (d.notes || []).filter(function(n){ return n.kind === 'buy' && / \u2014 replaces /.test(n.title || ''); })
+        .slice(0, 6).forEach(function(n){
+          var m = /Bought \S+ (\S+) at .* \u2014 replaces (\S+)/.exec(n.title);
+          if(m) add('Pure Portfolio' + (mkt === 'US' ? ' US' : ''), '#B7791F', '\u21c4',
+            '<b>' + m[2] + '</b> replaced by <b>' + m[1] + '</b> on ' + day(n.note_date));
+        });
+      /* and the holdings that have run furthest */
+      (d.holdings || []).filter(function(h){ return +h.pnl_pct >= 20; })
+        .sort(function(a, b){ return b.pnl_pct - a.pnl_pct; }).slice(0, 4).forEach(function(h){
+          add('Pure Portfolio' + (mkt === 'US' ? ' US' : ''), '#B7791F', '\u2191',
+            'still holding <b>' + h.symbol + '</b> after <b>' + pc(h.pnl_pct) + '</b>');
+        });
+    });
+  }catch(e){}
+
+  /* 2. winners the books are still holding */
+  function holding(pos, book, hue, min){
+    (pos || []).filter(function(p){ return p && (!p.status || p.status === 'OPEN') && +p.pnlPct >= min; })
+      .sort(function(a, b){ return b.pnlPct - a.pnlPct; }).slice(0, 6).forEach(function(p){
+        add(book, hue, '\u2191', 'still holding <b>' + p.symbol + '</b> after <b>' + pc(p.pnlPct) + '</b>' +
+          (p.entryDate ? ', taken ' + day(p.entryDate) : ''));
+      });
+  }
+  holding((D0.longTerm || {}).positions, 'Long Term', LT_ACCENT, 30);
+  holding((D0.modelPortfolio || {}).positions, 'Model Portfolio', MP_ACCENT, 15);
+  Object.keys(LT_SEG_CACHE || {}).forEach(function(k){
+    var key = k.split(':')[1], m = segMeta(key);
+    if(m) holding((LT_SEG_CACHE[k] || {}).positions, m[1], m[2], 30);
+  });
+
+  /* 3. the public record: swaps and long holds in the Model Portfolio
+        history, so a visitor sees the same kind of moves */
+  try{
+    var tr = PF_TRADES.slice();
+    var byEntry = {};
+    tr.forEach(function(t){ (byEntry[t[1]] = byEntry[t[1]] || []).push(t); });
+    tr.slice().sort(function(a, b){ return String(b[3]).localeCompare(String(a[3])); }).slice(0, 40).forEach(function(t){
+      var next = byEntry[t[3]];
+      if(next && next.length) add('Model Portfolio', MP_ACCENT, '\u21c4',
+        '<b>' + t[0] + '</b> replaced by <b>' + next[0][0] + '</b> on ' + day(t[3]) +
+        (+t[5] > 0 ? ' \u2014 ' + t[0] + ' left with <b>' + pc(t[5]) + '</b>' : ''));
+    });
+    tr.filter(function(t){ return +t[5] >= 50; }).sort(function(a, b){ return b[5] - a[5]; }).slice(0, 6).forEach(function(t){
+      var yrs = (new Date(t[3]) - new Date(t[1])) / (365.25 * 864e5);
+      add('Model Portfolio', MP_ACCENT, '\u2713', 'held <b>' + t[0] + '</b> ' +
+        (yrs >= 1 ? yrs.toFixed(1) + ' years' : Math.round(yrs * 12) + ' months') + ' for <b>' + pc(t[5]) + '</b>');
+    });
+  }catch(e){}
+
+  /* drop repeats, then interleave the books */
+  var seen = {}, uniq = it.filter(function(x){ var k = x.book + x.html; if(seen[k]) return false; seen[k] = 1; return true; });
+  var byBook = {}, keys = [];
+  uniq.forEach(function(x){ if(!byBook[x.book]){ byBook[x.book] = []; keys.push(x.book); } byBook[x.book].push(x); });
+  var out = [], more = true;
+  while(more){ more = false; keys.forEach(function(k){ if(byBook[k].length){ out.push(byBook[k].shift()); more = true; } }); }
+  return out.slice(0, 40);
+}
+
 var WF_SIG = '';
 function paintWinFlow(){
   var host = document.getElementById('winFlow');
   if(!host) return;
+  loadPublicWins();
   var items = wfItems();
-  var sig = items.map(function(x){ return x.html; }).join('|');
+  var eng = wfEngine();
+  var sig = items.concat(eng).map(function(x){ return x.html; }).join('|');
   if(sig === WF_SIG) return;
   WF_SIG = sig;
   if(!items.length){ host.style.display = 'none'; return; }
@@ -13298,8 +13464,17 @@ function paintWinFlow(){
   }
   host.innerHTML =
     '<div class="wf-head"><span class="wf-dot"></span>Wins from every book' +
-      '<small>backtests, the public trade record and today\u2019s open books</small></div>' +
-    track(rowA, 'wf-left') + track(rowB, 'wf-right');
+      '<small>the strongest numbers from each record, and what the engine did this month</small></div>' +
+    track(rowA, 'wf-left') + track(rowB, 'wf-right') +
+    (eng.length
+      ? '<div class="wf-head wf-head2"><span class="wf-dot"></span>The books at work' +
+          '<small>what was replaced, and the winners still being held</small></div>' +
+        '<div class="wf-row wf-left wf-eng" style="--dur:' + Math.max(40, eng.length * 6) + 's"><div class="wf-track">' +
+          eng.map(engChip).join('') + eng.map(engChip).join('') + '</div></div>'
+      : '');
+  function engChip(x){
+    return '<span class="wf-chip wf-act" style="--h:' + x.hue + '"><span class="wf-ic">' + x.icon + '</span><em>' + x.book + '</em>' + x.html + '</span>';
+  }
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(paintWinFlow, 50); });
 else setTimeout(paintWinFlow, 50);
@@ -13311,7 +13486,49 @@ function trioWeekly(series, startISO){
 
 /* Year-by-year mini bars for the side card next to a performance
    chart. rows: [{ year, pct, partial }]. Bars grow in on paint. */
-function perfYearBars(rows, accent){
+/* The bar card can show years, months or weeks of the same curve. */
+var TRIO_PTS = {}, TRIO_UNIT = {};
+function trioBarRows(pts, unit){
+  if(!pts || pts.length < 2) return [];
+  var first = pts[0], last = pts[pts.length - 1];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if(unit === 'week'){
+    var w = pts.slice(-27);
+    return w.slice(1).map(function(p, k){
+      var d = new Date(p.t);
+      return { year: d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(),
+               label: d.getDate() + '/' + (d.getMonth() + 1), pct: (p.v / w[k].v - 1) * 100,
+               partial: k === w.length - 2 };
+    });
+  }
+  var key = unit === 'month'
+    ? function(t){ var d = new Date(t); return d.getFullYear() * 100 + d.getMonth(); }
+    : function(t){ return new Date(t).getFullYear(); };
+  var end = {}, order = [];
+  pts.forEach(function(p){ var k = key(p.t); if(!(k in end)) order.push(k); end[k] = p.v; });
+  var rows = order.map(function(k, i){
+    var from = i === 0 ? first.v : end[order[i - 1]];
+    var lab, full;
+    if(unit === 'month'){ var y = Math.floor(k / 100), m = k % 100;
+      lab = MON[m].slice(0, 1) + (m === 0 ? '\u2019' + String(y).slice(2) : ''); full = MON[m] + ' ' + y; }
+    else { lab = '\u2019' + String(k).slice(2); full = String(k); }
+    return { year: full, label: lab, pct: (end[k] / from - 1) * 100, partial: k === key(last.t) };
+  });
+  return unit === 'month' ? rows.slice(-24) : rows;
+}
+
+function trioBarUnit(id, unit){
+  var st = TRIO_PTS[id], el = document.getElementById(id + '-b');
+  if(!st || !el) return;
+  TRIO_UNIT[id] = unit;
+  var tog = '<div class="yb-tog">' + [['year','Year'],['month','Month'],['week','Week']].map(function(u){
+    return '<button class="' + (u[0] === unit ? 'on' : '') + '" onclick="trioBarUnit(\'' + id + '\',\'' + u[0] + '\')">' + u[1] + '</button>';
+  }).join('') + '</div>';
+  el.innerHTML = tog + perfYearBars(trioBarRows(st.pts, unit), st.accent, unit);
+}
+
+function perfYearBars(rows, accent, unit){
+  unit = unit || 'year';
   rows = (rows || []).filter(function(r){ return r && isFinite(r.pct); });
   if(rows.length < 2) return '<div class="yb-empty">Not enough history yet.</div>';
   var max = Math.max.apply(null, rows.map(function(r){ return Math.abs(r.pct); })) || 1;
@@ -13320,14 +13537,26 @@ function perfYearBars(rows, accent){
   var best = (full.length ? full : rows).reduce(function(a, b){ return b.pct > a.pct ? b : a; });
   var worst = (full.length ? full : rows).reduce(function(a, b){ return b.pct < a.pct ? b : a; });
   var fmt = function(x){ return (x >= 0 ? '+' : '\u2212') + Math.abs(x).toFixed(0) + '%'; };
-  return '<div class="yb-head"><b>' + up + '</b> of <b>' + rows.length + '</b> years up</div>' +
-    '<div class="yb" style="--yb:' + (accent || '#0E9F6E') + '">' + rows.map(function(r, i){
+  var word = unit === 'month' ? 'months' : unit === 'week' ? 'weeks' : 'years';
+  var dp = unit === 'year' ? 0 : 1;
+  fmt = function(x){ return (x >= 0 ? '+' : '\u2212') + Math.abs(x).toFixed(dp) + '%'; };
+  var dense = rows.length > 16;
+  var divide = unit !== 'year' && rows.some(function(r){ return r.pct < 0; });
+  return '<div class="yb-head"><b>' + up + '</b> of <b>' + rows.length + '</b> ' + word + ' up</div>' +
+    '<div class="yb' + (divide ? ' yb-div' : '') + '" style="--yb:' + (accent || '#0E9F6E') + '">' + rows.map(function(r, i){
       var h = Math.max(4, Math.abs(r.pct) / max * 100);
+      if(divide){
+        var bar = '<i style="height:' + h.toFixed(1) + '%;animation-delay:' + Math.min(i * 30, 700) + 'ms"></i>';
+        return '<div class="yb-c yb-dv' + (r.pct < 0 ? ' neg' : '') + (r === best ? ' best' : '') + '" title="' +
+          r.year + ': ' + fmt(r.pct) + '">' +
+          '<span class="t">' + (r.pct >= 0 ? bar : '') + '</span><span class="b">' + (r.pct < 0 ? bar : '') + '</span>' +
+          '<small>' + ((dense && i % 4 && i !== rows.length - 1) ? '&nbsp;' : (r.label || ('\u2019' + String(r.year).slice(2))) + (r.partial ? '*' : '')) + '</small></div>';
+      }
       return '<div class="yb-c' + (r.pct < 0 ? ' neg' : '') + (r === best ? ' best' : '') + '" title="' +
         r.year + ': ' + fmt(r.pct) + '">' +
-        '<em>' + fmt(r.pct) + '</em>' +
-        '<i style="height:' + h.toFixed(1) + '%;animation-delay:' + (i * 45) + 'ms"></i>' +
-        '<small>\u2019' + String(r.year).slice(2) + (r.partial ? '*' : '') + '</small></div>';
+        (dense ? '' : '<em>' + fmt(r.pct) + '</em>') +
+        '<i style="height:' + h.toFixed(1) + '%;animation-delay:' + Math.min(i * 30, 700) + 'ms"></i>' +
+        '<small>' + ((dense && i % 4 && i !== rows.length - 1) ? '&nbsp;' : (r.label || ('\u2019' + String(r.year).slice(2))) + (r.partial ? '*' : '')) + '</small></div>';
     }).join('') + '</div>' +
     '<div class="yb-foot"><span>Best <b style="color:var(--yb-best,#0E9F6E)">' + best.year + ' ' + fmt(best.pct) + '</b></span>' +
     '<span>Worst <b style="color:' + (worst.pct < 0 ? '#E5484D' : 'var(--text)') + '">' + worst.year + ' ' + fmt(worst.pct) + '</b></span></div>';
