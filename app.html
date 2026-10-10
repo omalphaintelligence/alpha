@@ -3503,6 +3503,35 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
 .yb.yb-long .yb-c{flex:1 0 0;min-width:0}
 .yb.yb-long .yb-c small{overflow:visible;font-size:9px;text-align:left!important;width:0}
 .yb.yb-long .yb-c i{border-radius:1px!important;animation-delay:0ms!important}
+
+.yb-tools{display:flex;align-items:center;gap:8px}
+.yb-full{margin-left:auto;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+  color:var(--text);font-size:15px;line-height:1;cursor:pointer}
+.yb-full:hover{background:color-mix(in srgb,var(--muted) 12%,var(--panel))}
+.ybfs{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;padding:24px;
+  background:rgba(10,16,30,.55);backdrop-filter:blur(3px)}
+.ybfs-box{width:min(1600px,100%);height:min(820px,100%);display:flex;flex-direction:column;border-radius:18px;padding:18px 22px;
+  background:var(--panel);box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+.ybfs-hd{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.ybfs-hd b{font-family:var(--disp);font-size:22px;color:var(--text)}
+.ybfs-hd span{margin-left:10px;font-size:13px;color:var(--muted)}
+.ybfs-hd .yb-tog{margin:0 0 0 auto}
+.ybfs-x{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:22px;cursor:pointer}
+.ybfs-body{flex:1;display:flex;flex-direction:column;min-height:0}
+.ybfs-body .yb{flex:1;min-height:0}
+.ybfs-body .yb.yb-div{height:auto;flex:1}
+.ybfs-body .yb-c em{font-size:11px}
+.ybfs-body .yb-c small{font-size:11px}
+.yb.yb-fit{gap:1px}
+.yb.yb-fit .yb-c{min-width:0}
+.yb.yb-fit .yb-c small{overflow:visible;width:0;text-align:left!important;font-size:10.5px}
+.yb.yb-fit .yb-c i{border-radius:1px!important;animation-delay:0ms!important}
+@media(max-width:640px){ .ybfs{padding:0} .ybfs-box{border-radius:0;height:100%} .ybfs-hd{flex-wrap:wrap} }
+.yb.yb-hair{gap:0}
+.yb.yb-hair .yb-c i{background:#10B981!important;box-shadow:none!important}
+.yb.yb-hair .yb-c.neg i{background:#E5484D!important}
+.yb.yb-hair .yb-c:hover i{background:#065F46!important}
+.yb.yb-hair .yb-c.neg:hover i{background:#9F1239!important}
 </style>
 </head>
 <body class="s-light">
@@ -13530,9 +13559,10 @@ function trioBarUnit(id, unit){
   var st = TRIO_PTS[id], el = document.getElementById(id + '-b');
   if(!st || !el) return;
   TRIO_UNIT[id] = unit;
-  var tog = '<div class="yb-tog">' + [['year','Year'],['month','Month'],['week','Week']].map(function(u){
+  var tog = '<div class="yb-tools"><div class="yb-tog">' + [['year','Year'],['month','Month'],['week','Week']].map(function(u){
     return '<button class="' + (u[0] === unit ? 'on' : '') + '" onclick="trioBarUnit(\'' + id + '\',\'' + u[0] + '\')">' + u[1] + '</button>';
-  }).join('') + '</div>';
+  }).join('') + '</div>' +
+  '<button class="yb-full" onclick="trioBarFull(\'' + id + '\')" title="See every bar in one view" aria-label="Full screen">\u2922</button></div>';
   el.innerHTML = tog + perfYearBars(trioBarRows(st.pts, unit), st.accent, unit);
   var sc = el.querySelector('.yb-scroll');
   if(sc) requestAnimationFrame(function(){ sc.scrollLeft = sc.scrollWidth; });
@@ -13540,7 +13570,42 @@ function trioBarUnit(id, unit){
   if(ttl) ttl.textContent = unit === 'month' ? 'Month by month' : unit === 'week' ? 'Week by week' : 'Year by year';
 }
 
-function perfYearBars(rows, accent, unit){
+/* Full screen: every bar of the chosen unit, side by side in one view. */
+function trioBarFull(id, unit){
+  var st = TRIO_PTS[id];
+  if(!st) return;
+  unit = unit || TRIO_UNIT[id] || 'year';
+  var ov = document.getElementById('ybFull');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'ybFull';
+    ov.className = 'ybfs';
+    ov.onclick = function(e){ if(e.target === ov) trioBarFullClose(); };
+    document.body.appendChild(ov);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') trioBarFullClose(); });
+  }
+  var title = unit === 'month' ? 'Month by month' : unit === 'week' ? 'Week by week' : 'Year by year';
+  var card = document.getElementById(id + '-b');
+  var book = '';
+  try{ book = card.closest('.perf, .dash-scope').querySelector('.perf-ttl').textContent.replace(/ Performance$/, ''); }catch(e){}
+  ov.innerHTML = '<div class="ybfs-box">' +
+    '<div class="ybfs-hd"><div><b>' + title + '</b>' + (book ? '<span>' + book + '</span>' : '') + '</div>' +
+      '<div class="yb-tog">' + [['year','Year'],['month','Month'],['week','Week']].map(function(u){
+        return '<button class="' + (u[0] === unit ? 'on' : '') + '" onclick="trioBarFull(\'' + id + '\',\'' + u[0] + '\')">' + u[1] + '</button>';
+      }).join('') + '</div>' +
+      '<button class="ybfs-x" onclick="trioBarFullClose()" aria-label="Close">\u00d7</button></div>' +
+    '<div class="ybfs-body">' + perfYearBars(trioBarRows(st.pts, unit), st.accent, unit, true) + '</div>' +
+  '</div>';
+  ov.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function trioBarFullClose(){
+  var ov = document.getElementById('ybFull');
+  if(ov){ ov.style.display = 'none'; ov.innerHTML = ''; }
+  document.body.style.overflow = '';
+}
+
+function perfYearBars(rows, accent, unit, fit){
   unit = unit || 'year';
   rows = (rows || []).filter(function(r){ return r && isFinite(r.pct); });
   if(rows.length < 2) return '<div class="yb-empty">Not enough history yet.</div>';
@@ -13554,16 +13619,17 @@ function perfYearBars(rows, accent, unit){
   var dp = unit === 'year' ? 0 : 1;
   fmt = function(x){ return (x >= 0 ? '+' : '\u2212') + Math.abs(x).toFixed(dp) + '%'; };
   var dense = rows.length > 16;
-  var long = rows.length > 40;
+  var thin = rows.length > 40;
+  var long = thin && !fit;
   var slotW = unit === 'week' ? 5 : 11;
   var showLab = function(r, i){
-    if(!long) return !(dense && i % 4 && i !== rows.length - 1);
+    if(!thin) return !(dense && i % 4 && i !== rows.length - 1);
     return i === 0 || rows[i - 1].yr !== r.yr;
   };
   var divide = unit !== 'year' && rows.some(function(r){ return r.pct < 0; });
   return '<div class="yb-head"><b>' + up + '</b> of <b>' + rows.length + '</b> ' + word + ' up</div>' +
     (long ? '<div class="yb-scroll">' : '') +
-    '<div class="yb' + (divide ? ' yb-div' : '') + (long ? ' yb-long' : '') + '" style="--yb:' + (accent || '#0E9F6E') +
+    '<div class="yb' + (divide ? ' yb-div' : '') + (long ? ' yb-long' : '') + (fit && thin ? ' yb-fit' + (rows.length > 300 ? ' yb-hair' : '') : '') + '" style="--yb:' + (accent || '#0E9F6E') +
       (long ? ';width:' + (rows.length * slotW) + 'px' : '') + '">' + rows.map(function(r, i){
       var h = Math.max(4, Math.abs(r.pct) / max * 100);
       if(divide){
