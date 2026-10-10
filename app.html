@@ -13525,6 +13525,8 @@ function trioBarUnit(id, unit){
     return '<button class="' + (u[0] === unit ? 'on' : '') + '" onclick="trioBarUnit(\'' + id + '\',\'' + u[0] + '\')">' + u[1] + '</button>';
   }).join('') + '</div>';
   el.innerHTML = tog + perfYearBars(trioBarRows(st.pts, unit), st.accent, unit);
+  var card = el.closest('.trio-card'), ttl = card && card.querySelector('.yb-ttl');
+  if(ttl) ttl.textContent = unit === 'month' ? 'Month by month' : unit === 'week' ? 'Week by week' : 'Year by year';
 }
 
 function perfYearBars(rows, accent, unit){
