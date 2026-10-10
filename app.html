@@ -3541,6 +3541,34 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
 .yb.yb-div .yb-c.best .t i,.yb.yb-div .yb-c.best .b i{box-shadow:none}
 .yb-scroll .yb.yb-div{height:380px}
 @media(max-width:980px){ .yb-scroll .yb.yb-div{height:300px} }
+
+/* ---------- Wins: three cards, lines rising slowly ---------- */
+.wf{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;overflow:visible!important}
+.wfv{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wfv-card{border-radius:18px;padding:16px 16px 10px;background:var(--panel);border:1px solid var(--line-soft);border-top:4px solid var(--c);
+  box-shadow:0 1px 2px rgba(16,26,45,.05),0 12px 30px -20px rgba(16,26,45,.3);display:flex;flex-direction:column;min-width:0;
+  background-image:linear-gradient(180deg,color-mix(in srgb,var(--c) 8%,transparent),transparent 45%)}
+.wfv-a{--c:#3B4EE0}.wfv-b{--c:#0E9F6E}.wfv-c{--c:#E8590C}
+.wfv-hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.wfv-hd .wf-dot{margin-top:7px;background:var(--c);--h:var(--c)}
+.wfv-hd b{display:block;font-family:var(--disp);font-size:17px;color:var(--text)}
+.wfv-hd small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.wfv-win{position:relative;height:250px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);
+  mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent)}
+.wfv-track{display:flex;flex-direction:column;gap:8px}
+.wfv-track.run{animation:wfUp var(--dur,30s) linear infinite}
+.wfv-card:hover .wfv-track{animation-play-state:paused}
+.wfv-line{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;
+  background:color-mix(in srgb,var(--h) 7%,var(--panel));border:1px solid color-mix(in srgb,var(--h) 25%,var(--line-soft))}
+.wfv-line > i{width:9px;height:9px;border-radius:50%;background:var(--h);flex:none;margin-top:5px}
+.wfv-line .wf-ic{margin-top:0}
+.wfv-line em{display:block;font-style:normal;font-size:11.5px;font-weight:800;letter-spacing:.02em;color:color-mix(in srgb,var(--h) 78%,var(--text))}
+.wfv-line span{display:block;font-size:13.5px;line-height:1.45;color:var(--text)}
+.wfv-line b{color:color-mix(in srgb,var(--h) 70%,var(--text));font-weight:800}
+@keyframes wfUp{from{transform:translateY(0)}to{transform:translateY(calc(-50% - 4px))}}
+@media(max-width:980px){ .wfv{grid-template-columns:1fr} .wfv-win{height:210px} }
+@media(prefers-reduced-motion:reduce){ .wfv-track.run{animation:none} .wfv-win{overflow:auto} }
 </style>
 </head>
 <body class="s-light">
@@ -13495,32 +13523,48 @@ function paintWinFlow(){
   var sig = items.concat(eng).map(function(x){ return x.html; }).join('|');
   if(sig === WF_SIG) return;
   WF_SIG = sig;
-  if(!items.length){ host.style.display = 'none'; return; }
+  if(!items.length && !eng.length){ host.style.display = 'none'; return; }
   host.style.display = '';
-  function chip(x){
-    return '<span class="wf-chip" style="--h:' + x.hue + '"><i></i><em>' + x.book + '</em>' + x.html + '</span>';
+
+  /* three cards: the records, the biggest trades, the books at work */
+  var isTrade = function(x){ return /\d{4}\u2013\d{4}/.test(x.html) || /trades?<\/b>|closed trades/.test(x.html); };
+  var isToday = function(x){ return / today$/.test(x.book); };
+  var records = items.filter(function(x){ return !isTrade(x) && !isToday(x); });
+  var trades  = items.filter(isTrade);
+  /* fill the trades card from the public record: the dozen biggest */
+  try{
+    var have = {};
+    trades.forEach(function(x){ var m = /<b>(\S+) \+/.exec(x.html); if(m) have[m[1]] = 1; });
+    PF_TRADES.slice().sort(function(a, b){ return b[5] - a[5]; }).filter(function(t){ return +t[5] >= 30 && !have[t[0]]; })
+      .slice(0, 12).forEach(function(t){
+        var mo = Math.max(1, Math.round((new Date(t[3]) - new Date(t[1])) / (30.44 * 864e5)));
+        trades.push({ book: 'Model Portfolio', hue: MP_ACCENT,
+          html: '<b>' + t[0] + ' +' + (+t[5]).toFixed(0) + '%</b> in ' + (mo >= 12 ? (mo / 12).toFixed(1) + ' years' : mo + ' months') +
+                ', ' + String(t[1]).slice(0, 4) + '\u2013' + String(t[3]).slice(0, 4) });
+      });
+  }catch(e){}
+  var work    = items.filter(isToday).concat(eng);
+
+  function line(x){
+    return '<div class="wfv-line" style="--h:' + x.hue + '">' +
+      (x.icon ? '<span class="wf-ic">' + x.icon + '</span>' : '<i></i>') +
+      '<div><em>' + x.book + '</em><span>' + x.html + '</span></div></div>';
   }
-  var half = Math.ceil(items.length / 2);
-  var rowA = items.slice(0, half), rowB = items.slice(half);
-  function track(list, cls){
+  function card(cls, title, sub, list){
     if(!list.length) return '';
-    var html = list.map(chip).join('');
-    return '<div class="wf-row ' + cls + '" style="--dur:' + Math.max(30, list.length * 5) + 's">' +
-      '<div class="wf-track">' + html + html + '</div></div>';
+    var html = list.map(line).join('');
+    var moving = list.length > 3;
+    return '<article class="wfv-card ' + cls + '">' +
+      '<div class="wfv-hd"><span class="wf-dot"></span><div><b>' + title + '</b><small>' + sub + '</small></div></div>' +
+      '<div class="wfv-win"><div class="wfv-track' + (moving ? ' run' : '') + '" style="--dur:' + Math.max(18, list.length * 3.2) + 's">' +
+        html + (moving ? html : '') + '</div></div>' +
+    '</article>';
   }
-  host.innerHTML =
-    '<div class="wf-head"><span class="wf-dot"></span>Wins from every book' +
-      '<small>the strongest numbers from each record, and what the engine did this month</small></div>' +
-    track(rowA, 'wf-left') + track(rowB, 'wf-right') +
-    (eng.length
-      ? '<div class="wf-head wf-head2"><span class="wf-dot"></span>The books at work' +
-          '<small>what was replaced, and the winners still being held</small></div>' +
-        '<div class="wf-row wf-left wf-eng" style="--dur:' + Math.max(40, eng.length * 6) + 's"><div class="wf-track">' +
-          eng.map(engChip).join('') + eng.map(engChip).join('') + '</div></div>'
-      : '');
-  function engChip(x){
-    return '<span class="wf-chip wf-act" style="--h:' + x.hue + '"><span class="wf-ic">' + x.icon + '</span><em>' + x.book + '</em>' + x.html + '</span>';
-  }
+  host.innerHTML = '<div class="wfv">' +
+    card('wfv-a', 'From the record', 'the strongest number in each book', records) +
+    card('wfv-b', 'Biggest trades', 'from the public trade record', trades) +
+    card('wfv-c', 'The books at work', 'what was replaced, and the winners still held', work) +
+  '</div>';
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(paintWinFlow, 50); });
 else setTimeout(paintWinFlow, 50);
