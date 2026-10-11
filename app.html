@@ -3567,31 +3567,30 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
 .wfv-line span{display:block;font-size:13.5px;line-height:1.45;color:var(--text)}
 .wfv-line b{color:color-mix(in srgb,var(--h) 70%,var(--text));font-weight:800}
 @keyframes wfUp{from{transform:translateY(0)}to{transform:translateY(calc(-50% - 4px))}}
-/* Wins band: three across on every screen, shrinking on phones */
-@media(max-width:980px){ .wfv{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px} .wfv-win{height:230px} }
-@media(max-width:640px){
-  #winFlow{padding:0 10px!important;margin-top:16px}
-  .wfv{gap:6px}
-  .wfv-card{padding:10px 8px 6px;border-radius:12px;border-top-width:3px}
-  .wfv-hd{gap:0;margin-bottom:6px}
-  .wfv-hd .wf-dot,.wfv-hd small{display:none}
-  .wfv-hd b{font-size:12px;line-height:1.2}
-  .wfv-win{height:220px}
-  .wfv-track{gap:6px}
-  .wfv-line{padding:7px;gap:5px;border-radius:9px}
-  .wfv-line > i{display:none}
-  .wfv-line .wf-ic{width:15px;height:15px;font-size:8.5px}
-  .wfv-line em{font-size:9.5px;letter-spacing:0}
-  .wfv-line span{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
-  .wfv-track.run{animation-name:wfUpSm}
-}
-@keyframes wfUpSm{from{transform:translateY(0)}to{transform:translateY(calc(-50% - 3px))}}
-@media(max-width:380px){ .wfv-line .wf-ic{display:none} .wfv-line span{font-size:10.5px} }
+@media(max-width:980px){ .wfv{grid-template-columns:1fr} .wfv-win{height:210px} }
 @media(prefers-reduced-motion:reduce){ .wfv-track.run{animation:none} .wfv-win{overflow:auto} }
 
 .recb-c2{display:flex;flex-direction:column}
 .recb-c2 .trio-bars{flex:1;display:flex;flex-direction:column;min-height:0}
 .recb-c2 .yb{min-height:230px}
+
+/* ---------- access code for visitors from abroad ---------- */
+.gc{position:fixed;inset:0;z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(10,16,30,.55);backdrop-filter:blur(4px);animation:puFade .25s ease forwards}
+.gc-card{width:min(420px,100%);padding:26px 26px 20px;border-radius:20px;background:var(--panel);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.5);border-top:5px solid #3B4EE0;text-align:center}
+.gc-badge{display:inline-block;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;
+  background:color-mix(in srgb,#3B4EE0 12%,transparent);color:#3B4EE0;margin-bottom:12px}
+.gc-card h3{font-family:var(--disp);font-size:24px;margin:0 0 8px;color:var(--text)}
+.gc-card p{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 16px}
+.gc-card input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);font-size:16px;text-align:center;
+  letter-spacing:.12em;background:var(--panel);color:var(--text)}
+.gc-card input:focus{outline:2px solid #3B4EE0;outline-offset:1px}
+.gc-err{min-height:20px;margin:8px 0 4px;font-size:13px;color:var(--red)}
+.gc-go{width:100%;padding:13px;border:0;border-radius:12px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;
+  background:linear-gradient(120deg,#3B4EE0,#0E9F6E)}
+.gc-go:disabled{opacity:.7;cursor:wait}
+.gc-skip{margin-top:10px;border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body class="s-light">
@@ -4143,19 +4142,72 @@ var SIGNING_OUT = false;
 
 function isIntlGuest(){ return ACCOUNT_EMAIL === INTL_GUEST_EMAIL; }
 
+/* Visitors from an allowed country (set on the server) are asked for an
+   access code. The code is checked by the edge function, never here;
+   with the right code the page signs in as the guest and opens every
+   plan, with no account to make. The session is remembered on this
+   device, so the code is asked once. */
 async function maybeIntlGuest(){
   try{
     var got = await db.auth.getSession();
     if(got && got.data && got.data.session) return;
-    /* A guest who chose "Sign in" stays signed out for this visit. */
+    /* chose to sign in as a member, or skipped the code: not this visit */
     if(sessionStorage.getItem('ai_no_guest') === '1') return;
-    var res = await db.functions.invoke('intl-guest');
+    var res = await db.functions.invoke('intl-guest', { body: {} });
     var d = res && res.data;
-    if(!d || !d.guest || !d.access_token) return;
-    GUEST_BOOTING = true;
-    await db.auth.setSession({ access_token: d.access_token, refresh_token: d.refresh_token });
+    if(d && d.needCode) setTimeout(function(){ guestCodeOpen(d.country); }, 600);
   }catch(e){ console.warn('intl guest', e); }
-  finally{ GUEST_BOOTING = false; }
+}
+
+function guestCodeOpen(country){
+  if(document.getElementById('gcBox')) return;
+  var ov = document.createElement('div');
+  ov.id = 'gcBox';
+  ov.className = 'gc';
+  ov.innerHTML = '<form class="gc-card" onsubmit="guestCodeSend(event)">' +
+    '<div class="gc-badge">' + (country === 'US' ? '\ud83c\uddfa\ud83c\uddf8 ' : '') + 'Visiting from abroad</div>' +
+    '<h3>Enter your access code</h3>' +
+    '<p>Your code opens every plan \u2014 screeners, all books, Pure Portfolio and the commentary. No account, no sign-in.</p>' +
+    '<input id="gcIn" type="password" autocomplete="one-time-code" placeholder="Access code" aria-label="Access code" required>' +
+    '<div class="gc-err" id="gcErr"></div>' +
+    '<button type="submit" class="gc-go" id="gcGo">Open everything</button>' +
+    '<button type="button" class="gc-skip" onclick="guestCodeSkip()">Browse as a visitor</button>' +
+  '</form>';
+  document.body.appendChild(ov);
+  setTimeout(function(){ var i = document.getElementById('gcIn'); if(i) i.focus(); }, 50);
+}
+
+async function guestCodeSend(ev){
+  ev.preventDefault();
+  var inp = document.getElementById('gcIn'), err = document.getElementById('gcErr'), go = document.getElementById('gcGo');
+  var code = (inp.value || '').trim();
+  if(!code) return;
+  go.disabled = true; go.textContent = 'Checking\u2026'; err.textContent = '';
+  try{
+    var res = await db.functions.invoke('intl-guest', { body: { code: code } });
+    var d = (res && res.data) || {};
+    if(d.guest && d.access_token){
+      GUEST_BOOTING = true;
+      await db.auth.setSession({ access_token: d.access_token, refresh_token: d.refresh_token });
+      GUEST_BOOTING = false;
+      var box = document.getElementById('gcBox'); if(box) box.remove();
+      await route();
+      return;
+    }
+    err.textContent = d.error === 'too_many' ? 'Too many tries. Please wait an hour and try again.'
+                    : 'That code is not right. Please check and try again.';
+  }catch(e){
+    var st = e && e.context && e.context.status;
+    err.textContent = st === 429 ? 'Too many tries. Please wait an hour and try again.' : 'Could not check the code. Please try again.';
+  }
+  GUEST_BOOTING = false;
+  go.disabled = false; go.textContent = 'Open everything';
+  inp.select();
+}
+
+function guestCodeSkip(){
+  sessionStorage.setItem('ai_no_guest', '1');
+  var box = document.getElementById('gcBox'); if(box) box.remove();
 }
 
 /* ============================================================
@@ -6884,8 +6936,13 @@ var LT_BOOKS = [
 var LT_BOOK = 'ALL';
 var LT_SEG_CACHE = {};
 
+/* The US side runs four segment books (the US Apps Script SEG_BOOKS):
+   large, mid, small and ETF. India runs all seven. */
+var LT_US_SEGS = ['LC', 'MC', 'SC', 'ET'];
+function ltIsUS(){ return typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'; }
 function ltIsSegKey(b){
-  return b !== 'ALL' && b !== 'PURE' && !(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
+  if(b === 'ALL' || b === 'PURE') return false;
+  return ltIsUS() ? LT_US_SEGS.indexOf(b) !== -1 : true;
 }
 function ltIsSeg(){ return ltIsSegKey(LT_BOOK); }
 
@@ -6897,10 +6954,15 @@ function ltCurrent(){
 function ltFreshKey(){ return ltIsSeg() ? 'lt_' + LT_BOOK : 'longterm'; }
 
 function ltBookBar(){
-  /* The US side has one Long Term book plus its own Pure account. */
-  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
-    return '<div class="seg-bar"><button class="seg-btn' + (LT_BOOK !== 'PURE' ? ' on' : '') +
-      '" onclick="setLtBook(\'ALL\')">Long Term</button>' + purePill() + '</div>';
+  /* US: All, its four segment books, and its own Pure account. */
+  if(ltIsUS()){
+    if(LT_BOOK !== 'ALL' && LT_BOOK !== 'PURE' && LT_US_SEGS.indexOf(LT_BOOK) === -1) LT_BOOK = 'ALL';
+    return '<div class="seg-bar">' + LT_BOOKS.filter(function(b){
+      return b[0] === 'ALL' || LT_US_SEGS.indexOf(b[0]) !== -1;
+    }).map(function(b){
+      return '<button class="seg-btn' + (b[0] === LT_BOOK ? ' on' : '') +
+        '" style="--hue:' + segMeta(b[0])[2] + '" onclick="setLtBook(\'' + b[0] + '\')">' + b[1] + '</button>';
+    }).join('') + purePill() + '</div>';
   }
   /* Pure is an account, not a segment book, so it sits on its own
      line under the segment pills rather than among them. */
@@ -9114,7 +9176,7 @@ function paintLandingState(){
   const who = document.getElementById('nav-who');
   if(who){
     who.style.display = signedIn ? 'inline' : 'none';
-    who.textContent = isIntlGuest() ? 'Free access outside India' : ACCOUNT_EMAIL;
+    who.textContent = isIntlGuest() ? 'Guest access \u00b7 every plan' : ACCOUNT_EMAIL;
   }
 
   document.querySelectorAll('.cta').forEach(function(b){
