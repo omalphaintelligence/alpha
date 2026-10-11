@@ -5315,11 +5315,39 @@ function paintBigBets(){
    book's own daily snapshots carry it on: the equal-weighted move of
    the open positions, day by day, compounded and sampled weekly, with
    the latest day as the last point. Always rebuilt from the base. */
+/* Today's move of the open book, from the live quotes against the
+   latest snapshot. Only counted when the quotes are newer than that
+   snapshot, so after the evening run it adds nothing twice. */
+function liveBookMove(hist){
+  var live = (SCR_DATA && SCR_DATA.live) || {}, at = SCR_DATA && SCR_DATA.liveAt;
+  if(!hist || !hist.length || !at || !Object.keys(live).length) return null;
+  var lastDay = '';
+  hist.forEach(function(r){ var k = r && r.as_of ? String(r.as_of).slice(0, 10) : ''; if(k > lastDay) lastDay = k; });
+  var today = String(at).slice(0, 10);
+  if(!lastDay || today <= lastDay) return null;
+  var mv = [];
+  hist.forEach(function(r){
+    if(!r || String(r.as_of).slice(0, 10) !== lastDay || !(+r.curr_price > 0)) return;
+    if(r.status && r.status !== 'OPEN') return;
+    var lp = live[String(r.symbol).toUpperCase()];
+    if(lp > 0) mv.push((lp / r.curr_price - 1) * 100);
+  });
+  if(!mv.length) return null;
+  return { date: today, pct: mv.reduce(function(a, b){ return a + b; }, 0) / mv.length, live: true };
+}
+
+/* Daily moves of a book, with today's live move on the end. */
+function bookMoves(hist){
+  var out = dailyReturns(hist, 0), lm = liveBookMove(hist);
+  if(lm) out.push(lm);
+  return out;
+}
+
 function extendLive(series, startISO, hist){
   if(!series || series.length < 2 || !hist || !hist.length) return series;
   var WEEK = 7 * 864e5, t0 = new Date(startISO).getTime();
   var lastT = t0 + (series.length - 1) * WEEK;
-  var moves = dailyReturns(hist, 0).filter(function(r){
+  var moves = bookMoves(hist).filter(function(r){
     return new Date(String(r.date).slice(0, 10)).getTime() > lastT;
   });
   if(!moves.length) return series;
@@ -5515,8 +5543,9 @@ function fitBars(rows, labelFn){
    3. today's figures for the book
    Drawn from the daily snapshots; the curve draws itself in and
    follows the cursor, the bars show their day and value on hover. */
-function bookPulse(hist, accent, statsHTML){
-  var moves = dailyReturns(hist, 0);
+function bookPulse(hist, accent, statsHTML, key){
+  var moves = bookMoves(hist);
+  var bid = key || 'bkBook';
   var card1, card2;
   if(moves.length >= 2){
     var v = [100], d = [moves[0].date];
@@ -5541,7 +5570,7 @@ function bookPulse(hist, accent, statsHTML){
         ' sessions, compounded</div>' +
       '<svg class="bk-sq" viewBox="0 0 ' + S + ' ' + S + '" preserveAspectRatio="none" data-lo="' + lo + '" data-hi="' + hi +
         '" data-v=\'' + JSON.stringify(v.map(function(x){ return +x.toFixed(3); })) + '\' data-d=\'' +
-        JSON.stringify(d.map(fmt)) + '\'>' +
+        JSON.stringify(d.map(function(x, i){ return (i === d.length - 1 && moves[moves.length - 1].live) ? 'today, live' : fmt(x); })) + '\'>' +
         '<defs><linearGradient id="' + gid + 'l" x1="0" x2="1"><stop offset="0" stop-color="#3B4EE0"/><stop offset="1" stop-color="' + accent + '"/></linearGradient>' +
         '<linearGradient id="' + gid + 'a" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3B4EE0" stop-opacity=".18"/>' +
           '<stop offset="1" stop-color="#3B4EE0" stop-opacity="0"/></linearGradient></defs>' +
@@ -5552,26 +5581,23 @@ function bookPulse(hist, accent, statsHTML){
           'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
         '<circle cx="' + X(v.length - 1).toFixed(1) + '" cy="' + Y(v[v.length - 1]).toFixed(1) + '" r="5" fill="' + accent + '" class="pu-dotin"/>' +
       '</svg>' +
-      '<div class="bk-axis"><span>' + fmt(d[0]) + '</span><span>dashed: start</span><span>' + fmt(d[d.length - 1]) + '</span></div>' +
+      '<div class="bk-axis"><span>' + fmt(d[0]) + '</span><span>dashed: start</span><span>' +
+        (moves[moves.length - 1].live ? 'now, live' : fmt(d[d.length - 1])) + '</span></div>' +
     '</article>';
 
-    var last = moves.slice(-30);
-    var mx = Math.max.apply(null, last.map(function(m){ return Math.abs(m.pct); }).concat([0.01]));
-    var ups = last.filter(function(m){ return m.pct > 0; }).length;
-    var best = last.reduce(function(a, m){ return !a || m.pct > a.pct ? m : a; }, null);
-    var worst = last.reduce(function(a, m){ return !a || m.pct < a.pct ? m : a; }, null);
+    /* Every session as a bar, with Day / Week / Month, full screen and
+       scrolling back and forth — the same control as the historical
+       bars. Daily account values, compounded from the moves. */
+    var dayPts = [{ t: new Date(String(moves[0].date).slice(0, 10)).getTime() - 864e5, v: 100 }];
+    moves.forEach(function(m){
+      dayPts.push({ t: new Date(String(m.date).slice(0, 10)).getTime(), v: dayPts[dayPts.length - 1].v * (1 + m.pct / 100), live: !!m.live });
+    });
+    TRIO_PTS[bid] = { pts: dayPts, accent: accent, rowsFn: liveBarRows,
+                      units: [['day','Day'],['week','Week'],['month','Month']], book: 'The open book' };
+    setTimeout(function(){ trioBarUnit(bid, TRIO_UNIT[bid] || 'day'); }, 0);
     card2 = '<article class="trio-card tc2">' +
       '<div class="yb-ttl">Day by day</div>' +
-      '<div class="yb-head"><b>' + ups + '</b> of <b>' + last.length + '</b> sessions up</div>' +
-      '<div class="bk-days">' + last.map(function(m, i){
-        var h = Math.max(4, Math.abs(m.pct) / mx * 100).toFixed(1);
-        var bar = '<i style="height:' + h + '%;animation-delay:' + (i * 30) + 'ms"></i>';
-        return '<div class="bk-day ' + (m.pct >= 0 ? 'up' : 'dn') + '" title="' + fmt(m.date) + ': ' +
-          (m.pct >= 0 ? '+' : '') + m.pct.toFixed(2) + '%">' +
-          '<span class="t">' + (m.pct >= 0 ? bar : '') + '</span><span class="b">' + (m.pct < 0 ? bar : '') + '</span></div>';
-      }).join('') + '</div>' +
-      '<div class="yb-foot"><span>Best <b style="color:var(--tier-sb)">' + fmt(best.date) + ' +' + best.pct.toFixed(2) + '%</b></span>' +
-        '<span>Worst <b style="color:var(--red)">' + fmt(worst.date) + ' ' + worst.pct.toFixed(2) + '%</b></span></div>' +
+      '<div class="trio-bars" id="' + bid + '-b"></div>' +
     '</article>';
   } else {
     card1 = '<article class="trio-card tc1"><div class="yb-ttl">The open book</div>' +
@@ -5755,11 +5781,36 @@ var US_CURVE = [100.0, 99.41, 96.17, 96.19, 98.35, 99.24, 99.74, 100.65, 101.29,
 var US_RANGE = 'max';
 var US_RANGES = [['3m', 13], ['6m', 26], ['max', 0]];
 
-function usSlice(){
+/* The account record above runs until each book existed. From the
+   day a book was built, its own daily snapshots carry the curve on,
+   with today's live move as the last point.
+   Long Term: built 18 Sep 2026. Model Portfolio: its first snapshot. */
+var US_LT_BUILT = '2026-09-18';
+function usBookHist(key){
+  var d = SCR_DATA || {};
+  return key === 'lt' ? ((d.longTerm || {}).history || []) : (d.history || []);
+}
+function usBookBuilt(key, hist){
+  if(key === 'lt') return US_LT_BUILT;
+  var first = '';
+  (hist || []).forEach(function(r){ var k = r && r.as_of ? String(r.as_of).slice(0, 10) : ''; if(k && (!first || k < first)) first = k; });
+  return first;
+}
+function usSeries(key){
+  var hist = usBookHist(key), cut = usBookBuilt(key, hist);
+  if(!cut || !hist.length) return US_CURVE.slice();
+  var t0 = new Date(US_CURVE_START).getTime(), WEEK = 7 * 864e5;
+  var n = Math.floor((new Date(cut).getTime() - t0) / WEEK) + 1;
+  n = Math.max(2, Math.min(US_CURVE.length, n));
+  return extendLive(US_CURVE.slice(0, n), US_CURVE_START, hist);
+}
+
+function usSlice(key){
+  var src = usSeries(key || 'lt');
   var w = 0;
   US_RANGES.forEach(function(r){ if(r[0] === US_RANGE) w = r[1]; });
-  var from = w && w < US_CURVE.length ? US_CURVE.length - w - 1 : 0;
-  var seg = US_CURVE.slice(from), base = seg[0];
+  var from = w && w < src.length ? src.length - w - 1 : 0;
+  var seg = src.slice(from), base = seg[0];
   var t0 = new Date(US_CURVE_START).getTime(), WEEK = 7 * 864e5;
   return {
     pf: seg.map(function(v){ return v / base * 100; }),
@@ -5780,7 +5831,7 @@ function setUsRange(r, key){
 var USPERF_CFG = {};
 
 function paintUsWindow(key){
-  var d = usSlice(), pf = d.pf;
+  var d = usSlice(key), pf = d.pf;
   var ret = pf[pf.length - 1] - 100;
   var peak = -Infinity, dd = 0;
   pf.forEach(function(v){ peak = Math.max(peak, v); dd = Math.min(dd, v / peak - 1); });
@@ -5800,9 +5851,12 @@ function paintUsWindow(key){
 
 function renderUsPerf(key, name, accent){
   var id = 'usTrio-' + key;
-  USPERF_CFG[key] = { canvas:'usCanvas-' + key, tip:'usTip-' + key, slice:usSlice, accent:accent, label:name };
+  USPERF_CFG[key] = { canvas:'usCanvas-' + key, tip:'usTip-' + key,
+                      slice:function(){ return usSlice(key); }, accent:accent, label:name };
+  var built = usBookBuilt(key, usBookHist(key));
+  var builtTxt = built ? new Date(built).toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' }) : '';
   setTimeout(function(){
-    trioInit(id, trioWeekly(US_CURVE, US_CURVE_START), { accent:accent, name:name, startAmount:100000 });
+    trioInit(id, trioWeekly(usSeries(key), US_CURVE_START), { accent:accent, name:name, startAmount:100000 });
     paintUsWindow(key);
     drawPerf(USPERF_CFG[key]);
   }, 20);
@@ -5813,7 +5867,7 @@ function renderUsPerf(key, name, accent){
   return '<div class="perf perf-split" id="usPerf-' + key + '">' +
     trioHTML(id, accent,
       '<div class="perf-hd"><div><span class="perf-ttl">' + name + ' Performance</span> ' +
-        '<span class="perf-tag">Nov 2025 \u2013 Oct 2026</span></div>' +
+        '<span class="perf-tag">Nov 2025 \u2013 today</span></div>' +
         '<div class="perf-ctl">' + btns + '</div></div>' +
       '<div class="perf-legend"><span><i style="background:' + accent + '"></i>' + name + '</span></div>' +
       '<div class="perf-canvas-wrap"><canvas id="usCanvas-' + key + '"></canvas>' +
@@ -5821,10 +5875,11 @@ function renderUsPerf(key, name, accent){
     '<div class="perf-card perf-sidec perf-wide">' +
       '<div class="yb-ttl">This window</div>' +
       '<div class="perf-tops" id="usWin-' + key + '"></div>' +
-      '<div class="perf-foot">Rebuilt from the closed stock trades in the US account, November 2025 to October 2026. ' +
-        'Each trade\u2019s return is spread over the days it was held and weighted by the money in it; options, ' +
-        'dividends and fees are left out, and open positions do not move the line until they close. A short record \u2014 ' +
-        'read it as a start, not a track record. Past performance does not guarantee future returns.</div>' +
+      '<div class="perf-foot">Until ' + (builtTxt || 'this book was built') + ', rebuilt from the closed stock trades in the US account: ' +
+        'each trade\u2019s return spread over the days it was held and weighted by the money in it, with options, dividends ' +
+        'and fees left out. From ' + (builtTxt || 'then') + ' on, the line is the book itself \u2014 the equal-weighted daily move of ' +
+        'its open positions, with today\u2019s live move as the last point. A short record \u2014 read it as a start, not a ' +
+        'track record. Past performance does not guarantee future returns.</div>' +
     '</div>' +
   '</div>';
 }
@@ -8171,7 +8226,7 @@ function ltInsightsBlock(){
   if(!us && ltIsSeg() && typeof ltSegHasCurve === 'function' && ltSegHasCurve(LT_BOOK))
     weekly = { series: LT_SEG_CURVE[LT_BOOK], start: LT_SEG_START };
   else if(!us && !ltIsSeg()) weekly = { series: LT_CURVE, start: LT_CURVE_START };
-  else if(us && !ltIsSeg() && typeof US_CURVE !== 'undefined') weekly = { series: US_CURVE, start: US_CURVE_START };
+  else if(us && !ltIsSeg() && typeof US_CURVE !== 'undefined') weekly = { series: usSeries('lt'), start: US_CURVE_START };
   var list = insightsFor({ positions: pos, hist: lt.history, closed: closed, weekly: weekly,
     queue: (lt.queue || []).map(function(q){ return { s: q.symbol, why: q.state === 'READY' ? 'ready for the next free slot' : 'queued until a slot opens' }; }) });
   return bookStaticCards(pos, closed, weekly, LT_ACCENT) + insightPanel(list, LT_ACCENT);
@@ -8193,7 +8248,7 @@ function mpInsightsBlock(pos0){
   ((D.modelPortfolio || {}).journal || []).forEach(function(j){
     if(j.action === 'TARGET HIT' || j.action === 'STOPPED OUT') closed.push({ s: j.symbol, pnl: +j.pnlPct || 0, date: j.date });
   });
-  var weekly = us ? (typeof US_CURVE !== 'undefined' ? { series: US_CURVE, start: US_CURVE_START } : null)
+  var weekly = us ? (typeof US_CURVE !== 'undefined' ? { series: usSeries('mp'), start: US_CURVE_START } : null)
                   : { series: PF_WEEKLY, start: PF_START };
   var list = insightsFor({ positions: pos, hist: (D || {}).history, closed: closed, weekly: weekly,
     queue: (((SCR_DATA || {}).waitlist || {}).rows || []).map(function(r){ return { s: r.symbol, why: (r.state || '').toLowerCase() === 'ready' ? 'ready for the next slot' : 'queued, quality ' + r.quality }; }) });
@@ -8558,7 +8613,7 @@ function paintLongTerm(){
     (showRecord ? renderLtPerf(closed)
       : ((typeof FEED_MARKET === 'undefined' || FEED_MARKET !== 'US') && ltIsSeg() && ltSegHasCurve(LT_BOOK)
           ? renderLtSegPerf(LT_BOOK) : ltYoungBook())) +
-    bookPulse(lt.history, LT_ACCENT, strip) +
+    bookPulse(lt.history, LT_ACCENT, strip, 'bkLt') +
     '<div class="mp-sec">' +
       '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
         freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
@@ -13701,19 +13756,51 @@ function trioBarRows(pts, unit){
   return rows;   /* every month of the record */
 }
 
+var TRIO_TITLES = { year:'Year by year', month:'Month by month', week:'Week by week', day:'Day by day' };
+var TRIO_UNITS = [['year','Year'],['month','Month'],['week','Week']];
+
+/* Bars from daily account values: each session, or grouped by week
+   (Monday start) or month. The last bar is today's live move when there is one. */
+function liveBarRows(pts, unit){
+  if(!pts || pts.length < 2) return [];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if(unit === 'day'){
+    return pts.slice(1).map(function(p, k){
+      var d = new Date(p.t);
+      return { year: p.live ? 'Today, live' : d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(),
+               yr: d.getFullYear() * 100 + d.getMonth(), label: d.getDate() + ' ' + MON[d.getMonth()],
+               pct: (p.v / pts[k].v - 1) * 100, partial: !!p.live };
+    });
+  }
+  var key = unit === 'month'
+    ? function(t){ var d = new Date(t); return d.getFullYear() * 100 + d.getMonth(); }
+    : function(t){ var d = new Date(t); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); d.setHours(0,0,0,0); return d.getTime(); };
+  var end = {}, order = [];
+  pts.slice(1).forEach(function(p){ var k = key(p.t); if(!(k in end)) order.push(k); end[k] = p.v; });
+  var lastK = key(pts[pts.length - 1].t);
+  return order.map(function(k, i){
+    var from = i === 0 ? pts[0].v : end[order[i - 1]];
+    var full, lab, yr;
+    if(unit === 'month'){ var y = Math.floor(k / 100), m = k % 100; full = MON[m] + ' ' + y; lab = MON[m]; yr = k; }
+    else { var d = new Date(k); full = 'Week of ' + d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear();
+           lab = d.getDate() + ' ' + MON[d.getMonth()]; yr = k; }
+    return { year: full, yr: yr, label: lab, pct: (end[k] / from - 1) * 100, partial: k === lastK };
+  });
+}
+
 function trioBarUnit(id, unit){
   var st = TRIO_PTS[id], el = document.getElementById(id + '-b');
   if(!st || !el) return;
   TRIO_UNIT[id] = unit;
-  var tog = '<div class="yb-tools"><div class="yb-tog">' + [['year','Year'],['month','Month'],['week','Week']].map(function(u){
+  var tog = '<div class="yb-tools"><div class="yb-tog">' + (st.units || TRIO_UNITS).map(function(u){
     return '<button class="' + (u[0] === unit ? 'on' : '') + '" onclick="trioBarUnit(\'' + id + '\',\'' + u[0] + '\')">' + u[1] + '</button>';
   }).join('') + '</div>' +
   '<button class="yb-full" onclick="trioBarFull(\'' + id + '\')" title="See every bar in one view" aria-label="Full screen">\u2922</button></div>';
-  el.innerHTML = tog + perfYearBars(trioBarRows(st.pts, unit), st.accent, unit);
+  el.innerHTML = tog + perfYearBars((st.rowsFn || trioBarRows)(st.pts, unit), st.accent, unit);
   var sc = el.querySelector('.yb-scroll');
   if(sc) requestAnimationFrame(function(){ sc.scrollLeft = sc.scrollWidth; });
   var card = el.closest('.trio-card, .recb-card'), ttl = card && card.querySelector('.yb-ttl');
-  if(ttl) ttl.textContent = unit === 'month' ? 'Month by month' : unit === 'week' ? 'Week by week' : 'Year by year';
+  if(ttl) ttl.textContent = TRIO_TITLES[unit] || 'Year by year';
 }
 
 /* Full screen: every bar of the chosen unit, side by side in one view. */
@@ -13730,18 +13817,19 @@ function trioBarFull(id, unit){
     document.body.appendChild(ov);
     document.addEventListener('keydown', function(e){ if(e.key === 'Escape') trioBarFullClose(); });
   }
-  var title = unit === 'month' ? 'Month by month' : unit === 'week' ? 'Week by week' : 'Year by year';
+  var title = TRIO_TITLES[unit] || 'Year by year';
   var card = document.getElementById(id + '-b');
   var book = '';
   try{ book = card.closest('.perf, .dash-scope').querySelector('.perf-ttl').textContent.replace(/ Performance$/, ''); }catch(e){}
   if(!book && id === 'rec') book = 'Long Term, backtested since 2013';
+  if(st.book) book = (book ? book + ' \u00b7 ' : '') + st.book;
   ov.innerHTML = '<div class="ybfs-box">' +
     '<div class="ybfs-hd"><div><b>' + title + '</b>' + (book ? '<span>' + book + '</span>' : '') + '</div>' +
-      '<div class="yb-tog">' + [['year','Year'],['month','Month'],['week','Week']].map(function(u){
+      '<div class="yb-tog">' + (st.units || TRIO_UNITS).map(function(u){
         return '<button class="' + (u[0] === unit ? 'on' : '') + '" onclick="trioBarFull(\'' + id + '\',\'' + u[0] + '\')">' + u[1] + '</button>';
       }).join('') + '</div>' +
       '<button class="ybfs-x" onclick="trioBarFullClose()" aria-label="Close">\u00d7</button></div>' +
-    '<div class="ybfs-body">' + perfYearBars(trioBarRows(st.pts, unit), st.accent, unit, true) + '</div>' +
+    '<div class="ybfs-body">' + perfYearBars((st.rowsFn || trioBarRows)(st.pts, unit), st.accent, unit, true) + '</div>' +
   '</div>';
   ov.style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -13768,7 +13856,7 @@ function perfYearBars(rows, accent, unit, fit){
   var best = (full.length ? full : rows).reduce(function(a, b){ return b.pct > a.pct ? b : a; });
   var worst = (full.length ? full : rows).reduce(function(a, b){ return b.pct < a.pct ? b : a; });
   var fmt = function(x){ return (x >= 0 ? '+' : '\u2212') + Math.abs(x).toFixed(0) + '%'; };
-  var word = unit === 'month' ? 'months' : unit === 'week' ? 'weeks' : 'years';
+  var word = { month:'months', week:'weeks', day:'sessions' }[unit] || 'years';
   var dp = unit === 'year' ? 0 : 1;
   fmt = function(x){ return (x >= 0 ? '+' : '\u2212') + Math.abs(x).toFixed(dp) + '%'; };
   var dense = rows.length > 16;
@@ -13785,7 +13873,7 @@ function perfYearBars(rows, accent, unit, fit){
   var upShare = (upMax + dnMax) > 0 ? Math.min(0.85, Math.max(0.3, upMax / (upMax + dnMax))) : 0.5;
   var thin = rows.length > 40;
   var long = thin && !fit;
-  var slotW = unit === 'week' ? 9 : 16;
+  var slotW = (unit === 'week' || unit === 'day') ? 9 : 16;
   var showLab = function(r, i){
     if(!thin) return !(dense && i % 4 && i !== rows.length - 1);
     return i === 0 || rows[i - 1].yr !== r.yr;
@@ -14557,7 +14645,7 @@ function renderMpTables(){
      this tab for. */
   var portfolioView =
     freshLine('portfolio') +
-    bookPulse((D || {}).history, MP_ACCENT, renderScorecard(mpScorecard(pos, events))) +
+    bookPulse((D || {}).history, MP_ACCENT, renderScorecard(mpScorecard(pos, events)), 'bkMp') +
     '<div class="mp-sec">' +
     '<div class="mp-sec-head"><div class="mp-sec-t">Current holdings' +
       freshLine(feedAsOf()) + '</div>' + viewToggle() + '</div>' +
