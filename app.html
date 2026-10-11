@@ -6884,8 +6884,12 @@ var LT_BOOKS = [
 var LT_BOOK = 'ALL';
 var LT_SEG_CACHE = {};
 
+/* US runs four segment books (LC, MC, SC, ETF); India runs seven. */
+var LT_US_SEGS = ['LC','MC','SC','ET'];
+function ltIsUS(){ return typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'; }
 function ltIsSegKey(b){
-  return b !== 'ALL' && b !== 'PURE' && !(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US');
+  if(b === 'ALL' || b === 'PURE') return false;
+  return ltIsUS() ? LT_US_SEGS.indexOf(b) !== -1 : true;
 }
 function ltIsSeg(){ return ltIsSegKey(LT_BOOK); }
 
@@ -6897,10 +6901,15 @@ function ltCurrent(){
 function ltFreshKey(){ return ltIsSeg() ? 'lt_' + LT_BOOK : 'longterm'; }
 
 function ltBookBar(){
-  /* The US side has one Long Term book plus its own Pure account. */
-  if(typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US'){
-    return '<div class="seg-bar"><button class="seg-btn' + (LT_BOOK !== 'PURE' ? ' on' : '') +
-      '" onclick="setLtBook(\'ALL\')">Long Term</button>' + purePill() + '</div>';
+  /* The US side: the All book, its four segment books, and Pure. */
+  if(ltIsUS()){
+    return '<div class="seg-bar">' + LT_BOOKS.filter(function(b){
+      return b[0] === 'ALL' || LT_US_SEGS.indexOf(b[0]) !== -1;
+    }).map(function(b){
+      return '<button class="seg-btn' + (b[0] === LT_BOOK ? ' on' : '') +
+        '" style="--hue:' + segMeta(b[0])[2] + '" onclick="setLtBook(\'' + b[0] + '\')">' +
+        b[1] + '</button>';
+    }).join('') + purePill() + '</div>';
   }
   /* Pure is an account, not a segment book, so it sits on its own
      line under the segment pills rather than among them. */
@@ -9358,6 +9367,11 @@ function setMarket(m){
 
   FEED_MARKET = m;
   try { localStorage.setItem('ai_market', m); } catch(e){}
+
+  /* A book the other market does not run (Large + mid, F&O…) falls
+     back to All rather than loading an empty table. */
+  if(LT_BOOK !== 'ALL' && LT_BOOK !== 'PURE' && !ltIsSegKey(LT_BOOK)) LT_BOOK = 'ALL';
+  LT_NOTES_OPEN = {};
 
   /* The dashboard keeps its own copy. */
   try { if(typeof MARKET !== 'undefined') MARKET = m; } catch(e){}
