@@ -7509,7 +7509,7 @@ function paintPure(body){
       '<td class="' + pureCls(h.pnl_pct) + '">' + purePct(h.pnl_pct) + '</td>' +
       '<td' + (breach ? ' class="pu-dn"' : '') + '>' + pureInr(h.stop_loss, 2) + '</td>' +
       (breach
-        ? '<td class="pu-dn"><b>Below stop</b> <i class="pu-due">exit due</i></td>'
+        ? '<td class="pu-dn"><b>Under stop</b> <i class="pu-due">sells before close</i></td>'
         : '<td class="' + pureCls(sp) + '">' + pureSigned(sp) + ' <i>' + (sp < 0 ? 'risk' : 'locked') + '</i></td>') +
       '<td>' + (acct ? ((+h.value || 0) / acct * 100).toFixed(1) : '0.0') + '%</td>' +
       '<td>' + (h.days_held || 0) + 'd</td>' +
@@ -7836,7 +7836,7 @@ function pureExtraNotes(d, last){
       body: 'Leading: ' + rows.slice(0, 3).map(function(r){ return '<b>' + r.s + '</b> <span class="' + (r.pnl >= 0 ? 'pu-up' : 'pu-dn') + '">' + pc(r.pnl) + '</span>'; }).join(', ') +
             '. Lagging: ' + rows.slice(-3).reverse().map(function(r){ return '<b>' + r.s + '</b> <span class="' + (r.pnl >= 0 ? 'pu-up' : 'pu-dn') + '">' + pc(r.pnl) + '</span>'; }).join(', ') + '. ' +
             (under.length ? '<b class="pu-dn">' + under.map(function(r){ return r.s; }).join(', ') + ' ' +
-              (under.length === 1 ? 'is' : 'are') + ' trading below the stop</b> \u2014 the exit is taken in the evening run, at the price then, not at the stop. ' : '') +
+              (under.length === 1 ? 'is' : 'are') + ' trading under the Supertrend</b> \u2014 if it is still below 15 minutes before the close, it is sold then and the cash goes to the next name in the queue. ' : '') +
             (near.length ? near.length + ' sit within 5% of their stop (' +
               near.map(function(r){ return r.s + ' ' + r.room.toFixed(1) + '%'; }).join(', ') + '). '
               : 'None is within 5% of its stop. ') +
