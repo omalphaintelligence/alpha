@@ -2438,6 +2438,8 @@ body.s-light #hero-wrap .hero-copy,body.s-light #hero-wrap .hero-quote{
 .pu-t tbody tr:last-child td{border-bottom:0}
 .pu-t .pu-l,.pu-t th:first-child,.pu-t td:first-child{text-align:left}
 .pu-t td i{font-style:normal;font-size:11px;color:var(--pu-mute)}
+.pu-t tr.pu-breach td{background:color-mix(in srgb,var(--pu-coral) 9%,transparent)}
+.pu-t td i.pu-due{color:var(--pu-coral);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:10px}
 .pure-scope .pu-t tbody tr:hover td,
 .dash-scope .pure-scope .pu-t tbody tr:hover td{background:#164B38!important;color:var(--pu-paper)}
 .pure-scope .pu-t tbody tr:hover td.pu-up{color:var(--pu-mint)!important}
@@ -7492,9 +7494,12 @@ function paintPure(body){
   hold = hold.slice().sort(function(a, b){ return (+b.value || 0) - (+a.value || 0); });
   var tInv = 0, tVal = 0, tStop = 0;
   var hRows = hold.map(function(h){
-    tInv += +h.invested || 0; tVal += +h.value || 0; tStop += +h.stop_pnl || 0;
     var sp = +h.stop_pnl || 0;
-    return '<tr>' +
+    var ltpN = +h.ltp || 0, stopN = +h.stop_loss || 0;
+    var breach = ltpN > 0 && stopN > 0 && ltpN < stopN;   /* price under the stop: exit due tonight */
+    /* A breached stop no longer protects anything: count today's P&L instead. */
+    tInv += +h.invested || 0; tVal += +h.value || 0; tStop += breach ? (+h.pnl || 0) : sp;
+    return '<tr' + (breach ? ' class="pu-breach"' : '') + '>' +
       '<td class="pu-sym"><button onclick="openChart(\'' + h.symbol + '\')">' + h.symbol + '</button></td>' +
       '<td>' + (h.qty || 0) + '</td>' +
       '<td>' + pureInr(h.avg_price, 2) + '</td>' +
@@ -7502,8 +7507,10 @@ function paintPure(body){
       '<td>' + pureInr(h.value) + '</td>' +
       '<td class="' + pureCls(h.pnl) + '">' + pureSigned(h.pnl) + '</td>' +
       '<td class="' + pureCls(h.pnl_pct) + '">' + purePct(h.pnl_pct) + '</td>' +
-      '<td>' + pureInr(h.stop_loss, 2) + '</td>' +
-      '<td class="' + pureCls(sp) + '">' + pureSigned(sp) + ' <i>' + (sp < 0 ? 'risk' : 'locked') + '</i></td>' +
+      '<td' + (breach ? ' class="pu-dn"' : '') + '>' + pureInr(h.stop_loss, 2) + '</td>' +
+      (breach
+        ? '<td class="pu-dn"><b>Below stop</b> <i class="pu-due">exit due</i></td>'
+        : '<td class="' + pureCls(sp) + '">' + pureSigned(sp) + ' <i>' + (sp < 0 ? 'risk' : 'locked') + '</i></td>') +
       '<td>' + (acct ? ((+h.value || 0) / acct * 100).toFixed(1) : '0.0') + '%</td>' +
       '<td>' + (h.days_held || 0) + 'd</td>' +
     '</tr>';
@@ -7813,11 +7820,13 @@ function pureExtraNotes(d, last){
     var rows = hold.map(function(h){
       var px = live[h.symbol] > 0 ? live[h.symbol] : (+h.ltp || +h.avg_price || 0);
       var avg = +h.avg_price || 0, stop = +h.stop_loss || 0;
+      var below = px > 0 && stop > 0 && px < stop;
       return { s: h.symbol, pnl: avg ? (px / avg - 1) * 100 : 0, room: (px && stop) ? (px - stop) / px * 100 : null,
-               locked: stop >= avg && avg > 0 };
+               below: below, locked: stop >= avg && avg > 0 && !below };
     }).sort(function(a, b){ return b.pnl - a.pnl; });
     var inProfit = rows.filter(function(r){ return r.pnl > 0; }).length;
-    var near = rows.filter(function(r){ return r.room != null && r.room < 5; });
+    var near = rows.filter(function(r){ return r.room != null && r.room >= 0 && r.room < 5; });
+    var under = rows.filter(function(r){ return r.below; });
     var locked = rows.filter(function(r){ return r.locked; }).length;
     var avgP = rows.reduce(function(a, r){ return a + r.pnl; }, 0) / rows.length;
     var pc = function(v){ return (v >= 0 ? '+' : '\u2212') + Math.abs(v).toFixed(1) + '%'; };
@@ -7826,6 +7835,8 @@ function pureExtraNotes(d, last){
       title: inProfit + ' of ' + rows.length + ' holdings in profit \u00b7 average ' + pc(avgP),
       body: 'Leading: ' + rows.slice(0, 3).map(function(r){ return '<b>' + r.s + '</b> <span class="' + (r.pnl >= 0 ? 'pu-up' : 'pu-dn') + '">' + pc(r.pnl) + '</span>'; }).join(', ') +
             '. Lagging: ' + rows.slice(-3).reverse().map(function(r){ return '<b>' + r.s + '</b> <span class="' + (r.pnl >= 0 ? 'pu-up' : 'pu-dn') + '">' + pc(r.pnl) + '</span>'; }).join(', ') + '. ' +
+            (under.length ? '<b class="pu-dn">' + under.map(function(r){ return r.s; }).join(', ') + ' ' +
+              (under.length === 1 ? 'is' : 'are') + ' trading below the stop</b> \u2014 the exit is taken in the evening run, at the price then, not at the stop. ' : '') +
             (near.length ? near.length + ' sit within 5% of their stop (' +
               near.map(function(r){ return r.s + ' ' + r.room.toFixed(1) + '%'; }).join(', ') + '). '
               : 'None is within 5% of its stop. ') +
