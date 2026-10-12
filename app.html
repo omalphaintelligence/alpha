@@ -3705,6 +3705,7 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
       </div>
       <nav class="ltabs" id="ltabs"></nav>
       <div class="nav-actions">
+        <button class="sf-btn" onclick="pureGo()" title="Open the Pure Portfolio" aria-label="Pure Portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18"/><path d="M12 21L8 9l4-6 4 6z"/></svg><span>Pure</span></button>
         <button class="sf-btn tdy-btn" onclick="tdyOpen()" title="Today's additions and removals" aria-label="Today in the books"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Today</span><i id="tdyBadge"></i></button>
         <button class="sf-btn" onclick="sfOpen()" title="Search a stock" aria-label="Search a stock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg><span>Search</span></button>
         <button class="theme-tog" id="theme-tog" onclick="toggleTheme()" title="Switch theme"></button>
@@ -15904,6 +15905,18 @@ function tdyPaint(){
         '<span class="tdy-sym">' + escapeHtml(x.sym) + '</span><span class="tdy-bk">' + tdyBookLabel(x) + '</span></div>' +
       '<div class="tdy-c">' + x.c + '</div></button>';
   }).join('');
+}
+
+/* Nav button: straight to the Pure Portfolio book. */
+function pureGo(){
+  try { sfClose(); tdyClose(); } catch(e){}
+  LT_TAB = 'book';
+  tdyTab('longterm');
+  setLtBook('PURE');
+  setTimeout(function(){
+    var b = document.getElementById('ltBody');
+    if(b) b.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 300);
 }
 
 function tdyTab(tab){
