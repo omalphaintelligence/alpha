@@ -3595,24 +3595,22 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
 
 
 /* ---------- Today in the books (hero card) ---------- */
-#hero-wrap .hero-grid{grid-template-columns:1.3fr 1fr 1.08fr .82fr}
-@media(min-width:1200px){ #hero-wrap .hero-copy h1{font-size:clamp(28px,2.5vw,36px)} }
-@media(max-width:1199px){
-  #hero-wrap .hero-grid{grid-template-columns:1fr 1fr}
-  #hero-wrap .hero-copy{grid-column:auto}
-}
-@media(max-width:640px){ #hero-wrap .hero-grid{grid-template-columns:1fr} }
-.tdy{background:var(--panel);border:1px solid var(--line-soft);border-top:4px solid #7C3AED;border-radius:18px;
-  padding:16px 14px 12px;display:flex;flex-direction:column;min-width:0;min-height:0}
-body.s-light .tdy{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+.tdy{width:100%;max-width:560px;max-height:86vh;background:var(--panel);color:var(--text);font-family:var(--sans);
+  border:1px solid var(--line);border-top:4px solid #7C3AED;border-radius:16px;
+  padding:16px 14px 12px;display:flex;flex-direction:column;min-width:0;box-shadow:0 24px 60px -20px rgba(0,0,0,.45)}
+.tdy .sf-x{margin-left:6px}
+.tdy-btn{position:relative}
+.tdy-btn i{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;
+  background:#7C3AED;color:#fff;font-size:10px;font-style:normal;font-weight:800;line-height:17px;text-align:center;display:none}
+.tdy-btn i.on{display:block}
 .tdy-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px}
-.tdy-t{font-size:12.5px;font-weight:600;color:var(--muted)}
+.tdy-t{font-size:16px;font-weight:700;color:var(--text)}
 .tdy-d{font-size:11px;font-weight:700;color:#7C3AED;letter-spacing:.04em}
 .tdy-cnt{display:flex;gap:6px;padding:10px 4px 8px;flex-wrap:wrap}
 .tdy-cnt button{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;
   font-size:11.5px;font-weight:700;padding:4px 10px;cursor:pointer;font-family:inherit}
 .tdy-cnt button.on{background:var(--text);color:var(--panel);border-color:var(--text)}
-.tdy-list{flex:1;min-height:180px;max-height:350px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 2px 0;
+.tdy-list{flex:1;min-height:120px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 2px 0;
   scrollbar-width:thin}
 .tdy-it{display:block;width:100%;text-align:left;border:1px solid var(--line-soft);background:var(--panel-2);
   border-left:3px solid var(--g);border-radius:10px;padding:8px 10px;margin-bottom:7px;cursor:pointer;font-family:inherit;color:var(--text);
@@ -3705,6 +3703,7 @@ body.s-light .tdy{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba
       </div>
       <nav class="ltabs" id="ltabs"></nav>
       <div class="nav-actions">
+        <button class="sf-btn tdy-btn" onclick="tdyOpen()" title="Today's additions and removals" aria-label="Today in the books"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Today</span><i id="tdyBadge"></i></button>
         <button class="sf-btn" onclick="sfOpen()" title="Search a stock" aria-label="Search a stock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg><span>Search</span></button>
         <button class="theme-tog" id="theme-tog" onclick="toggleTheme()" title="Switch theme"></button>
         <span id="nav-guest" style="display:flex;gap:10px">
@@ -3794,13 +3793,6 @@ body.s-light .tdy{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba
             </div>
           </div>
 
-        </div>
-
-        <div class="tdy" id="tdyCard">
-          <div class="tdy-hd"><span class="tdy-t">Today in the books</span><span class="tdy-d" id="tdyDate"></span></div>
-          <div class="tdy-cnt" id="tdyCnt"></div>
-          <div class="tdy-list" id="tdyList"><div class="tdy-empty">Loading…</div></div>
-          <div class="tdy-foot">Tap a name to read its note in that book's commentary</div>
         </div>
 
         <div class="hero-quote">
@@ -15491,6 +15483,14 @@ if('serviceWorker' in navigator){
 </script>
 
 
+<div class="sf-ov" id="tdy-ov" onclick="if(event.target===this)tdyClose()">
+  <div class="tdy" role="dialog" aria-label="Today in the books">
+    <div class="tdy-hd"><span class="tdy-t">Today in the books</span><span style="display:flex;align-items:center"><span class="tdy-d" id="tdyDate"></span><button class="sf-x" onclick="tdyClose()" aria-label="Close">&times;</button></span></div>
+    <div class="tdy-cnt" id="tdyCnt"></div>
+    <div class="tdy-list" id="tdyList"><div class="tdy-empty">Loading…</div></div>
+    <div class="tdy-foot">Tap a name to read its note in that book's commentary</div>
+  </div>
+</div>
 <div class="sf-ov" id="sf-ov" onclick="if(event.target===this)sfClose()">
   <div class="sf-box" role="dialog" aria-label="Search a stock">
     <div class="sf-head">
@@ -15798,10 +15798,11 @@ async function tdyLoad(){
   var list = document.getElementById('tdyList'); if(!list) return;
   var cnt = document.getElementById('tdyCnt'), dt = document.getElementById('tdyDate');
   if(typeof canSeeModel !== 'function' || !canSeeModel()){
-    cnt.innerHTML = ''; dt.textContent = '';
+    cnt.innerHTML = ''; dt.textContent = ''; TDY.date = ''; TDY.mkt = '';
+    var bd0 = document.getElementById('tdyBadge'); if(bd0) bd0.classList.remove('on');
     list.innerHTML = '<div class="tdy-lock"><b>Every move, the evening it happens.</b>' +
       'Members see what was added to and removed from each book today, with the reason behind it.' +
-      '<button class="btn btn-gold" onclick="goPricing()">See plans</button></div>';
+      '<button class="btn btn-gold" onclick="tdyClose();goPricing()">See plans</button></div>';
     return;
   }
   var m = tdyMkt(), us = m === 'US'; TDY.mkt = m;
@@ -15856,10 +15857,26 @@ function tdyBookLabel(x){
 
 function tdySet(f){ TDY.f = f; tdyPaint(); }
 
+function tdyOpen(){
+  document.getElementById('tdy-ov').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  if(TDY.mkt !== tdyMkt() || !TDY.date) tdyLoad(); else tdyPaint();
+}
+function tdyClose(){
+  document.getElementById('tdy-ov').classList.remove('on');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(ev){
+  var ov = document.getElementById('tdy-ov');
+  if(ev.key === 'Escape' && ov && ov.classList.contains('on')) tdyClose();
+});
+
 function tdyPaint(){
   var list = document.getElementById('tdyList'); if(!list) return;
   var cnt = document.getElementById('tdyCnt'), dt = document.getElementById('tdyDate');
   var nIn = TDY.rows.filter(function(x){ return x.k === 'in'; }).length, nOut = TDY.rows.length - nIn;
+  var bd = document.getElementById('tdyBadge');
+  if(bd){ bd.textContent = TDY.rows.length; bd.classList.toggle('on', TDY.rows.length > 0); }
   dt.textContent = TDY.date ? sfDate(TDY.date).toUpperCase() : '';
   cnt.innerHTML = [['all', 'All ' + TDY.rows.length], ['in', 'Added ' + nIn], ['out', 'Removed ' + nOut]].map(function(b){
     return '<button class="' + (TDY.f === b[0] ? 'on' : '') + '" onclick="tdySet(\'' + b[0] + '\')">' + b[1] + '</button>';
@@ -15906,6 +15923,7 @@ function tdyFind(hostId, sym){
 
 function tdyGo(i){
   var x = TDY.rows[i]; if(!x) return;
+  tdyClose();
   if(x.src === 'mp'){
     MP_VIEW = 'commentary'; CM_FILTER = 'all'; try { NOTES_OPEN = {}; } catch(e){}
     tdyTab('model');
