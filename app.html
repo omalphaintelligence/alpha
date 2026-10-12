@@ -3593,6 +3593,44 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
 .recb-c2 .trio-bars{flex:1;display:flex;flex-direction:column;min-height:0}
 .recb-c2 .yb{min-height:230px}
 
+
+/* ---------- Today in the books (hero card) ---------- */
+#hero-wrap .hero-grid{grid-template-columns:1.3fr 1fr 1.08fr .82fr}
+@media(min-width:1200px){ #hero-wrap .hero-copy h1{font-size:clamp(28px,2.5vw,36px)} }
+@media(max-width:1199px){
+  #hero-wrap .hero-grid{grid-template-columns:1fr 1fr}
+  #hero-wrap .hero-copy{grid-column:auto}
+}
+@media(max-width:640px){ #hero-wrap .hero-grid{grid-template-columns:1fr} }
+.tdy{background:var(--panel);border:1px solid var(--line-soft);border-top:4px solid #7C3AED;border-radius:18px;
+  padding:16px 14px 12px;display:flex;flex-direction:column;min-width:0;min-height:0}
+body.s-light .tdy{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14px rgba(16,26,45,.18)}
+.tdy-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px}
+.tdy-t{font-size:12.5px;font-weight:600;color:var(--muted)}
+.tdy-d{font-size:11px;font-weight:700;color:#7C3AED;letter-spacing:.04em}
+.tdy-cnt{display:flex;gap:6px;padding:10px 4px 8px;flex-wrap:wrap}
+.tdy-cnt button{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;
+  font-size:11.5px;font-weight:700;padding:4px 10px;cursor:pointer;font-family:inherit}
+.tdy-cnt button.on{background:var(--text);color:var(--panel);border-color:var(--text)}
+.tdy-list{flex:1;min-height:180px;max-height:350px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 2px 0;
+  scrollbar-width:thin}
+.tdy-it{display:block;width:100%;text-align:left;border:1px solid var(--line-soft);background:var(--panel-2);
+  border-left:3px solid var(--g);border-radius:10px;padding:8px 10px;margin-bottom:7px;cursor:pointer;font-family:inherit;color:var(--text);
+  transition:border-color .15s var(--ease),transform .12s var(--ease)}
+.tdy-it:hover{border-color:var(--g);transform:translateX(2px)}
+.tdy-it.in{--g:var(--green)} .tdy-it.out{--g:var(--red)}
+.tdy-row{display:flex;align-items:center;gap:7px}
+.tdy-tag{font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;color:#fff;background:var(--g)}
+.tdy-sym{font-weight:700;font-size:13.5px}
+.tdy-bk{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.tdy-c{font-size:12px;line-height:1.45;color:var(--muted);margin-top:4px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tdy-c b{color:var(--text)}
+.tdy-empty{font-size:13px;color:var(--muted);padding:26px 8px;text-align:center;line-height:1.5}
+.tdy-lock{display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:16px 6px;font-size:13px;color:var(--muted);line-height:1.5}
+.tdy-lock b{color:var(--text);font-size:14px}
+.tdy-foot{font-size:10.5px;color:var(--muted);padding:6px 4px 0;border-top:1px solid var(--line-soft);margin-top:4px}
+.flash-hit{outline:2px solid #7C3AED;outline-offset:3px;border-radius:12px;transition:outline-color 1.2s ease}
 /* ---------- Stock finder ---------- */
 .sf-btn{height:34px;padding:0 14px 0 11px;border-radius:999px;border:1px solid var(--line);
   color:var(--text);background:var(--panel);font-size:13px;font-weight:600;
@@ -3756,6 +3794,13 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
             </div>
           </div>
 
+        </div>
+
+        <div class="tdy" id="tdyCard">
+          <div class="tdy-hd"><span class="tdy-t">Today in the books</span><span class="tdy-d" id="tdyDate"></span></div>
+          <div class="tdy-cnt" id="tdyCnt"></div>
+          <div class="tdy-list" id="tdyList"><div class="tdy-empty">Loading…</div></div>
+          <div class="tdy-foot">Tap a name to read its note in that book's commentary</div>
         </div>
 
         <div class="hero-quote">
@@ -15736,5 +15781,154 @@ async function sfLookup(e, typed){
       '<a class="btn btn-ghost" href="' + chart + '" target="_blank" rel="noopener">Open chart</a></div>' +
   '</div>';
 }
+</script>
+<script>
+/* ================= TODAY IN THE BOOKS =================
+   Additions and removals across every book from the latest session,
+   each one linking to the note in that book's commentary. */
+var TDY = { rows:[], date:'', f:'all', mkt:'' };
+var TDY_SEG = { LC:'Large', MC:'Mid', SC:'Small', FO:'F&O', ET:'ETF', LM:'Large + mid', MS:'Mid + small' };
+var TDY_ORDER = { mp:0, lt:1, seg:2, pure:3 };
+
+function tdyMkt(){ return (typeof FEED_MARKET !== 'undefined' && FEED_MARKET === 'US') ? 'US' : 'NSE'; }
+function tdyCut(t, n){ t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '\u2026' : t; }
+function tdyQ(p){ return p.then(function(r){ return (r && !r.error && r.data) ? r.data : []; }, function(){ return []; }); }
+
+async function tdyLoad(){
+  var list = document.getElementById('tdyList'); if(!list) return;
+  var cnt = document.getElementById('tdyCnt'), dt = document.getElementById('tdyDate');
+  if(typeof canSeeModel !== 'function' || !canSeeModel()){
+    cnt.innerHTML = ''; dt.textContent = '';
+    list.innerHTML = '<div class="tdy-lock"><b>Every move, the evening it happens.</b>' +
+      'Members see what was added to and removed from each book today, with the reason behind it.' +
+      '<button class="btn btn-gold" onclick="goPricing()">See plans</button></div>';
+    return;
+  }
+  var m = tdyMkt(), us = m === 'US'; TDY.mkt = m;
+  list.innerHTML = '<div class="tdy-empty">Loading today\u2019s moves\u2026</div>';
+  var r = await Promise.all([
+    tdyQ(db.from('mp_journal').select('trade_date, symbol, action, price, pnl_pct, notes').eq('market', m).order('trade_date', { ascending:false }).limit(80)),
+    tdyQ(db.from('lt_journal').select('trade_date, symbol, action, price, pnl_pct, notes').eq('market', m).order('trade_date', { ascending:false }).limit(80)),
+    tdyQ(db.from('lt_seg_journal').select('trade_date, book, symbol, action, price, pnl_pct, notes').eq('market', m).order('trade_date', { ascending:false }).limit(500)),
+    tdyQ(db.from(us ? 'pure_us_notes' : 'pure_notes').select('note_date, kind, symbol, title, body').in('kind', ['buy', 'sell']).order('note_date', { ascending:false }).limit(80))
+  ]);
+  if(m !== tdyMkt()) return;   /* market switched while loading */
+
+  var OUT = { 'TRAIL EXIT':'trailing stop hit', 'STOPPED OUT':'stop hit', 'TARGET HIT':'target hit' };
+  var rows = [];
+  function jrow(src, book, j){
+    var a = String(j.action || '').toUpperCase();
+    var isIn = a === 'ENTRY', isOut = !!OUT[a];
+    if(!isIn && !isOut) return;
+    var note = tdyCut(j.notes, 140), c;
+    if(isIn) c = 'Added at <b>' + sfMoney(j.price, m) + '</b>' + (note ? ' \u2014 ' + escapeHtml(note) : '');
+    else {
+      var p = +j.pnl_pct;
+      c = 'Closed ' + (isFinite(p) ? '<b style="color:' + (p >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (p >= 0 ? '+' : '') + p.toFixed(1) + '%</b> ' : '') +
+          '\u00b7 ' + OUT[a] + (note ? ' \u2014 ' + escapeHtml(note) : '');
+    }
+    rows.push({ src:src, book:book, sym:j.symbol, d:String(j.trade_date).slice(0, 10), k:isIn ? 'in' : 'out', c:c });
+  }
+  r[0].forEach(function(j){ jrow('mp', '', j); });
+  r[1].forEach(function(j){ jrow('lt', 'ALL', j); });
+  r[2].forEach(function(j){ jrow('seg', j.book, j); });
+  r[3].forEach(function(n){
+    var isIn = n.kind === 'buy';
+    rows.push({ src:'pure', book:'PURE', sym:n.symbol || tdyCut(n.title, 14), d:String(n.note_date).slice(0, 10), k:isIn ? 'in' : 'out',
+      c:escapeHtml(tdyCut((n.title || '') + (n.body ? ' \u2014 ' + n.body : ''), 160)) });
+  });
+
+  var latest = rows.reduce(function(a, x){ return x.d > a ? x.d : a; }, '');
+  TDY.rows = rows.filter(function(x){ return x.d === latest; }).sort(function(a, b){
+    return (TDY_ORDER[a.src] - TDY_ORDER[b.src]) || String(a.book).localeCompare(String(b.book)) ||
+           (a.k === b.k ? 0 : a.k === 'in' ? -1 : 1) || String(a.sym).localeCompare(String(b.sym));
+  });
+  TDY.date = latest; TDY.f = 'all';
+  tdyPaint();
+}
+
+function tdyBookLabel(x){
+  if(x.src === 'mp') return 'Model Portfolio';
+  if(x.src === 'pure') return 'Pure';
+  if(x.src === 'lt') return 'LT \u00b7 All';
+  return 'LT \u00b7 ' + (TDY_SEG[x.book] || x.book);
+}
+
+function tdySet(f){ TDY.f = f; tdyPaint(); }
+
+function tdyPaint(){
+  var list = document.getElementById('tdyList'); if(!list) return;
+  var cnt = document.getElementById('tdyCnt'), dt = document.getElementById('tdyDate');
+  var nIn = TDY.rows.filter(function(x){ return x.k === 'in'; }).length, nOut = TDY.rows.length - nIn;
+  dt.textContent = TDY.date ? sfDate(TDY.date).toUpperCase() : '';
+  cnt.innerHTML = [['all', 'All ' + TDY.rows.length], ['in', 'Added ' + nIn], ['out', 'Removed ' + nOut]].map(function(b){
+    return '<button class="' + (TDY.f === b[0] ? 'on' : '') + '" onclick="tdySet(\'' + b[0] + '\')">' + b[1] + '</button>';
+  }).join('');
+  var rows = TDY.f === 'all' ? TDY.rows : TDY.rows.filter(function(x){ return x.k === TDY.f; });
+  if(!rows.length){
+    list.innerHTML = '<div class="tdy-empty">' + (TDY.rows.length ? 'Nothing in this group today.' : 'No additions or removals in the latest session.') + '</div>';
+    return;
+  }
+  list.innerHTML = rows.map(function(x){
+    var i = TDY.rows.indexOf(x);
+    return '<button class="tdy-it ' + x.k + '" onclick="tdyGo(' + i + ')">' +
+      '<div class="tdy-row"><span class="tdy-tag">' + (x.k === 'in' ? 'IN' : 'OUT') + '</span>' +
+        '<span class="tdy-sym">' + escapeHtml(x.sym) + '</span><span class="tdy-bk">' + tdyBookLabel(x) + '</span></div>' +
+      '<div class="tdy-c">' + x.c + '</div></button>';
+  }).join('');
+}
+
+function tdyTab(tab){
+  var b = document.querySelector('#ltabs .ltab-btn[onclick*="\'' + tab + '\'"]');
+  setLandingTab(tab, b);
+}
+
+/* Waits for the commentary to render, then opens and centres the
+   note that names this stock. */
+function tdyFind(hostId, sym){
+  var t0 = Date.now(), re = new RegExp('(^|[^A-Z0-9&])' + String(sym).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^A-Z0-9&]|$)');
+  (function look(){
+    var host = document.getElementById(hostId);
+    var items = host ? host.querySelectorAll('.feed-item, .pu-note') : [];
+    if(!items.length && Date.now() - t0 < 8000){ setTimeout(look, 150); return; }
+    var hit = null;
+    for(var i = 0; i < items.length; i++){
+      var tEl = items[i].querySelector('.feed-title') || items[i];
+      if(re.test(tEl.textContent)){ hit = items[i]; break; }
+    }
+    if(!hit){ if(host) host.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
+    if(hit.classList.contains('feed-item') && !hit.classList.contains('open')) hit.click();
+    hit.classList.add('flash-hit');
+    setTimeout(function(){ hit.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60);
+    setTimeout(function(){ hit.classList.remove('flash-hit'); }, 2600);
+  })();
+}
+
+function tdyGo(i){
+  var x = TDY.rows[i]; if(!x) return;
+  if(x.src === 'mp'){
+    MP_VIEW = 'commentary'; CM_FILTER = 'all'; try { NOTES_OPEN = {}; } catch(e){}
+    tdyTab('model');
+    tdyFind('mpGated', x.sym);
+    return;
+  }
+  LT_TAB = 'commentary'; LT_CM_FILTER = 'all'; try { PURE_CM = 'all'; } catch(e){}
+  tdyTab('longterm');
+  setLtBook(x.src === 'pure' ? 'PURE' : (x.src === 'lt' ? 'ALL' : x.book));
+  tdyFind('ltBody', x.sym);
+}
+
+/* Reload when the market or the access level changes. */
+(function(){
+  var _sm = window.setMarket;
+  if(typeof _sm === 'function') window.setMarket = function(m){ var r = _sm.apply(this, arguments); setTimeout(tdyLoad, 50); return r; };
+  var _rb = window.rebuildTabs;
+  if(typeof _rb === 'function') window.rebuildTabs = function(){ var r = _rb.apply(this, arguments); setTimeout(tdyLoad, 50); return r; };
+  var tries = 0;
+  (function boot(){
+    if(typeof db === 'undefined' && tries++ < 40){ setTimeout(boot, 250); return; }
+    tdyLoad();
+  })();
+})();
 </script>
 </body></html>
