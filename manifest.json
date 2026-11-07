@@ -1,24 +1,21 @@
 {
-  "name": "Alpha Intelligence",
-  "short_name": "Alpha AI",
-  "description": "NSE India + US Market Stock Screener",
-  "start_url": "/alpha/dashboard.html",
+  "name": "Geography Notes",
+  "short_name": "Geo Notes",
+  "start_url": "./index.html#book",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f1f5f9",
-  "theme_color": "#f59e0b",
-  "orientation": "portrait-primary",
+  "background_color": "#EAF3F5",
+  "theme_color": "#12324A",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "icon.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }

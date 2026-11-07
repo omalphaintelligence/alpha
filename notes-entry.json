@@ -1,0 +1,31 @@
+{
+  "tab": "book",
+  "subject": "Climatology",
+  "chapter": 2,
+  "title": "Climatology · Neetu Singh (Part 2 of 14)",
+  "desc": "11 chapters • bilingual notes, visual diagrams, 100 MCQs with detailed explanations and final revision sheet.",
+  "topics": [
+    "Atmosphere",
+    "Insolation",
+    "Seasons",
+    "Lapse Rate",
+    "Inversion",
+    "Heat Budget",
+    "Pressure Belts",
+    "Wind",
+    "Coriolis",
+    "Jet Stream",
+    "Indian Monsoon",
+    "ENSO",
+    "Humidity",
+    "Clouds",
+    "Cyclones",
+    "Köppen",
+    "Thornthwaite",
+    "Trewartha"
+  ],
+  "emoji": "🌦️",
+  "file": "climatology-neetu-singh-part-2.html",
+  "mcq": 100,
+  "source": "Neetu Singh Notes"
+}
