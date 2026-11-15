@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@400;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;family=Literata:wght@400;600;700&amp;family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;family=Source+Sans+3:wght@400;600;700&amp;family=Lora:wght@400;600;700&amp;family=Archivo:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=Inter+Tight:wght@400;500;600;700&amp;family=Bricolage+Grotesque:wght@400;600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;family=Libre+Baskerville:wght@400;700&amp;family=Nunito:wght@400;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=Rubik:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@400;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;family=Literata:wght@400;600;700&amp;family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;family=Source+Sans+3:wght@400;600;700&amp;family=Lora:wght@400;600;700&amp;family=Archivo:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=Inter+Tight:wght@400;500;600;700&amp;family=Bricolage+Grotesque:wght@400;600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;family=Libre+Baskerville:wght@400;700&amp;family=Nunito:wght@400;600;700&amp;family=Lexend:wght@400;500;600;700&amp;family=Rubik:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 
 <!-- ============================================================
      PART 1 — SHELL STYLES (landing page, auth modal, gate views)
@@ -314,6 +314,8 @@ h2 em{font-style:normal;color:var(--page,var(--brand))}
 #ltab-calls     { --page:var(--r85); }
 #ltab-ask       { --page:var(--tier-b); }
 #ltab-overview  { --page:var(--brand); }
+#ltab-etf       { --page:#0EA8A8; }
+body.s-light #ltab-etf { --page:#0A7A7A; }
 
 /* The same hues, darkened for the light theme. The dark-theme values
    are chosen to glow on a near-black page and several of them fall
@@ -2348,12 +2350,13 @@ body.s-light .recb-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
 #ltab-ask{--sans:'Nunito',system-ui,sans-serif;--disp:'Nunito',system-ui,sans-serif;--name:'Nunito',system-ui,sans-serif;--fig:'Nunito',system-ui,sans-serif}
 #ltab-pricing{--sans:'Lexend',system-ui,sans-serif;--disp:'Lexend',system-ui,sans-serif;--name:'Lexend',system-ui,sans-serif;--fig:'Lexend',system-ui,sans-serif}
 #ltab-account{--sans:'Rubik',system-ui,sans-serif;--disp:'Rubik',system-ui,sans-serif;--name:'Rubik',system-ui,sans-serif;--fig:'Rubik',system-ui,sans-serif}
+#ltab-etf{--sans:'Space Grotesk',system-ui,sans-serif;--disp:'Space Grotesk',system-ui,sans-serif;--name:'Space Grotesk',system-ui,sans-serif;--fig:'Space Grotesk',system-ui,sans-serif}
 /* iPru theme: one sans everywhere, so the per-page faces above stand down */
 body.s-ipru [id^="ltab-"],body.s-ipru #record,body.s-ipru #hero-wrap{--sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--disp:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--name:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--fig:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 #ltab-overview,#record,#hero-wrap,#ltab-screener,#ltab-model,#ltab-longterm,#ltab-ready,
-#ltab-bigbets,#ltab-calls,#ltab-ask,#ltab-pricing,#ltab-account{font-family:var(--sans)}
+#ltab-bigbets,#ltab-calls,#ltab-ask,#ltab-pricing,#ltab-account,#ltab-etf{font-family:var(--sans)}
 :where(#ltab-overview,#ltab-screener,#ltab-model,#ltab-longterm,#ltab-ready,#ltab-bigbets,#ltab-calls,
-#ltab-ask,#ltab-pricing,#ltab-account) :where(button,input,select,textarea){font-family:inherit}
+#ltab-ask,#ltab-pricing,#ltab-account,#ltab-etf) :where(button,input,select,textarea){font-family:inherit}
 /* ---------- Hero, in three parts ----------
    Same treatment as the record band above it: three cards in a row,
    each with its own colour edge. Copy, live ladder, quote. */
@@ -3142,17 +3145,54 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
    fixed height whether or not they had anything to fill it with.
    Pulled in so a page reads as one block, not islands in white. */
 #ltab-screener .sec,#ltab-model .sec,#ltab-longterm .sec,#ltab-ready .sec,
-#ltab-calls .sec,#ltab-bigbets .sec,#ltab-ask .sec,#ltab-account .sec,#ltab-pricing .sec{
+#ltab-calls .sec,#ltab-bigbets .sec,#ltab-ask .sec,#ltab-account .sec,#ltab-pricing .sec,#ltab-etf .sec{
   padding-top:22px!important;padding-bottom:36px}
 #ltab-screener .sec-head,#ltab-model .sec-head,#ltab-longterm .sec-head,#ltab-ready .sec-head,
-#ltab-calls .sec-head,#ltab-bigbets .sec-head,#ltab-ask .sec-head,#ltab-account .sec-head,#ltab-pricing .sec-head{
+#ltab-calls .sec-head,#ltab-bigbets .sec-head,#ltab-ask .sec-head,#ltab-account .sec-head,#ltab-pricing .sec-head,#ltab-etf .sec-head{
   margin-bottom:16px;max-width:none}
 #ltab-screener .sec-head h2,#ltab-model .sec-head h2,#ltab-longterm .sec-head h2,#ltab-ready .sec-head h2,
-#ltab-calls .sec-head h2,#ltab-bigbets .sec-head h2,#ltab-ask .sec-head h2,#ltab-account .sec-head h2,#ltab-pricing .sec-head h2{
+#ltab-calls .sec-head h2,#ltab-bigbets .sec-head h2,#ltab-ask .sec-head h2,#ltab-account .sec-head h2,#ltab-pricing .sec-head h2,#ltab-etf .sec-head h2{
   font-size:clamp(22px,2.4vw,28px);line-height:1.2;margin:4px 0 6px}
 #ltab-screener .sec-head p,#ltab-model .sec-head p,#ltab-longterm .sec-head p,#ltab-ready .sec-head p,
-#ltab-calls .sec-head p,#ltab-bigbets .sec-head p,#ltab-ask .sec-head p,#ltab-account .sec-head p,#ltab-pricing .sec-head p{
+#ltab-calls .sec-head p,#ltab-bigbets .sec-head p,#ltab-ask .sec-head p,#ltab-account .sec-head p,#ltab-pricing .sec-head p,#ltab-etf .sec-head p{
   font-size:14px;line-height:1.5;max-width:90ch;margin:0}
+
+/* ── ETF Strategy tab ───────────────────────────────────────────── */
+.etf-signal-card{background:color-mix(in srgb,var(--panel) 60%,transparent);border:1.5px solid var(--page);border-radius:12px;padding:20px 24px;margin-bottom:20px}
+.etf-signal-card .etf-sig-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--page);font-weight:600;margin-bottom:6px}
+.etf-signal-card .etf-sig-etf{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.etf-signal-card .etf-sig-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.etf-signal-card .etf-sig-pct{font-size:20px;font-weight:600;color:var(--page)}
+.etf-rank-tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+.etf-rank-tbl th{padding:7px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border)}
+.etf-rank-tbl td{padding:8px 10px;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);vertical-align:middle}
+.etf-rank-tbl tr:last-child td{border-bottom:none}
+.etf-rank-tbl tr:hover td{background:color-mix(in srgb,var(--panel) 40%,transparent)}
+.etf-rank-num{font-size:11px;font-weight:700;width:20px;height:20px;border-radius:50%;background:var(--page);color:#fff;display:inline-flex;align-items:center;justify-content:center}
+.etf-hold-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:color-mix(in srgb,var(--page) 15%,transparent);color:var(--page)}
+.etf-action-btn{background:var(--page);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.etf-action-btn:hover{opacity:.8}
+.etf-action-btn.ghost{background:transparent;border:1.5px solid var(--page);color:var(--page)}
+.etf-commentary{background:color-mix(in srgb,var(--panel) 40%,transparent);border-left:3px solid var(--page);border-radius:0 8px 8px 0;padding:14px 18px;margin-top:16px}
+.etf-commentary .etf-comm-line{font-size:13.5px;color:var(--text);line-height:1.6;padding:3px 0;display:flex;gap:8px}
+.etf-commentary .etf-comm-line::before{content:'▸';color:var(--page);flex-shrink:0;font-size:11px;margin-top:3px}
+.etf-port-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:0;align-items:center}
+@media(max-width:640px){.etf-port-row{grid-template-columns:1fr 1fr;gap:4px 12px}}
+.etf-stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.etf-stat-box{background:color-mix(in srgb,var(--panel) 55%,transparent);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.etf-stat-box .esk{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.etf-stat-box .esv{font-size:20px;font-weight:600;color:var(--text)}
+.etf-bt-wrap{background:color-mix(in srgb,var(--panel) 40%,transparent);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:16px}
+.etf-bt-wrap h4{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.etf-eq-canvas-wrap{position:relative;height:160px;margin-bottom:4px}
+.etf-upload-zone{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:16px}
+.etf-upload-zone:hover{border-color:var(--page)}
+.etf-upload-zone p{font-size:13px;color:var(--muted);margin-top:6px}
+.etf-sub-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.etf-sub-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit}
+.etf-sub-btn.on{background:var(--page);border-color:var(--page);color:#fff;font-weight:600}
+.etf-pane{display:none}.etf-pane.on{display:block}
+.g{color:#3fb950}.r{color:#f85149}
 .seg-bar{margin-bottom:12px}
 .cm-sub{margin-bottom:14px}
 .cm-sub button{padding:9px 2px}
@@ -4022,6 +4062,52 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
     </div>
   </div>
 
+  <!-- ==================== ETF STRATEGY TAB ==================== -->
+  <div class="ltab-pane" id="ltab-etf">
+    <div class="sec" style="padding-top:32px">
+      <div class="wrap-x">
+        <div class="sec-head">
+          <div class="sec-tag">ETF Strategy</div>
+          <h2>20 DMA mean reversion, <em>one ETF at a time</em>.</h2>
+          <p>66 high-volume NSE ETFs ranked daily by their distance below the 20-day moving average. Buy the most oversold, sell at 6% profit, average down at 2.5% — systematic, no guesswork.</p>
+        </div>
+
+        <!-- Sub-tab nav -->
+        <div class="etf-sub-tabs">
+          <button class="etf-sub-btn on" onclick="etfSubTab('signal',this)">Today's Signal</button>
+          <button class="etf-sub-btn" onclick="etfSubTab('ranking',this)">Live Ranking</button>
+          <button class="etf-sub-btn" onclick="etfSubTab('portfolio',this)">My Holdings</button>
+          <button class="etf-sub-btn" onclick="etfSubTab('backtest',this)">Backtest</button>
+        </div>
+
+        <!-- SIGNAL PANE -->
+        <div class="etf-pane on" id="etf-pane-signal">
+          <div id="etfSignalBody">
+            <div style="color:var(--muted);font-size:13px;padding:20px 0">Load historical data in the Backtest tab to unlock live ranking and signals.</div>
+          </div>
+        </div>
+
+        <!-- RANKING PANE -->
+        <div class="etf-pane" id="etf-pane-ranking">
+          <div id="etfRankBody">
+            <div style="color:var(--muted);font-size:13px;padding:20px 0">Load historical data in the Backtest tab first — ranking uses the same dataset.</div>
+          </div>
+        </div>
+
+        <!-- PORTFOLIO / HOLDINGS PANE -->
+        <div class="etf-pane" id="etf-pane-portfolio">
+          <div id="etfPortBody"></div>
+        </div>
+
+        <!-- BACKTEST PANE -->
+        <div class="etf-pane" id="etf-pane-backtest">
+          <div id="etfBacktestBody"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <footer>
     <div class="wrap-x">
       <div class="foot-top">
@@ -4522,11 +4608,11 @@ function canSeeCalls(){
 var ZONE_TABS = {
   free:   [['overview','Overview'], ['screener','Screeners'],
            ['model','Model Portfolio'], ['longterm','Long Term'],
-           ['ready','Ready to Move'], ['pricing','Plans']],
+           ['ready','Ready to Move'], ['etf','ETF Strategy'], ['pricing','Plans']],
   member: [['screener','Screeners'], ['model','Model Portfolio'],
            ['longterm','Long Term'], ['bigbets','Big Bets'],
            ['ready','Ready to Move'], ['calls','Fundamental Calls'],
-           ['ask','Ask'], ['pricing','Your plan'], ['account','Account']]
+           ['etf','ETF Strategy'], ['ask','Ask'], ['pricing','Your plan'], ['account','Account']]
 };
 
 function setZone(z){
@@ -4591,6 +4677,7 @@ function setLandingTab(tab, btn){
   if(tab === 'ask') buildAsk();
   if(tab === 'longterm') buildLongTerm();
   if(tab === 'bigbets') buildBigBetsTab();
+  if(tab === 'etf') buildEtfTab();
   if(tab === 'overview'){ buildShowcase(); buildVoices(); buildTopHoldings(); }
   if(ZONE === 'free') setTimeout(function(){ revealScan(); }, 30);
   if(tab !== 'overview') showStop();
@@ -9188,6 +9275,722 @@ function rebuildTabs(){
   if(LANDING_TAB === 'longterm') buildLongTerm();
   if(LANDING_TAB === 'bigbets') buildBigBetsTab();
 }
+
+/* ================================================================
+   ETF STRATEGY TAB
+   ================================================================ */
+var ETF_DATA = null;         // loaded from etf_data.json
+var ETF_HOLDINGS = [];       // [{ticker,qty,avgPrice,lastBuyPrice,totalInvested,buys:[]}]
+var ETF_TRADES   = [];       // completed sells
+var ETF_BT_RESULT = null;    // last backtest result
+var ETF_CHART_INST = null;
+var ETF_ACTIVE_SUB = 'signal';
+
+var ETF_LIST_ALL = [
+  "MOM30IETF.NS","NIFTYQLITY.NS","VAL30IETF.NS","ABSLPSE.NS","UTISXN50.NS",
+  "CPSEETF.NS","GOLDBEES.NS","HNGSNGBEES.NS","MAHKTECH.NS","HDFCGROWTH.NS",
+  "LOWVOLIETF.NS","HDFCQUAL.NS","BSE500IETF.NS","COMMOIETF.NS","FINIETF.NS",
+  "INFRAIETF.NS","MNC.NS","ALPHAETF.NS","MIDSMALL.NS","SMALLCAP.NS",
+  "MONIFTY500.NS","MOREALTY.NS","MOSMALL250.NS","MOVALUE.NS","MONQ50.NS",
+  "MON100.NS","TOP100CASE.NS","NIFTYBEES.NS","MOMENTUM50.NS","ALPHA.NS",
+  "ALPL30IETF.NS","AUTOIETF.NS","BANKBEES.NS","DIVOPPBEES.NS","EVINDIA.NS",
+  "BFSI.NS","FMCGIETF.NS","HEALTHY.NS","MOHEALTH.NS","CONSUMBEES.NS",
+  "MODEFENCE.NS","TNIDETF.NS","MAKEINDIA.NS","ITBEES.NS","METALIETF.NS",
+  "MOM100.NS","MIDCAPETF.NS","MIDQ50ADD.NS","MIDCAP.NS","NEXT50IETF.NS",
+  "OILIETF.NS","PHARMABEES.NS","PVTBANIETF.NS","PSUBNKBEES.NS","TOP10ADD.NS",
+  "ESG.NS","NV20IETF.NS","MULTICAP.NS","EMULTIMQ.NS","MAFANG.NS",
+  "MASPTOP50.NS","ICICIB22.NS","MIDSELIETF.NS","SILVERBEES.NS","SENSEXIETF.NS",
+  "SHARIABEES.NS","MOTOUR.NS"
+];
+
+/* ── localStorage persistence ── */
+function etfSave(){
+  try{
+    localStorage.setItem('ai_etf_holdings', JSON.stringify(ETF_HOLDINGS));
+    localStorage.setItem('ai_etf_trades',   JSON.stringify(ETF_TRADES));
+  }catch(e){}
+}
+function etfLoad(){
+  try{
+    var h = localStorage.getItem('ai_etf_holdings');
+    var t = localStorage.getItem('ai_etf_trades');
+    if(h) ETF_HOLDINGS = JSON.parse(h);
+    if(t) ETF_TRADES   = JSON.parse(t);
+  }catch(e){}
+}
+etfLoad();
+
+/* ── sub-tab switcher ── */
+function etfSubTab(name, btn){
+  ETF_ACTIVE_SUB = name;
+  document.querySelectorAll('.etf-sub-btn').forEach(function(b){ b.classList.remove('on'); });
+  if(btn) btn.classList.add('on');
+  document.querySelectorAll('.etf-pane').forEach(function(p){ p.classList.remove('on'); });
+  var pane = document.getElementById('etf-pane-' + name);
+  if(pane) pane.classList.add('on');
+  if(name === 'signal')    etfBuildSignal();
+  if(name === 'ranking')   etfBuildRanking();
+  if(name === 'portfolio') etfBuildPortfolio();
+  if(name === 'backtest')  etfBuildBacktest();
+}
+
+function buildEtfTab(){
+  etfSubTab(ETF_ACTIVE_SUB, document.querySelector('.etf-sub-btn.on'));
+}
+
+/* ── 20 DMA helper ── */
+function etfGet20DMA(ticker, asOfDate){
+  if(!ETF_DATA || !ETF_DATA.data[ticker]) return null;
+  var priceMap = ETF_DATA.data[ticker];
+  var dates = Object.keys(priceMap).filter(function(d){ return d <= asOfDate; }).sort();
+  if(dates.length < 20) return null;
+  var last20 = dates.slice(-20);
+  var sum = 0;
+  last20.forEach(function(d){ sum += priceMap[d]; });
+  return sum / 20;
+}
+
+function etfGetLastPrice(ticker){
+  if(!ETF_DATA || !ETF_DATA.data[ticker]) return null;
+  var priceMap = ETF_DATA.data[ticker];
+  var dates = Object.keys(priceMap).sort();
+  if(!dates.length) return null;
+  return priceMap[dates[dates.length - 1]];
+}
+
+function etfGetLastDate(){
+  if(!ETF_DATA) return null;
+  var allDates = new Set();
+  Object.values(ETF_DATA.data).forEach(function(pm){
+    Object.keys(pm).forEach(function(d){ allDates.add(d); });
+  });
+  var arr = [...allDates].sort();
+  return arr[arr.length - 1];
+}
+
+/* ── compute today's ranking ── */
+function etfComputeRanking(){
+  if(!ETF_DATA) return [];
+  var today = etfGetLastDate();
+  var rows = [];
+  ETF_LIST_ALL.forEach(function(ticker){
+    var cmp   = etfGetLastPrice(ticker);
+    var dma20 = etfGet20DMA(ticker, today);
+    if(!cmp || !dma20) return;
+    var pct = (dma20 - cmp) / dma20 * 100;
+    rows.push({ ticker: ticker, cmp: cmp, dma20: dma20, pct: pct });
+  });
+  rows.sort(function(a,b){ return b.pct - a.pct; });
+  return rows;
+}
+
+/* ── SIGNAL pane ── */
+function etfBuildSignal(){
+  var body = document.getElementById('etfSignalBody');
+  if(!body) return;
+
+  if(!ETF_DATA){
+    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">📂 Backtest tab mein <strong>etf_data.json</strong> load karo — signal usi data se aayega.</div>';
+    return;
+  }
+
+  var ranking = etfComputeRanking();
+  var top5    = ranking.slice(0, 5);
+  var heldTickers = ETF_HOLDINGS.map(function(h){ return h.ticker; });
+  var today   = etfGetLastDate();
+
+  /* Determine today's action */
+  var action = null;
+  var newETF  = null;
+  var avgETF  = null;
+
+  for(var i=0; i<top5.length; i++){
+    if(!heldTickers.includes(top5[i].ticker)){
+      newETF = top5[i]; break;
+    }
+  }
+
+  if(!newETF){
+    /* All top5 held — check avg down */
+    for(var j=0; j<top5.length; j++){
+      var h = ETF_HOLDINGS.find(function(x){ return x.ticker === top5[j].ticker; });
+      if(h && h.lastBuyPrice){
+        var fallFromLast = (h.lastBuyPrice - top5[j].cmp) / h.lastBuyPrice * 100;
+        if(fallFromLast >= 2.5){
+          avgETF = { rank: top5[j], holding: h, fall: fallFromLast };
+          break;
+        }
+      }
+    }
+  }
+
+  /* Commentary lines */
+  var comm = [];
+  comm.push('Data as of <strong>' + today + '</strong> — ' + ranking.length + ' ETFs ranked.');
+
+  var html = '';
+
+  if(newETF){
+    comm.push('Rank 1 new entry: <strong>' + newETF.ticker.replace('.NS','') + '</strong> is ' + Math.abs(newETF.pct).toFixed(2) + '% below its 20 DMA — signal to BUY today after 2:30 PM.');
+    comm.push('Place a market or limit order near ₹' + newETF.cmp.toFixed(2) + '. Record your buy price in My Holdings.');
+    if(heldTickers.length > 0) comm.push('You are currently holding ' + heldTickers.length + ' ETF(s). Max concurrent positions = 5.');
+
+    html += '<div class="etf-signal-card">';
+    html += '<div class="etf-sig-label">🟢 Today\'s Buy Signal</div>';
+    html += '<div class="etf-sig-etf">' + newETF.ticker.replace('.NS','') + '</div>';
+    html += '<div class="etf-sig-sub">Rank #1 · ' + Math.abs(newETF.pct).toFixed(2) + '% below 20 DMA</div>';
+    html += '<div style="margin-top:12px;display:flex;gap:16px;align-items:center">';
+    html += '<div><div style="font-size:11px;color:var(--muted)">Last Price</div><div class="etf-sig-pct">₹' + newETF.cmp.toFixed(2) + '</div></div>';
+    html += '<div><div style="font-size:11px;color:var(--muted)">20 DMA</div><div style="font-size:18px;font-weight:600;color:var(--muted)">₹' + newETF.dma20.toFixed(2) + '</div></div>';
+    html += '<div><div style="font-size:11px;color:var(--muted)">Gap</div><div class="etf-sig-pct">' + Math.abs(newETF.pct).toFixed(2) + '%</div></div>';
+    html += '</div>';
+    html += '<div style="margin-top:14px;display:flex;gap:8px">';
+    html += '<button class="etf-action-btn" onclick="etfSubTab(\'portfolio\',document.querySelectorAll(\'.etf-sub-btn\')[2])">Record Buy in Holdings →</button>';
+    html += '</div></div>';
+
+  } else if(avgETF){
+    comm.push('All top-5 ETFs are already in your holdings.');
+    comm.push('<strong>' + avgETF.rank.ticker.replace('.NS','') + '</strong> has fallen ' + avgETF.fall.toFixed(2) + '% from your last buy price (₹' + avgETF.holding.lastBuyPrice.toFixed(2) + ') — eligible to average down.');
+    comm.push('Buy again to bring down average cost. Record in My Holdings after buying.');
+
+    html += '<div class="etf-signal-card">';
+    html += '<div class="etf-sig-label">🔵 Average Down Signal</div>';
+    html += '<div class="etf-sig-etf">' + avgETF.rank.ticker.replace('.NS','') + '</div>';
+    html += '<div class="etf-sig-sub">Fell ' + avgETF.fall.toFixed(2) + '% from last buy · Current price ₹' + avgETF.rank.cmp.toFixed(2) + '</div>';
+    html += '<div style="margin-top:14px"><button class="etf-action-btn" onclick="etfSubTab(\'portfolio\',document.querySelectorAll(\'.etf-sub-btn\')[2])">Record Avg Down →</button></div>';
+    html += '</div>';
+
+  } else if(heldTickers.length === 0){
+    comm.push('No holdings recorded yet. Today\'s top-ranked ETF is <strong>' + (top5[0]||{ticker:'—'}).ticker.replace('.NS','') + '</strong>.');
+    comm.push('Go to My Holdings and add your first position, or simply buy rank #1 today after 2:30 PM.');
+
+    if(top5[0]){
+      html += '<div class="etf-signal-card">';
+      html += '<div class="etf-sig-label">🟢 Start Here — Rank #1</div>';
+      html += '<div class="etf-sig-etf">' + top5[0].ticker.replace('.NS','') + '</div>';
+      html += '<div class="etf-sig-sub">' + Math.abs(top5[0].pct).toFixed(2) + '% below 20 DMA · ₹' + top5[0].cmp.toFixed(2) + '</div>';
+      html += '<div style="margin-top:14px"><button class="etf-action-btn" onclick="etfSubTab(\'portfolio\',document.querySelectorAll(\'.etf-sub-btn\')[2])">Record First Buy →</button></div>';
+      html += '</div>';
+    }
+
+  } else {
+    comm.push('All top-5 ETFs held and none have fallen 2.5%+ from last buy. No action today — wait for tomorrow\'s signal.');
+    html += '<div class="etf-signal-card" style="border-color:var(--border)">';
+    html += '<div class="etf-sig-label" style="color:var(--muted)">⏸ No Action Today</div>';
+    html += '<div style="font-size:14px;color:var(--muted);margin-top:8px">All conditions checked — no new buy or average-down signal. Check again tomorrow.</div>';
+    html += '</div>';
+  }
+
+  /* Sell signals */
+  var sellSignals = ETF_HOLDINGS.filter(function(h){
+    var cmp = etfGetLastPrice(h.ticker);
+    if(!cmp) return false;
+    return (cmp - h.avgPrice) / h.avgPrice * 100 >= 6;
+  });
+  if(sellSignals.length){
+    comm.push(sellSignals.length + ' holding(s) have crossed the 6% profit target — <strong>SELL signal active</strong>.');
+    html += '<div class="etf-signal-card" style="border-color:#3fb950">';
+    html += '<div class="etf-sig-label" style="color:#3fb950">🔴 Sell Signal — 6% Target Hit</div>';
+    sellSignals.forEach(function(h){
+      var cmp = etfGetLastPrice(h.ticker);
+      var pnl = ((cmp - h.avgPrice)/h.avgPrice*100).toFixed(2);
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">';
+      html += '<div><strong>' + h.ticker.replace('.NS','') + '</strong><span style="color:var(--muted);font-size:12px;margin-left:8px">Avg ₹' + h.avgPrice.toFixed(2) + '</span></div>';
+      html += '<div class="g" style="font-weight:600">+' + pnl + '% · ₹' + cmp.toFixed(2) + '</div>';
+      html += '</div>';
+    });
+    html += '<div style="margin-top:12px"><button class="etf-action-btn" onclick="etfSubTab(\'portfolio\',document.querySelectorAll(\'.etf-sub-btn\')[2])">Record Sell in Holdings →</button></div>';
+    html += '</div>';
+  }
+
+  /* Commentary */
+  html += '<div class="etf-commentary">';
+  comm.forEach(function(line){
+    html += '<div class="etf-comm-line"><span>' + line + '</span></div>';
+  });
+  html += '</div>';
+
+  body.innerHTML = html;
+}
+
+/* ── RANKING pane ── */
+function etfBuildRanking(){
+  var body = document.getElementById('etfRankBody');
+  if(!body) return;
+
+  if(!ETF_DATA){
+    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">Backtest tab mein etf_data.json load karo pehle.</div>';
+    return;
+  }
+
+  var ranking = etfComputeRanking();
+  var heldTickers = ETF_HOLDINGS.map(function(h){ return h.ticker; });
+  var today = etfGetLastDate();
+
+  var html = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">As of ' + today + ' · ' + ranking.length + ' ETFs · Sorted by distance below 20 DMA</div>';
+  html += '<div class="wrap-x" style="overflow-x:auto">';
+  html += '<table class="etf-rank-tbl"><thead><tr>';
+  html += '<th>#</th><th>ETF</th><th>Last Price</th><th>20 DMA</th><th>% Below DMA</th><th>Status</th>';
+  html += '</tr></thead><tbody>';
+
+  ranking.forEach(function(r, i){
+    var held = heldTickers.includes(r.ticker);
+    var isAbove = r.pct < 0;
+    html += '<tr>';
+    html += '<td><span class="etf-rank-num" style="' + (i < 5 ? '' : 'background:var(--border);color:var(--muted)') + '">' + (i+1) + '</span></td>';
+    html += '<td><strong>' + r.ticker.replace('.NS','') + '</strong></td>';
+    html += '<td>₹' + r.cmp.toFixed(2) + '</td>';
+    html += '<td>₹' + r.dma20.toFixed(2) + '</td>';
+    html += '<td class="' + (isAbove ? 'g' : 'r') + '" style="font-weight:600">' + (isAbove ? '+' : '') + (-r.pct).toFixed(2) + '%</td>';
+    html += '<td>' + (held ? '<span class="etf-hold-badge">Holding</span>' : (i < 5 ? '<span style="font-size:11px;color:var(--page)">Top 5</span>' : '')) + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+/* ── PORTFOLIO pane ── */
+function etfBuildPortfolio(){
+  var body = document.getElementById('etfPortBody');
+  if(!body) return;
+
+  /* Stats strip */
+  var totalInvested = ETF_HOLDINGS.reduce(function(s,h){ return s + h.totalInvested; }, 0);
+  var totalCurrent  = ETF_HOLDINGS.reduce(function(s,h){
+    var cmp = ETF_DATA ? (etfGetLastPrice(h.ticker) || h.avgPrice) : h.avgPrice;
+    return s + cmp * h.qty;
+  }, 0);
+  var unrealisedPnL = totalCurrent - totalInvested;
+  var realisedPnL   = ETF_TRADES.reduce(function(s,t){ return s + t.pnl; }, 0);
+
+  var html = '<div class="etf-stat-strip">';
+  html += etfStatBox('Invested', '₹' + etfFmt(Math.round(totalInvested)));
+  html += etfStatBox('Current Value', '₹' + etfFmt(Math.round(totalCurrent)));
+  html += etfStatBox('Unrealised P&L', '<span class="' + (unrealisedPnL>=0?'g':'r') + '">₹' + etfFmt(Math.round(unrealisedPnL)) + '</span>');
+  html += etfStatBox('Realised P&L', '<span class="' + (realisedPnL>=0?'g':'r') + '">₹' + etfFmt(Math.round(realisedPnL)) + '</span>');
+  html += etfStatBox('Positions', ETF_HOLDINGS.length + '/5');
+  html += etfStatBox('Trades Closed', ETF_TRADES.length + '');
+  html += '</div>';
+
+  /* Add buy form */
+  html += '<div class="etf-bt-wrap">';
+  html += '<h4>Record a Buy / Average Down</h4>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px">';
+  html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">ETF Ticker</label>';
+  html += '<input id="etfBuyTicker" list="etfTickerList" placeholder="e.g. NIFTYBEES" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit">';
+  html += '<datalist id="etfTickerList">' + ETF_LIST_ALL.map(function(t){ return '<option value="' + t.replace('.NS','') + '">'; }).join('') + '</datalist></div>';
+  html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Buy Price (₹)</label>';
+  html += '<input id="etfBuyPrice" type="number" placeholder="0.00" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+  html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Quantity</label>';
+  html += '<input id="etfBuyQty" type="number" placeholder="0" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+  html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Date</label>';
+  html += '<input id="etfBuyDate" type="date" value="' + new Date().toISOString().slice(0,10) + '" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+  html += '</div>';
+  html += '<button class="etf-action-btn" onclick="etfRecordBuy()">+ Record Buy</button>';
+  html += ' <span id="etfBuyMsg" style="font-size:12px;color:var(--muted);margin-left:10px"></span>';
+  html += '</div>';
+
+  /* Holdings table */
+  if(ETF_HOLDINGS.length){
+    html += '<div class="etf-bt-wrap"><h4>Open Positions</h4>';
+    html += '<div style="overflow-x:auto"><table class="etf-rank-tbl"><thead><tr>';
+    html += '<th>ETF</th><th>Avg Price</th><th>Last Price</th><th>Qty</th><th>Invested</th><th>P&L</th><th>P&L%</th><th></th>';
+    html += '</tr></thead><tbody>';
+    ETF_HOLDINGS.forEach(function(h, idx){
+      var cmp    = ETF_DATA ? (etfGetLastPrice(h.ticker) || h.avgPrice) : h.avgPrice;
+      var pnl    = (cmp - h.avgPrice) * h.qty;
+      var pnlPct = (cmp - h.avgPrice) / h.avgPrice * 100;
+      var hitTarget = pnlPct >= 6;
+      html += '<tr' + (hitTarget ? ' style="background:color-mix(in srgb,#3fb950 8%,transparent)"' : '') + '>';
+      html += '<td><strong>' + h.ticker.replace('.NS','') + '</strong>' + (hitTarget ? ' <span style="font-size:10px;color:#3fb950;font-weight:700">SELL ✓</span>' : '') + '</td>';
+      html += '<td>₹' + h.avgPrice.toFixed(2) + '</td>';
+      html += '<td>₹' + cmp.toFixed(2) + '</td>';
+      html += '<td>' + h.qty + '</td>';
+      html += '<td>₹' + etfFmt(Math.round(h.totalInvested)) + '</td>';
+      html += '<td class="' + (pnl>=0?'g':'r') + '">₹' + etfFmt(Math.round(pnl)) + '</td>';
+      html += '<td class="' + (pnlPct>=0?'g':'r') + '" style="font-weight:600">' + (pnlPct>=0?'+':'') + pnlPct.toFixed(2) + '%</td>';
+      html += '<td><button class="etf-action-btn ghost" style="font-size:11px;padding:4px 10px" onclick="etfRecordSell(' + idx + ')">Sell</button></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  /* Sold trades */
+  if(ETF_TRADES.length){
+    html += '<div class="etf-bt-wrap"><h4>Closed Trades</h4>';
+    html += '<div style="overflow-x:auto"><table class="etf-rank-tbl"><thead><tr>';
+    html += '<th>ETF</th><th>Buy Price</th><th>Sell Price</th><th>Qty</th><th>P&L</th><th>P&L%</th><th>Sold On</th>';
+    html += '</tr></thead><tbody>';
+    ETF_TRADES.slice().reverse().forEach(function(t){
+      var pnlPct = (t.sellPrice - t.avgPrice) / t.avgPrice * 100;
+      html += '<tr><td>' + t.ticker.replace('.NS','') + '</td>';
+      html += '<td>₹' + t.avgPrice.toFixed(2) + '</td>';
+      html += '<td>₹' + t.sellPrice.toFixed(2) + '</td>';
+      html += '<td>' + t.qty + '</td>';
+      html += '<td class="' + (t.pnl>=0?'g':'r') + '">₹' + etfFmt(Math.round(t.pnl)) + '</td>';
+      html += '<td class="' + (pnlPct>=0?'g':'r') + '">' + (pnlPct>=0?'+':'') + pnlPct.toFixed(2) + '%</td>';
+      html += '<td>' + (t.date||'—') + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  body.innerHTML = html;
+}
+
+function etfStatBox(label, val){
+  return '<div class="etf-stat-box"><div class="esk">' + label + '</div><div class="esv">' + val + '</div></div>';
+}
+
+function etfRecordBuy(){
+  var ticker = (document.getElementById('etfBuyTicker').value||'').trim().toUpperCase();
+  var price  = parseFloat(document.getElementById('etfBuyPrice').value);
+  var qty    = parseInt(document.getElementById('etfBuyQty').value);
+  var date   = document.getElementById('etfBuyDate').value;
+  var msg    = document.getElementById('etfBuyMsg');
+
+  if(!ticker || isNaN(price) || isNaN(qty) || price<=0 || qty<=0){
+    msg.textContent = '⚠ Ticker, price aur quantity fill karo.'; return;
+  }
+
+  var fullTicker = ticker.endsWith('.NS') ? ticker : ticker + '.NS';
+  var existing = ETF_HOLDINGS.find(function(h){ return h.ticker === fullTicker; });
+
+  if(existing){
+    var newQty      = existing.qty + qty;
+    var newInvested = existing.totalInvested + price * qty;
+    existing.qty          = newQty;
+    existing.totalInvested= newInvested;
+    existing.avgPrice     = newInvested / newQty;
+    existing.lastBuyPrice = price;
+    existing.buys.push({ date: date, price: price, qty: qty });
+    msg.textContent = '✓ Averaged down on ' + ticker;
+  } else {
+    ETF_HOLDINGS.push({
+      ticker: fullTicker, qty: qty, avgPrice: price,
+      lastBuyPrice: price, totalInvested: price * qty,
+      date: date, buys: [{ date: date, price: price, qty: qty }]
+    });
+    msg.textContent = '✓ ' + ticker + ' added to holdings';
+  }
+
+  etfSave();
+  setTimeout(function(){ etfBuildPortfolio(); }, 300);
+}
+
+function etfRecordSell(idx){
+  var h       = ETF_HOLDINGS[idx];
+  if(!h) return;
+  var cmp     = ETF_DATA ? (etfGetLastPrice(h.ticker) || h.avgPrice) : h.avgPrice;
+  var sellPrice = parseFloat(prompt('Sell price for ' + h.ticker.replace('.NS','') + '? (Last: ₹' + cmp.toFixed(2) + ')', cmp.toFixed(2)));
+  if(isNaN(sellPrice) || sellPrice <= 0) return;
+  var pnl = (sellPrice - h.avgPrice) * h.qty;
+  ETF_TRADES.push({
+    ticker: h.ticker, avgPrice: h.avgPrice, sellPrice: sellPrice,
+    qty: h.qty, pnl: pnl, date: new Date().toISOString().slice(0,10)
+  });
+  ETF_HOLDINGS.splice(idx, 1);
+  etfSave();
+  etfBuildPortfolio();
+}
+
+/* ── BACKTEST pane ── */
+function etfBuildBacktest(){
+  var body = document.getElementById('etfBacktestBody');
+  if(!body) return;
+
+  var dataInfo = ETF_DATA
+    ? '<div style="font-size:12px;color:#3fb950;margin-bottom:12px">✓ Data loaded — ' + Object.keys(ETF_DATA.data).length + ' ETFs · ' + (ETF_DATA.meta||{}).start_date + ' to ' + (ETF_DATA.meta||{}).end_date + '</div>'
+    : '';
+
+  var html = dataInfo;
+
+  /* Upload zone (always shown if no data) */
+  if(!ETF_DATA){
+    html += '<div class="etf-upload-zone" onclick="document.getElementById(\'etfJsonInput\').click()" ondragover="event.preventDefault();this.style.borderColor=\'var(--page)\'" ondragleave="this.style.borderColor=\'\'" ondrop="etfHandleDrop(event)">';
+    html += '<div style="font-size:28px">📂</div>';
+    html += '<strong style="font-size:14px">Load etf_data.json</strong>';
+    html += '<p>Click ya drag & drop karo — Colab se download ki hui file</p>';
+    html += '<input type="file" id="etfJsonInput" accept=".json" style="display:none" onchange="etfLoadFile(this.files[0])">';
+    html += '</div>';
+  } else {
+    html += '<button class="etf-action-btn ghost" style="margin-bottom:16px;font-size:12px" onclick="document.getElementById(\'etfJsonInput2\').click()">↺ Replace Data File <input type="file" id="etfJsonInput2" accept=".json" style="display:none" onchange="etfLoadFile(this.files[0])"></button> ';
+  }
+
+  /* Config */
+  html += '<div class="etf-bt-wrap"><h4>Backtest Parameters</h4>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px">';
+  html += etfCfgInput('etfCfgStart','Start Date','date', ETF_DATA ? (ETF_DATA.meta||{}).start_date || '2021-01-01' : '2021-01-01');
+  html += etfCfgInput('etfCfgEnd','End Date','date', ETF_DATA ? (ETF_DATA.meta||{}).end_date || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
+  html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number','500000');
+  html += etfCfgInput('etfCfgTrade','Per Trade (₹)','number','25000');
+  html += etfCfgInput('etfCfgSell','Sell Target (%)','number','6');
+  html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number','2.5');
+  html += etfCfgInput('etfCfgMinDrop','Min % Below 20 DMA to Buy','number','0');
+  html += etfCfgInput('etfCfgMaxH','Max Concurrent Holdings','number','5');
+  html += '</div>';
+  html += '<button class="etf-action-btn" onclick="etfRunBacktest()"' + (ETF_DATA?'':' disabled style="opacity:.4"') + '>▶ Run Backtest</button>';
+  html += ' <span id="etfBtStatus" style="font-size:12px;color:var(--muted);margin-left:10px"></span>';
+  html += '</div>';
+
+  /* Results (if available) */
+  if(ETF_BT_RESULT){
+    var r = ETF_BT_RESULT;
+    html += '<div class="etf-stat-strip">';
+    html += etfStatBox('Final Value','<span class="' + (r.finalVal>=r.capital?'g':'r') + '">₹' + etfFmt(Math.round(r.finalVal)) + '</span>');
+    html += etfStatBox('Total Return','<span class="' + (r.totalRet>=0?'g':'r') + '">' + r.totalRet.toFixed(2) + '%</span>');
+    html += etfStatBox('CAGR','<span class="' + (r.cagr>=0?'g':'r') + '">' + r.cagr.toFixed(2) + '%</span>');
+    html += etfStatBox('Max Drawdown','<span class="r">' + r.maxDD.toFixed(2) + '%</span>');
+    html += etfStatBox('Win Rate','<span style="color:var(--page)">' + r.winRate.toFixed(1) + '%</span>');
+    html += etfStatBox('Total Trades',r.trades.length + '');
+    html += '</div>';
+
+    /* Equity curve */
+    html += '<div class="etf-bt-wrap"><h4>Portfolio Value Over Time</h4>';
+    html += '<canvas id="etfEqChart" style="max-height:220px"></canvas></div>';
+
+    /* Monthly PnL */
+    html += '<div class="etf-bt-wrap"><h4>Monthly Realised P&L</h4>';
+    html += '<canvas id="etfMoChart" style="max-height:180px"></canvas></div>';
+
+    /* Top ETFs */
+    html += '<div class="etf-bt-wrap"><h4>Top ETFs by Realised Profit</h4>';
+    html += '<canvas id="etfTopChart" style="max-height:180px"></canvas></div>';
+
+    /* Trade log */
+    html += '<div class="etf-bt-wrap"><h4>Trade Log (last 100)</h4>';
+    html += '<div style="overflow-x:auto;max-height:280px"><table class="etf-rank-tbl"><thead><tr>';
+    html += '<th>Date</th><th>ETF</th><th>Action</th><th>Price</th><th>Qty</th><th>P&L</th></tr></thead><tbody>';
+    r.trades.slice(-100).reverse().forEach(function(t){
+      html += '<tr><td>' + t.date + '</td><td>' + t.ticker.replace('.NS','') + '</td>';
+      html += '<td><span style="padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;background:' +
+              (t.action==='BUY'?'rgba(63,185,80,.15)':t.action==='SELL'?'rgba(248,81,73,.15)':'rgba(88,166,255,.15)') +
+              ';color:' + (t.action==='BUY'?'#3fb950':t.action==='SELL'?'#f85149':'#58a6ff') + '">' + t.action + '</span></td>';
+      html += '<td>₹' + t.price.toFixed(2) + '</td><td>' + t.qty + '</td>';
+      html += '<td class="' + (t.pnl==null?'':t.pnl>=0?'g':'r') + '">' + (t.pnl==null?'—':'₹'+etfFmt(Math.round(t.pnl))) + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  body.innerHTML = html;
+
+  /* Draw charts if result available */
+  if(ETF_BT_RESULT) setTimeout(etfDrawCharts, 50);
+}
+
+function etfCfgInput(id, label, type, val){
+  return '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">' + label + '</label>' +
+    '<input id="' + id + '" type="' + type + '" value="' + val + '" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+}
+
+function etfHandleDrop(e){
+  e.preventDefault();
+  var f = e.dataTransfer.files[0];
+  if(f) etfLoadFile(f);
+}
+
+function etfLoadFile(file){
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var json = JSON.parse(e.target.result);
+      if(!json.data) throw new Error('Invalid');
+      ETF_DATA = json;
+      etfBuildBacktest();
+      /* also refresh signal/ranking if active */
+      if(ETF_ACTIVE_SUB === 'signal')  etfBuildSignal();
+      if(ETF_ACTIVE_SUB === 'ranking') etfBuildRanking();
+    }catch(err){
+      document.getElementById('etfBtStatus').textContent = '⚠ Invalid file: ' + err.message;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function etfRunBacktest(){
+  if(!ETF_DATA){ return; }
+  var status = document.getElementById('etfBtStatus');
+  status.textContent = 'Running…';
+
+  var capital    = parseFloat(document.getElementById('etfCfgCapital').value);
+  var tradeSize  = parseFloat(document.getElementById('etfCfgTrade').value);
+  var sellTarget = parseFloat(document.getElementById('etfCfgSell').value) / 100;
+  var avgTrigger = parseFloat(document.getElementById('etfCfgAvg').value) / 100;
+  var minDrop    = parseFloat(document.getElementById('etfCfgMinDrop').value) / 100;
+  var maxH       = parseInt(document.getElementById('etfCfgMaxH').value);
+  var startDate  = document.getElementById('etfCfgStart').value;
+  var endDate    = document.getElementById('etfCfgEnd').value;
+
+  setTimeout(function(){
+    try{
+      ETF_BT_RESULT = etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, startDate, endDate);
+      ETF_BT_RESULT.capital = capital;
+      status.textContent = '✓ Done — ' + ETF_BT_RESULT.trades.length + ' trades';
+      etfBuildBacktest();
+    }catch(e){
+      status.textContent = '⚠ Error: ' + e.message;
+    }
+  }, 60);
+}
+
+function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, startDate, endDate){
+  var rawData = ETF_DATA.data;
+  var dmaCache = {};
+
+  /* Build per-ETF DMA lookup */
+  var allDates = new Set();
+  Object.keys(rawData).forEach(function(ticker){
+    var allD = Object.keys(rawData[ticker]).sort();
+    var allP = allD.map(function(d){ return rawData[ticker][d]; });
+    dmaCache[ticker] = {};
+    for(var i=19;i<allD.length;i++){
+      var s=0; for(var j=i-19;j<=i;j++) s+=allP[j];
+      dmaCache[ticker][allD[i]] = s/20;
+    }
+    allD.filter(function(d){ return d>=startDate && d<=endDate; }).forEach(function(d){ allDates.add(d); });
+  });
+
+  var tradingDays = [...allDates].sort();
+
+  /* Price index */
+  var priceIdx = {};
+  Object.keys(rawData).forEach(function(ticker){
+    Object.keys(rawData[ticker]).forEach(function(d){
+      if(!priceIdx[d]) priceIdx[d]={};
+      priceIdx[d][ticker] = rawData[ticker][d];
+    });
+  });
+
+  var cash = capital;
+  var holdings = {};
+  var trades = [];
+  var equityCurve = [];
+  var monthlyPnL = {};
+  var etfPnL = {};
+
+  tradingDays.forEach(function(date){
+    var dp = priceIdx[date] || {};
+
+    /* Sells */
+    Object.keys(holdings).forEach(function(ticker){
+      var cmp = dp[ticker]; if(!cmp) return;
+      var h = holdings[ticker];
+      if((cmp - h.avgPrice)/h.avgPrice >= sellTarget){
+        var profit = cmp*h.qty - h.totalInvested;
+        cash += cmp*h.qty;
+        trades.push({date,ticker,action:'SELL',price:cmp,qty:h.qty,pnl:profit});
+        var mo = date.slice(0,7);
+        monthlyPnL[mo] = (monthlyPnL[mo]||0) + profit;
+        etfPnL[ticker] = (etfPnL[ticker]||0) + profit;
+        delete holdings[ticker];
+      }
+    });
+
+    /* Rank */
+    var ranking = [];
+    Object.keys(rawData).forEach(function(ticker){
+      var cmp = dp[ticker]; var dma20 = dmaCache[ticker]&&dmaCache[ticker][date];
+      if(!cmp||!dma20) return;
+      var pct = (dma20-cmp)/dma20;
+      if(pct>=minDrop) ranking.push({ticker,pct,cmp});
+    });
+    ranking.sort(function(a,b){ return b.pct-a.pct; });
+    var top = ranking.slice(0,maxH);
+    var held = Object.keys(holdings);
+
+    if(cash >= tradeSize){
+      var newE = top.find(function(r){ return !held.includes(r.ticker); });
+      if(newE){
+        var qty = Math.floor(tradeSize/newE.cmp);
+        if(qty>0){
+          var cost = qty*newE.cmp; cash -= cost;
+          holdings[newE.ticker]={qty,avgPrice:newE.cmp,lastBuyPrice:newE.cmp,totalInvested:cost};
+          trades.push({date,ticker:newE.ticker,action:'BUY',price:newE.cmp,qty,pnl:null});
+        }
+      } else {
+        var avgC = top.find(function(r){
+          if(!holdings[r.ticker]) return false;
+          return (holdings[r.ticker].lastBuyPrice-r.cmp)/holdings[r.ticker].lastBuyPrice >= avgTrigger;
+        });
+        if(avgC){
+          var ah = holdings[avgC.ticker];
+          var aqty = Math.floor(tradeSize/avgC.cmp);
+          if(aqty>0){
+            var acost=aqty*avgC.cmp; cash-=acost;
+            var nq=ah.qty+aqty, ni=ah.totalInvested+acost;
+            holdings[avgC.ticker]={qty:nq,avgPrice:ni/nq,lastBuyPrice:avgC.cmp,totalInvested:ni};
+            trades.push({date,ticker:avgC.ticker,action:'AVG',price:avgC.cmp,qty:aqty,pnl:null});
+          }
+        }
+      }
+    }
+
+    var hVal=0;
+    Object.keys(holdings).forEach(function(ticker){
+      var cmp=dp[ticker]; hVal += cmp ? cmp*holdings[ticker].qty : holdings[ticker].totalInvested;
+    });
+    equityCurve.push({date,value:cash+hVal});
+  });
+
+  var finalVal = equityCurve.length ? equityCurve[equityCurve.length-1].value : capital;
+  var totalRet = (finalVal-capital)/capital*100;
+  var years = tradingDays.length/252;
+  var cagr = (Math.pow(finalVal/capital,1/Math.max(years,.01))-1)*100;
+  var peak=capital,maxDD=0;
+  equityCurve.forEach(function(d){ if(d.value>peak)peak=d.value; var dd=(peak-d.value)/peak; if(dd>maxDD)maxDD=dd; });
+  var sells=trades.filter(function(t){return t.action==='SELL';});
+  var wins=sells.filter(function(t){return t.pnl>0;});
+  var winRate=sells.length?wins.length/sells.length*100:0;
+
+  return {trades,equityCurve,monthlyPnL,etfPnL,finalVal,totalRet,cagr,maxDD:maxDD*100,winRate,validETFs:Object.keys(rawData).length};
+}
+
+function etfDrawCharts(){
+  var r = ETF_BT_RESULT;
+  if(!r) return;
+  if(typeof Chart === 'undefined') return;
+  if(ETF_CHART_INST){ try{ ETF_CHART_INST.forEach(function(c){ c.destroy(); }); }catch(e){} }
+  ETF_CHART_INST = [];
+
+  var step = Math.max(1,Math.floor(r.equityCurve.length/400));
+  var eqD  = r.equityCurve.filter(function(_,i){ return i%step===0; });
+  var defs = { responsive:true, plugins:{legend:{display:false}},
+    scales:{ x:{ticks:{color:'var(--muted)',maxTicksLimit:8},grid:{color:'rgba(255,255,255,.06)'}},
+             y:{ticks:{color:'var(--muted)'},grid:{color:'rgba(255,255,255,.06)'}} }};
+
+  var ec = document.getElementById('etfEqChart');
+  if(ec) ETF_CHART_INST.push(new Chart(ec.getContext('2d'),{type:'line',data:{
+    labels:eqD.map(function(d){return d.date;}),
+    datasets:[{data:eqD.map(function(d){return d.value;}),
+      borderColor:'#0EA8A8',backgroundColor:'rgba(14,168,168,.08)',
+      borderWidth:1.5,pointRadius:0,fill:true,tension:.3}]},
+    options:{...defs,scales:{x:defs.scales.x,y:{...defs.scales.y,ticks:{color:'var(--muted)',callback:function(v){return '₹'+(v/100000).toFixed(1)+'L';}}}}}
+  }));
+
+  var months = Object.keys(r.monthlyPnL).sort();
+  var mc = document.getElementById('etfMoChart');
+  if(mc) ETF_CHART_INST.push(new Chart(mc.getContext('2d'),{type:'bar',data:{
+    labels:months,
+    datasets:[{data:months.map(function(m){return r.monthlyPnL[m];}),
+      backgroundColor:months.map(function(m){return r.monthlyPnL[m]>=0?'rgba(63,185,80,.75)':'rgba(248,81,73,.75)';}),borderRadius:3}]},
+    options:{...defs,scales:{x:{...defs.scales.x,ticks:{color:'var(--muted)',maxTicksLimit:12}},y:{...defs.scales.y,ticks:{color:'var(--muted)',callback:function(v){return '₹'+(v/1000).toFixed(0)+'k';}}}}}}
+  ));
+
+  var topE = Object.entries(r.etfPnL).filter(function(e){return e[1]!==0;}).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+  var tc = document.getElementById('etfTopChart');
+  if(tc) ETF_CHART_INST.push(new Chart(tc.getContext('2d'),{type:'bar',data:{
+    labels:topE.map(function(e){return e[0].replace('.NS','');}),
+    datasets:[{data:topE.map(function(e){return e[1];}),
+      backgroundColor:topE.map(function(e){return e[1]>=0?'rgba(63,185,80,.75)':'rgba(248,81,73,.75)';}),borderRadius:3}]},
+    options:{...defs,indexAxis:'y',scales:{x:{...defs.scales.x,ticks:{color:'var(--muted)',callback:function(v){return '₹'+(v/1000).toFixed(0)+'k';}}},y:{...defs.scales.y}}}
+  }));
+}
+
+function etfFmt(n){ return (n||0).toLocaleString('en-IN'); }
+/* ================================================================
+   END ETF STRATEGY TAB
+   ================================================================ */
 
 function goHome(){ setLandingTab('overview', document.querySelector('#ltabs .ltab-btn')); }
 
