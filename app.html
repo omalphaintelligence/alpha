@@ -3158,36 +3158,56 @@ body.s-light .trio-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 24px -14p
   font-size:14px;line-height:1.5;max-width:90ch;margin:0}
 
 /* ── ETF Strategy tab ───────────────────────────────────────────── */
-.etf-signal-card{background:color-mix(in srgb,var(--panel) 60%,transparent);border:1.5px solid var(--page);border-radius:12px;padding:20px 24px;margin-bottom:20px}
+/* Config strip */
+.etf-cfg-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;background:color-mix(in srgb,var(--panel) 55%,transparent);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:20px}
+.etf-cfg-item label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+.etf-cfg-item input{width:100%;background:var(--panel-2,#111825);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit;font-weight:600}
+.etf-cfg-item input:focus{outline:none;border-color:var(--page)}
+.etf-cfg-derived{grid-column:1/-1;font-size:12px;color:var(--muted);padding-top:4px;border-top:1px solid var(--border);margin-top:4px}
+/* Signal card */
+.etf-signal-card{background:color-mix(in srgb,var(--panel) 60%,transparent);border:1.5px solid var(--page);border-radius:12px;padding:20px 24px;margin-bottom:16px}
 .etf-signal-card .etf-sig-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--page);font-weight:600;margin-bottom:6px}
 .etf-signal-card .etf-sig-etf{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-.02em}
 .etf-signal-card .etf-sig-sub{font-size:13px;color:var(--muted);margin-top:4px}
 .etf-signal-card .etf-sig-pct{font-size:20px;font-weight:600;color:var(--page)}
+/* Table */
 .etf-rank-tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
 .etf-rank-tbl th{padding:7px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border)}
 .etf-rank-tbl td{padding:8px 10px;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);vertical-align:middle}
 .etf-rank-tbl tr:last-child td{border-bottom:none}
 .etf-rank-tbl tr:hover td{background:color-mix(in srgb,var(--panel) 40%,transparent)}
-.etf-rank-num{font-size:11px;font-weight:700;width:20px;height:20px;border-radius:50%;background:var(--page);color:#fff;display:inline-flex;align-items:center;justify-content:center}
+.etf-rank-num{font-size:11px;font-weight:700;width:22px;height:22px;border-radius:50%;background:var(--page);color:#fff;display:inline-flex;align-items:center;justify-content:center}
 .etf-hold-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:color-mix(in srgb,var(--page) 15%,transparent);color:var(--page)}
 .etf-action-btn{background:var(--page);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s}
 .etf-action-btn:hover{opacity:.8}
 .etf-action-btn.ghost{background:transparent;border:1.5px solid var(--page);color:var(--page)}
+/* Ideal positions */
+.etf-ideal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:16px}
+.etf-ideal-card{background:color-mix(in srgb,var(--panel) 55%,transparent);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative}
+.etf-ideal-card.rank1{border-color:var(--page);background:color-mix(in srgb,var(--page) 8%,var(--panel))}
+.etf-ideal-rank{position:absolute;top:10px;right:12px;font-size:11px;font-weight:700;color:var(--muted)}
+.etf-ideal-ticker{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.01em;margin-bottom:2px}
+.etf-ideal-name{font-size:11px;color:var(--muted);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.etf-ideal-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.etf-ideal-row span:last-child{color:var(--text);font-weight:600}
+.etf-ideal-pct{font-size:16px;font-weight:700;color:var(--page);margin:8px 0 4px}
+/* Commentary */
 .etf-commentary{background:color-mix(in srgb,var(--panel) 40%,transparent);border-left:3px solid var(--page);border-radius:0 8px 8px 0;padding:14px 18px;margin-top:16px}
 .etf-commentary .etf-comm-line{font-size:13.5px;color:var(--text);line-height:1.6;padding:3px 0;display:flex;gap:8px}
 .etf-commentary .etf-comm-line::before{content:'▸';color:var(--page);flex-shrink:0;font-size:11px;margin-top:3px}
-.etf-port-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:0;align-items:center}
-@media(max-width:640px){.etf-port-row{grid-template-columns:1fr 1fr;gap:4px 12px}}
+/* Stats */
 .etf-stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
 .etf-stat-box{background:color-mix(in srgb,var(--panel) 55%,transparent);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
 .etf-stat-box .esk{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
 .etf-stat-box .esv{font-size:20px;font-weight:600;color:var(--text)}
+/* Wrappers */
 .etf-bt-wrap{background:color-mix(in srgb,var(--panel) 40%,transparent);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:16px}
 .etf-bt-wrap h4{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
 .etf-eq-canvas-wrap{position:relative;height:160px;margin-bottom:4px}
 .etf-upload-zone{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:16px}
 .etf-upload-zone:hover{border-color:var(--page)}
 .etf-upload-zone p{font-size:13px;color:var(--muted);margin-top:6px}
+/* Sub-tabs */
 .etf-sub-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
 .etf-sub-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit}
 .etf-sub-btn.on{background:var(--page);border-color:var(--page);color:#fff;font-weight:600}
@@ -4068,29 +4088,71 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">ETF Strategy</div>
-          <h2>20 DMA mean reversion, <em>one ETF at a time</em>.</h2>
-          <p>66 high-volume NSE ETFs ranked daily by their distance below the 20-day moving average. Buy the most oversold, sell at 6% profit, average down at 2.5% — systematic, no guesswork.</p>
+          <h2>FIRE ETF — 20 DMA mean reversion, <em>systematic.</em></h2>
+          <p>66 high-volume NSE ETFs ranked by distance below 20 DMA. Ideal positions auto-calculated from your capital — max 10 concurrent holdings, ₹5000/trade. No manual entry needed.</p>
+        </div>
+
+        <!-- Capital config strip -->
+        <div class="etf-cfg-strip" id="etfCfgStrip">
+          <div class="etf-cfg-item">
+            <label>Investment Capital (₹)</label>
+            <input id="etfCapInput" type="number" value="300000" min="10000" step="10000" oninput="etfOnCapChange()">
+          </div>
+          <div class="etf-cfg-item">
+            <label>Per Trade (₹)</label>
+            <input id="etfPerTradeInput" type="number" value="5000" min="1000" step="500" oninput="etfOnCapChange()">
+          </div>
+          <div class="etf-cfg-item">
+            <label>Max Holdings</label>
+            <input id="etfMaxHInput" type="number" value="10" min="1" max="20" oninput="etfOnCapChange()">
+          </div>
+          <div class="etf-cfg-item">
+            <label>Sell Target (%)</label>
+            <input id="etfSellTgtInput" type="number" value="6" min="1" max="30" step="0.5" oninput="etfOnCapChange()">
+          </div>
+          <div class="etf-cfg-item">
+            <label>Avg Down Trigger (%)</label>
+            <input id="etfAvgTrigInput" type="number" value="2.5" min="0.5" max="10" step="0.5" oninput="etfOnCapChange()">
+          </div>
+          <div class="etf-cfg-derived" id="etfCfgDerived">— Parts: 60 · Max deployed: ₹50,000</div>
+          <div style="grid-column:1/-1;display:flex;gap:8px;padding-top:4px">
+            <button class="etf-action-btn" style="font-size:11px;padding:5px 14px" onclick="etfSaveCfg();document.getElementById('etfCfgSaved').textContent='✓ Saved';setTimeout(function(){document.getElementById('etfCfgSaved').textContent=''},2000)">Save Config</button>
+            <button class="etf-action-btn ghost" style="font-size:11px;padding:5px 14px" onclick="localStorage.removeItem('ai_etf_cfg');location.reload()">Reset to Default</button>
+            <span id="etfCfgSaved" style="font-size:11px;color:#3fb950;line-height:28px"></span>
+          </div>
         </div>
 
         <!-- Sub-tab nav -->
-        <div class="etf-sub-tabs">
+        <div class="etf-sub-tabs" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px">
           <button class="etf-sub-btn on" onclick="etfSubTab('signal',this)">Today's Signal</button>
           <button class="etf-sub-btn" onclick="etfSubTab('ranking',this)">Live Ranking</button>
+          <button class="etf-sub-btn" onclick="etfSubTab('ideal',this)">Ideal Positions</button>
           <button class="etf-sub-btn" onclick="etfSubTab('portfolio',this)">My Holdings</button>
           <button class="etf-sub-btn" onclick="etfSubTab('backtest',this)">Backtest</button>
+          <button class="etf-action-btn" style="margin-left:auto;font-size:11px;padding:5px 12px" onclick="fetchEtfLive(function(ok){ if(!ok) alert('Live fetch failed — check ETF_LIVE_URL in app.html'); })">⟳ Refresh Live</button>
+        </div>
+        <div id="etfLiveBadge" style="font-size:11px;color:var(--muted);min-height:16px;margin-bottom:12px">
+          <!-- Live data status badge — updated by fetchEtfLive() -->
         </div>
 
         <!-- SIGNAL PANE -->
         <div class="etf-pane on" id="etf-pane-signal">
           <div id="etfSignalBody">
-            <div style="color:var(--muted);font-size:13px;padding:20px 0">Load historical data in the Backtest tab to unlock live ranking and signals.</div>
+            <div style="color:var(--muted);font-size:13px;padding:20px 0">⟳ Loading…</div>
           </div>
         </div>
 
         <!-- RANKING PANE -->
         <div class="etf-pane" id="etf-pane-ranking">
           <div id="etfRankBody">
-            <div style="color:var(--muted);font-size:13px;padding:20px 0">Load historical data in the Backtest tab first — ranking uses the same dataset.</div>
+            <div style="color:var(--muted);font-size:13px;padding:20px 0">⟳ Loading…</div>
+          </div>
+        </div>
+
+        <!-- IDEAL POSITIONS PANE -->
+        <div class="etf-pane" id="etf-pane-ideal">
+          <div id="etfIdealBody">
+            <div style="color:var(--muted);font-size:13px;padding:20px 0">etf_data.json load hone ke baad ideal positions dikhenge.</div>
           </div>
         </div>
 
@@ -9279,12 +9341,47 @@ function rebuildTabs(){
 /* ================================================================
    ETF STRATEGY TAB
    ================================================================ */
-var ETF_DATA = null;         // loaded from etf_data.json
-var ETF_HOLDINGS = [];       // [{ticker,qty,avgPrice,lastBuyPrice,totalInvested,buys:[]}]
-var ETF_TRADES   = [];       // completed sells
-var ETF_BT_RESULT = null;    // last backtest result
+var ETF_DATA = null;         /* backtest file (etf_data.json) — historical */
+var ETF_LIVE = null;         /* live data from Apps Script Web App */
+var ETF_LIVE_FETCHING = false;
+var ETF_HOLDINGS = [];
+var ETF_TRADES   = [];
+var ETF_BT_RESULT = null;
 var ETF_CHART_INST = null;
 var ETF_ACTIVE_SUB = 'signal';
+
+/* ── Apps Script Web App URL ──
+   Steps to generate this URL:
+   1. OM ETF1 spreadsheet → Extensions → Apps Script
+   2. Paste etf_web_app.gs code → Save
+   3. Deploy → New deployment → Web app → Execute as: Me → Who: Anyone → Deploy
+   4. Copy the URL and paste below (replace the placeholder)
+
+   Until this URL is set, app shows helpful message; file-upload path still works for backtest.
+*/
+var ETF_LIVE_URL = 'https://script.google.com/macros/s/AKfycbwvmWPhvA6vIX43XSY23_ipnzeENvJdfkojS6Lp_bPIse3FY3UlCn_2uqoiJyP2Qslj/exec';
+
+/* ETF name map for display */
+var ETF_NAME_MAP = {
+  "MOM30IETF":"Nifty 200 Momentum 30","NIFTYQLITY":"Nifty 200 Quality 30","VAL30IETF":"Nifty200 Value 30",
+  "ABSLPSE":"Nifty PSE ETF","UTISXN50":"BSE Sensex Next 50","CPSEETF":"CPSE ETF","GOLDBEES":"Nifty 50 (Gold)","HNGSNGBEES":"Hang Seng",
+  "MAHKTECH":"Hang Seng TECH","HDFCGROWTH":"Nifty Growth Sectors 15","LOWVOLIETF":"Nifty 100 Low Vol 30","HDFCQUAL":"Nifty 200 Quality 30",
+  "BSE500IETF":"BSE 500","COMMOIETF":"Nifty Commodities","FINIETF":"Nifty Financial Services","INFRAIETF":"Nifty Infrastructure",
+  "MNC":"Nifty MNC","ALPHAETF":"Nifty Alpha 50","MIDSMALL":"Nifty MidSmall 400","SMALLCAP":"Nifty Smallcap 250",
+  "MONIFTY500":"Nifty 500","MOREALTY":"Nifty India REITs","MOSMALL250":"Nifty Smallcap 250","MOVALUE":"Nifty 500 Value 50",
+  "MONQ50":"Nifty Next 50","MON100":"Nifty 100","TOP100CASE":"Nifty 100","NIFTYBEES":"Nifty 50","MOMENTUM50":"Nifty Midcap 150 Momentum 50",
+  "ALPHA":"Nifty Alpha 50","ALPL30IETF":"Nifty Alpha Low Vol 30","AUTOIETF":"Nifty Auto","BANKBEES":"Nifty Bank",
+  "DIVOPPBEES":"Nifty Dividend Opportunities 50","EVINDIA":"Nifty EV & New Age Automotive","BFSI":"Nifty India BFSI",
+  "FMCGIETF":"Nifty FMCG","HEALTHY":"Nifty Healthcare","MOHEALTH":"Nifty Healthcare","CONSUMBEES":"Nifty India Consumption",
+  "MODEFENCE":"Nifty India Defence","TNIDETF":"Nifty India Digital","MAKEINDIA":"Nifty India Mfg","ITBEES":"Nifty IT",
+  "METALIETF":"Nifty Metal","MOM100":"MidSmall Momentum 100","MIDCAPETF":"Nifty Midcap 150","MIDQ50ADD":"Nifty Midcap 50",
+  "MIDCAP":"Nifty Midcap 100","NEXT50IETF":"Nifty Next 50","OILIETF":"Nifty Oil & Gas","PHARMABEES":"Nifty Pharma",
+  "PVTBANIETF":"Nifty Private Bank","PSUBNKBEES":"Nifty PSU Bank","TOP10ADD":"Nifty 10 Yr Benchmark GSEC",
+  "ESG":"Nifty 100 ESG","NV20IETF":"Nifty NV 20","MULTICAP":"Nifty Multicap 50:25:25","EMULTIMQ":"EM Multicap Momentum 50",
+  "MAFANG":"Nifty India Manufacturing","MASPTOP50":"S&P BSE Sensex Top 50","ICICIB22":"Bharat 22 ETF",
+  "MIDSELIETF":"Nifty Midsmall Select","SILVERBEES":"Silver","SENSEXIETF":"BSE Sensex","SHARIABEES":"Nifty50 Shariah",
+  "MOTOUR":"Nifty India Tourism"
+};
 
 var ETF_LIST_ALL = [
   "MOM30IETF.NS","NIFTYQLITY.NS","VAL30IETF.NS","ABSLPSE.NS","UTISXN50.NS",
@@ -9302,6 +9399,51 @@ var ETF_LIST_ALL = [
   "MASPTOP50.NS","ICICIB22.NS","MIDSELIETF.NS","SILVERBEES.NS","SENSEXIETF.NS",
   "SHARIABEES.NS","MOTOUR.NS"
 ];
+
+/* ── Config helpers ── */
+function etfCfgCapital(){ return parseFloat((document.getElementById('etfCapInput')||{value:'300000'}).value)||300000; }
+function etfCfgPerTrade(){ return parseFloat((document.getElementById('etfPerTradeInput')||{value:'5000'}).value)||5000; }
+function etfCfgMaxH(){ return parseInt((document.getElementById('etfMaxHInput')||{value:'10'}).value)||10; }
+function etfCfgSellTgt(){ return parseFloat((document.getElementById('etfSellTgtInput')||{value:'6'}).value)||6; }
+function etfCfgAvgTrig(){ return parseFloat((document.getElementById('etfAvgTrigInput')||{value:'2.5'}).value)||2.5; }
+
+function etfOnCapChange(){
+  var cap = etfCfgCapital();
+  var per = etfCfgPerTrade();
+  var maxH = etfCfgMaxH();
+  var parts = per > 0 ? Math.floor(cap/per) : 0;
+  var maxDep = per * maxH;
+  var d = document.getElementById('etfCfgDerived');
+  if(d) d.textContent = 'Parts: ' + parts + '  ·  Max concurrent deployed: ₹' + etfFmt(maxDep) + '  ·  Remaining cash: ₹' + etfFmt(Math.max(0, cap - maxDep));
+  /* Refresh active pane */
+  if(ETF_ACTIVE_SUB === 'signal')   etfBuildSignal();
+  if(ETF_ACTIVE_SUB === 'ideal')    etfBuildIdeal();
+  if(ETF_ACTIVE_SUB === 'ranking')  etfBuildRanking();
+  if(ETF_ACTIVE_SUB === 'portfolio') etfBuildPortfolio();
+}
+
+/* Call once on tab load */
+function etfInitCfg(){
+  /* Load saved config */
+  try{
+    var s = JSON.parse(localStorage.getItem('ai_etf_cfg')||'{}');
+    if(s.capital)   { var el=document.getElementById('etfCapInput'); if(el) el.value=s.capital; }
+    if(s.perTrade)  { var el=document.getElementById('etfPerTradeInput'); if(el) el.value=s.perTrade; }
+    if(s.maxH)      { var el=document.getElementById('etfMaxHInput'); if(el) el.value=s.maxH; }
+    if(s.sellTgt)   { var el=document.getElementById('etfSellTgtInput'); if(el) el.value=s.sellTgt; }
+    if(s.avgTrig)   { var el=document.getElementById('etfAvgTrigInput'); if(el) el.value=s.avgTrig; }
+  }catch(e){}
+  etfOnCapChange();
+}
+
+function etfSaveCfg(){
+  try{
+    localStorage.setItem('ai_etf_cfg', JSON.stringify({
+      capital: etfCfgCapital(), perTrade: etfCfgPerTrade(),
+      maxH: etfCfgMaxH(), sellTgt: etfCfgSellTgt(), avgTrig: etfCfgAvgTrig()
+    }));
+  }catch(e){}
+}
 
 /* ── localStorage persistence ── */
 function etfSave(){
@@ -9330,12 +9472,18 @@ function etfSubTab(name, btn){
   if(pane) pane.classList.add('on');
   if(name === 'signal')    etfBuildSignal();
   if(name === 'ranking')   etfBuildRanking();
+  if(name === 'ideal')     etfBuildIdeal();
   if(name === 'portfolio') etfBuildPortfolio();
   if(name === 'backtest')  etfBuildBacktest();
 }
 
 function buildEtfTab(){
+  etfInitCfg();
   etfSubTab(ETF_ACTIVE_SUB, document.querySelector('.etf-sub-btn.on'));
+  /* Auto-fetch live data on tab open if URL is set and no fresh data yet */
+  if(ETF_LIVE_URL && !ETF_LIVE){
+    setTimeout(function(){ fetchEtfLive(); }, 200);
+  }
 }
 
 /* ── 20 DMA helper ── */
@@ -9368,7 +9516,7 @@ function etfGetLastDate(){
   return arr[arr.length - 1];
 }
 
-/* ── compute today's ranking ── */
+/* ── compute today's ranking from ETF_DATA (backtest file) ── */
 function etfComputeRanking(){
   if(!ETF_DATA) return [];
   var today = etfGetLastDate();
@@ -9384,40 +9532,123 @@ function etfComputeRanking(){
   return rows;
 }
 
+/* ── Live ranking from Apps Script (preferred) or ETF_DATA fallback ── */
+function etfLiveRanking(){
+  if(ETF_LIVE && ETF_LIVE.etfs && ETF_LIVE.etfs.length){
+    /* Apps Script already returns sorted list; just map to expected shape */
+    return ETF_LIVE.etfs.map(function(e){
+      return {
+        ticker: e.sym + '.NS',
+        sym:    e.sym,
+        cmp:    e.cmp,
+        dma20:  e.dma20,
+        pct:    e.pct,
+        name:   e.name
+      };
+    });
+  }
+  /* Fallback to historical file */
+  return etfComputeRanking();
+}
+
+/* Get live CMP for a ticker — Apps Script first, then ETF_DATA */
+function etfGetLiveCmp(ticker){
+  if(ETF_LIVE && ETF_LIVE.etfs){
+    var sym = ticker.replace('.NS','');
+    var e = ETF_LIVE.etfs.find(function(x){ return x.sym === sym; });
+    if(e && e.cmp) return e.cmp;
+  }
+  return ETF_DATA ? (etfGetLastPrice(ticker) || null) : null;
+}
+
+/* Date label — live data has updated timestamp, file has last trading date */
+function etfDataDate(){
+  if(ETF_LIVE) return ETF_LIVE.updated || 'live';
+  return etfGetLastDate() || '—';
+}
+
+/* Has ANY data source (live or file)? */
+function etfHasData(){
+  return (ETF_LIVE && ETF_LIVE.etfs && ETF_LIVE.etfs.length > 0) || (ETF_DATA != null);
+}
+
+/* ── Fetch live data from Apps Script Web App ── */
+function fetchEtfLive(onDone){
+  if(!ETF_LIVE_URL){
+    if(onDone) onDone(false, 'URL not set');
+    return;
+  }
+  if(ETF_LIVE_FETCHING){ if(onDone) onDone(false, 'fetching'); return; }
+  ETF_LIVE_FETCHING = true;
+  /* Show spinner in status badge */
+  var badge = document.getElementById('etfLiveBadge');
+  if(badge) badge.innerHTML = '<span style="color:var(--muted)">⟳ Fetching live…</span>';
+
+  fetch(ETF_LIVE_URL)
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data){
+      ETF_LIVE_FETCHING = false;
+      if(!data.etfs || !data.etfs.length) throw new Error('Empty response');
+      ETF_LIVE = data;
+      var badge2 = document.getElementById('etfLiveBadge');
+      if(badge2) badge2.innerHTML = '<span style="color:#3fb950">● Live · ' + data.count + ' ETFs · ' + data.updated + '</span>';
+      /* Refresh whichever pane is active */
+      if(ETF_ACTIVE_SUB === 'signal')   etfBuildSignal();
+      if(ETF_ACTIVE_SUB === 'ranking')  etfBuildRanking();
+      if(ETF_ACTIVE_SUB === 'ideal')    etfBuildIdeal();
+      if(ETF_ACTIVE_SUB === 'portfolio') etfBuildPortfolio();
+      if(onDone) onDone(true);
+    })
+    .catch(function(err){
+      ETF_LIVE_FETCHING = false;
+      var badge3 = document.getElementById('etfLiveBadge');
+      if(badge3) badge3.innerHTML = '<span style="color:#f85149" title="' + err.message + '">⚠ Live fetch failed</span>';
+      if(onDone) onDone(false, err.message);
+    });
+}
+
 /* ── SIGNAL pane ── */
 function etfBuildSignal(){
   var body = document.getElementById('etfSignalBody');
   if(!body) return;
 
-  if(!ETF_DATA){
-    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">📂 Backtest tab mein <strong>etf_data.json</strong> load karo — signal usi data se aayega.</div>';
+  if(!etfHasData()){
+    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">' +
+      (ETF_LIVE_URL
+        ? '⟳ Live data fetch ho raha hai…<br><small>Agar kuch seconds mein nahi aaya toh page reload karo ya Backtest tab mein etf_data.json upload karo.</small>'
+        : '📡 Live data ke liye <strong>ETF_LIVE_URL</strong> set karo (Apps Script Web App URL), ya<br>📂 Backtest tab mein <strong>etf_data.json</strong> load karo — dono mein se koi bhi kaam karega.') +
+      '</div>';
     return;
   }
 
-  var ranking = etfComputeRanking();
-  var top5    = ranking.slice(0, 5);
+  var maxH    = etfCfgMaxH();
+  var sellTgt = etfCfgSellTgt();
+  var avgTrig = etfCfgAvgTrig();
+  var perTrade= etfCfgPerTrade();
+  var ranking = etfLiveRanking();
+  var topN    = ranking.slice(0, maxH);
   var heldTickers = ETF_HOLDINGS.map(function(h){ return h.ticker; });
-  var today   = etfGetLastDate();
+  var today   = etfDataDate();
 
-  /* Determine today's action */
-  var action = null;
   var newETF  = null;
   var avgETF  = null;
 
-  for(var i=0; i<top5.length; i++){
-    if(!heldTickers.includes(top5[i].ticker)){
-      newETF = top5[i]; break;
+  for(var i=0; i<topN.length; i++){
+    if(!heldTickers.includes(topN[i].ticker)){
+      newETF = topN[i]; break;
     }
   }
 
   if(!newETF){
-    /* All top5 held — check avg down */
-    for(var j=0; j<top5.length; j++){
-      var h = ETF_HOLDINGS.find(function(x){ return x.ticker === top5[j].ticker; });
+    for(var j=0; j<topN.length; j++){
+      var h = ETF_HOLDINGS.find(function(x){ return x.ticker === topN[j].ticker; });
       if(h && h.lastBuyPrice){
-        var fallFromLast = (h.lastBuyPrice - top5[j].cmp) / h.lastBuyPrice * 100;
-        if(fallFromLast >= 2.5){
-          avgETF = { rank: top5[j], holding: h, fall: fallFromLast };
+        var fallFromLast = (h.lastBuyPrice - topN[j].cmp) / h.lastBuyPrice * 100;
+        if(fallFromLast >= avgTrig){
+          avgETF = { rank: topN[j], holding: h, fall: fallFromLast };
           break;
         }
       }
@@ -9426,14 +9657,15 @@ function etfBuildSignal(){
 
   /* Commentary lines */
   var comm = [];
-  comm.push('Data as of <strong>' + today + '</strong> — ' + ranking.length + ' ETFs ranked.');
+  comm.push('Data as of <strong>' + today + '</strong> — ' + ranking.length + ' ETFs ranked · Top ' + maxH + ' eligible · Per trade ₹' + etfFmt(perTrade) + '.');
 
   var html = '';
 
   if(newETF){
-    comm.push('Rank 1 new entry: <strong>' + newETF.ticker.replace('.NS','') + '</strong> is ' + Math.abs(newETF.pct).toFixed(2) + '% below its 20 DMA — signal to BUY today after 2:30 PM.');
-    comm.push('Place a market or limit order near ₹' + newETF.cmp.toFixed(2) + '. Record your buy price in My Holdings.');
-    if(heldTickers.length > 0) comm.push('You are currently holding ' + heldTickers.length + ' ETF(s). Max concurrent positions = 5.');
+    var symN = newETF.ticker.replace('.NS','');
+    comm.push('Rank signal: <strong>' + symN + '</strong> (' + (ETF_NAME_MAP[symN]||'') + ') is ' + Math.abs(newETF.pct).toFixed(2) + '% below 20 DMA — eligible to BUY today after 2:30 PM.');
+    comm.push('Buy ~₹' + etfFmt(perTrade) + ' worth at CMP ₹' + newETF.cmp.toFixed(2) + ' → approx ' + Math.floor(perTrade/newETF.cmp) + ' units. Sell target: ₹' + (newETF.cmp * (1 + sellTgt/100)).toFixed(2) + ' (+' + sellTgt + '%).');
+    if(heldTickers.length > 0) comm.push('Currently holding ' + heldTickers.length + '/' + maxH + ' positions.');
 
     html += '<div class="etf-signal-card">';
     html += '<div class="etf-sig-label">🟢 Today\'s Buy Signal</div>';
@@ -9449,9 +9681,9 @@ function etfBuildSignal(){
     html += '</div></div>';
 
   } else if(avgETF){
-    comm.push('All top-5 ETFs are already in your holdings.');
-    comm.push('<strong>' + avgETF.rank.ticker.replace('.NS','') + '</strong> has fallen ' + avgETF.fall.toFixed(2) + '% from your last buy price (₹' + avgETF.holding.lastBuyPrice.toFixed(2) + ') — eligible to average down.');
-    comm.push('Buy again to bring down average cost. Record in My Holdings after buying.');
+    comm.push('All top-' + maxH + ' ETFs already held.');
+    comm.push('<strong>' + avgETF.rank.ticker.replace('.NS','') + '</strong> fell ' + avgETF.fall.toFixed(2) + '% from last buy ₹' + avgETF.holding.lastBuyPrice.toFixed(2) + ' → avg down eligible. Buy ₹' + etfFmt(perTrade) + ' more at ₹' + avgETF.rank.cmp.toFixed(2) + '.');
+    comm.push('New avg price after this buy: ~₹' + ((avgETF.holding.totalInvested + perTrade) / (avgETF.holding.qty + Math.floor(perTrade/avgETF.rank.cmp))).toFixed(2) + '.');
 
     html += '<div class="etf-signal-card">';
     html += '<div class="etf-sig-label">🔵 Average Down Signal</div>';
@@ -9461,8 +9693,9 @@ function etfBuildSignal(){
     html += '</div>';
 
   } else if(heldTickers.length === 0){
-    comm.push('No holdings recorded yet. Today\'s top-ranked ETF is <strong>' + (top5[0]||{ticker:'—'}).ticker.replace('.NS','') + '</strong>.');
-    comm.push('Go to My Holdings and add your first position, or simply buy rank #1 today after 2:30 PM.');
+    var t0sym = (topN[0]||{ticker:'—'}).ticker.replace('.NS','');
+    comm.push('No holdings recorded. Top-ranked ETF: <strong>' + t0sym + '</strong> (' + (ETF_NAME_MAP[t0sym]||'') + ') — ' + (topN[0] ? Math.abs(topN[0].pct).toFixed(2) + '% below 20 DMA' : '') + '.');
+    comm.push('Buy ₹' + etfFmt(perTrade) + ' at CMP ₹' + (topN[0]?topN[0].cmp.toFixed(2):'—') + ' after 2:30 PM. See <strong>Ideal Positions</strong> tab for full picture.');
 
     if(top5[0]){
       html += '<div class="etf-signal-card">';
@@ -9474,7 +9707,7 @@ function etfBuildSignal(){
     }
 
   } else {
-    comm.push('All top-5 ETFs held and none have fallen 2.5%+ from last buy. No action today — wait for tomorrow\'s signal.');
+    comm.push('All top-' + maxH + ' ETFs held · none have fallen ' + avgTrig + '%+ from last buy. No action today — wait for tomorrow\'s signal.');
     html += '<div class="etf-signal-card" style="border-color:var(--border)">';
     html += '<div class="etf-sig-label" style="color:var(--muted)">⏸ No Action Today</div>';
     html += '<div style="font-size:14px;color:var(--muted);margin-top:8px">All conditions checked — no new buy or average-down signal. Check again tomorrow.</div>';
@@ -9483,16 +9716,16 @@ function etfBuildSignal(){
 
   /* Sell signals */
   var sellSignals = ETF_HOLDINGS.filter(function(h){
-    var cmp = etfGetLastPrice(h.ticker);
+    var cmp = etfGetLiveCmp(h.ticker);
     if(!cmp) return false;
-    return (cmp - h.avgPrice) / h.avgPrice * 100 >= 6;
+    return (cmp - h.avgPrice) / h.avgPrice * 100 >= sellTgt;
   });
   if(sellSignals.length){
-    comm.push(sellSignals.length + ' holding(s) have crossed the 6% profit target — <strong>SELL signal active</strong>.');
+    comm.push(sellSignals.length + ' holding(s) have crossed ' + sellTgt + '% target — <strong>SELL signal active</strong>.');
     html += '<div class="etf-signal-card" style="border-color:#3fb950">';
     html += '<div class="etf-sig-label" style="color:#3fb950">🔴 Sell Signal — 6% Target Hit</div>';
     sellSignals.forEach(function(h){
-      var cmp = etfGetLastPrice(h.ticker);
+      var cmp = etfGetLiveCmp(h.ticker) || h.avgPrice;
       var pnl = ((cmp - h.avgPrice)/h.avgPrice*100).toFixed(2);
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">';
       html += '<div><strong>' + h.ticker.replace('.NS','') + '</strong><span style="color:var(--muted);font-size:12px;margin-left:8px">Avg ₹' + h.avgPrice.toFixed(2) + '</span></div>';
@@ -9518,35 +9751,137 @@ function etfBuildRanking(){
   var body = document.getElementById('etfRankBody');
   if(!body) return;
 
-  if(!ETF_DATA){
-    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">Backtest tab mein etf_data.json load karo pehle.</div>';
+  if(!etfHasData()){
+    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">' +
+      (ETF_LIVE_URL ? '⟳ Live data aa raha hai…' : '📂 Backtest tab mein etf_data.json load karo ya ETF_LIVE_URL set karo.') +
+      '</div>';
     return;
   }
 
-  var ranking = etfComputeRanking();
+  var maxH = etfCfgMaxH();
+  var ranking = etfLiveRanking();
   var heldTickers = ETF_HOLDINGS.map(function(h){ return h.ticker; });
-  var today = etfGetLastDate();
+  var today = etfDataDate();
 
-  var html = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">As of ' + today + ' · ' + ranking.length + ' ETFs · Sorted by distance below 20 DMA</div>';
-  html += '<div class="wrap-x" style="overflow-x:auto">';
+  var html = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">As of ' + today + ' · ' + ranking.length + ' ETFs · Sorted by distance below 20 DMA · Top ' + maxH + ' eligible</div>';
+  html += '<div style="overflow-x:auto">';
   html += '<table class="etf-rank-tbl"><thead><tr>';
-  html += '<th>#</th><th>ETF</th><th>Last Price</th><th>20 DMA</th><th>% Below DMA</th><th>Status</th>';
+  html += '<th>#</th><th>ETF</th><th>Underlying</th><th>Last Price</th><th>20 DMA</th><th>% vs DMA</th><th>Qty @ ₹' + etfFmt(etfCfgPerTrade()) + '</th><th>Status</th>';
   html += '</tr></thead><tbody>';
 
   ranking.forEach(function(r, i){
+    var sym = r.ticker.replace('.NS','');
     var held = heldTickers.includes(r.ticker);
     var isAbove = r.pct < 0;
+    var qty = Math.floor(etfCfgPerTrade() / r.cmp);
     html += '<tr>';
-    html += '<td><span class="etf-rank-num" style="' + (i < 5 ? '' : 'background:var(--border);color:var(--muted)') + '">' + (i+1) + '</span></td>';
-    html += '<td><strong>' + r.ticker.replace('.NS','') + '</strong></td>';
+    html += '<td><span class="etf-rank-num" style="' + (i < maxH ? '' : 'background:var(--border);color:var(--muted)') + '">' + (i+1) + '</span></td>';
+    html += '<td><strong>' + sym + '</strong></td>';
+    html += '<td style="font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (ETF_NAME_MAP[sym]||'') + '</td>';
     html += '<td>₹' + r.cmp.toFixed(2) + '</td>';
     html += '<td>₹' + r.dma20.toFixed(2) + '</td>';
-    html += '<td class="' + (isAbove ? 'g' : 'r') + '" style="font-weight:600">' + (isAbove ? '+' : '') + (-r.pct).toFixed(2) + '%</td>';
-    html += '<td>' + (held ? '<span class="etf-hold-badge">Holding</span>' : (i < 5 ? '<span style="font-size:11px;color:var(--page)">Top 5</span>' : '')) + '</td>';
+    html += '<td class="' + (isAbove ? 'g' : 'r') + '" style="font-weight:600">' + (isAbove ? '+' : '-') + Math.abs(r.pct).toFixed(2) + '%</td>';
+    html += '<td style="color:var(--muted);font-size:12px">' + qty + '</td>';
+    html += '<td>' + (held ? '<span class="etf-hold-badge">Holding</span>' : (i < maxH ? '<span style="font-size:11px;color:var(--page);font-weight:600">Eligible</span>' : '')) + '</td>';
     html += '</tr>';
   });
 
   html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+/* ── IDEAL POSITIONS pane ── */
+function etfBuildIdeal(){
+  var body = document.getElementById('etfIdealBody');
+  if(!body) return;
+
+  if(!etfHasData()){
+    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">' +
+      (ETF_LIVE_URL ? '⟳ Live data fetch ho raha hai — Ideal Positions abhi milenge…' :
+       '📡 Live data ke liye ETF_LIVE_URL set karo ya 📂 Backtest tab mein etf_data.json load karo.') +
+      '</div>';
+    return;
+  }
+
+  var capital  = etfCfgCapital();
+  var perTrade = etfCfgPerTrade();
+  var maxH     = etfCfgMaxH();
+  var sellTgt  = etfCfgSellTgt();
+  var avgTrig  = etfCfgAvgTrig();
+  var ranking  = etfLiveRanking();
+  var topN     = ranking.slice(0, maxH);
+  var today    = etfDataDate();
+  var heldMap  = {};
+  ETF_HOLDINGS.forEach(function(h){ heldMap[h.ticker] = h; });
+
+  var maxDeployed = perTrade * maxH;
+  var currentDeployed = ETF_HOLDINGS.reduce(function(s,h){ return s + h.totalInvested; }, 0);
+  var remainingCash = capital - currentDeployed;
+  var parts = Math.floor(capital / perTrade);
+
+  /* Summary strip */
+  var html = '<div class="etf-stat-strip">';
+  html += etfStatBox('Capital', '₹' + etfFmt(capital));
+  html += etfStatBox('Per Trade', '₹' + etfFmt(perTrade));
+  html += etfStatBox('Total Parts', parts + '');
+  html += etfStatBox('Max Holdings', maxH + '');
+  html += etfStatBox('Max Deployed', '₹' + etfFmt(maxDeployed));
+  html += etfStatBox('Remaining Cash', '<span class="' + (remainingCash>=0?'g':'r') + '">₹' + etfFmt(Math.round(remainingCash)) + '</span>');
+  html += '</div>';
+
+  /* Commentary */
+  html += '<div class="etf-commentary" style="margin-bottom:20px">';
+  html += '<div class="etf-comm-line"><span>Strategy rule: Rank ETFs by % below 20 DMA. Buy rank #1 each day (if not already held). Sell at +' + sellTgt + '%. Avg down when any held ETF falls ' + avgTrig + '% from last buy price.</span></div>';
+  html += '<div class="etf-comm-line"><span>Max ' + maxH + ' concurrent positions × ₹' + etfFmt(perTrade) + ' = ₹' + etfFmt(maxDeployed) + ' max deployed. Capital ₹' + etfFmt(capital) + ' → ' + parts + ' trades possible before full deployment.</span></div>';
+  if(topN.length > 0) html += '<div class="etf-comm-line"><span>Today\'s ideal #1 buy: <strong>' + topN[0].ticker.replace('.NS','') + '</strong> at ₹' + topN[0].cmp.toFixed(2) + ' · ' + Math.abs(topN[0].pct).toFixed(2) + '% below 20 DMA · Sell target ₹' + (topN[0].cmp * (1+sellTgt/100)).toFixed(2) + '.</span></div>';
+  html += '</div>';
+
+  /* Ideal positions grid */
+  html += '<h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px">Ideal Top ' + maxH + ' Positions — Based on Current Ranking</h4>';
+  html += '<div class="etf-ideal-grid">';
+
+  topN.forEach(function(r, i){
+    var sym = r.ticker.replace('.NS','');
+    var h   = heldMap[r.ticker];
+    var qty = Math.floor(perTrade / r.cmp);
+    var sellPrice = r.cmp * (1 + sellTgt/100);
+    var isHeld = !!h;
+    var cmp = etfGetLiveCmp(r.ticker) || r.cmp;
+    var pnl = isHeld ? (cmp - h.avgPrice) * h.qty : null;
+    var pnlPct = isHeld ? (cmp - h.avgPrice) / h.avgPrice * 100 : null;
+    var hitTarget = isHeld && pnlPct >= sellTgt;
+    var avgDown = isHeld && h.lastBuyPrice && (h.lastBuyPrice - cmp)/h.lastBuyPrice*100 >= avgTrig;
+
+    html += '<div class="etf-ideal-card' + (i===0?' rank1':'') + '" style="' + (hitTarget?'border-color:#3fb950;background:color-mix(in srgb,#3fb950 6%,var(--panel))':'') + '">';
+    html += '<div class="etf-ideal-rank">#' + (i+1) + '</div>';
+    html += '<div class="etf-ideal-ticker">' + sym + '</div>';
+    html += '<div class="etf-ideal-name">' + (ETF_NAME_MAP[sym]||sym) + '</div>';
+    html += '<div class="etf-ideal-pct">' + (r.pct < 0 ? '+' : '-') + Math.abs(r.pct).toFixed(2) + '% vs 20 DMA</div>';
+    html += '<div class="etf-ideal-row"><span>CMP</span><span>₹' + r.cmp.toFixed(2) + '</span></div>';
+    html += '<div class="etf-ideal-row"><span>20 DMA</span><span>₹' + r.dma20.toFixed(2) + '</span></div>';
+    html += '<div class="etf-ideal-row"><span>Ideal Buy</span><span>₹' + etfFmt(perTrade) + ' → ' + qty + ' units</span></div>';
+    html += '<div class="etf-ideal-row"><span>Sell Target</span><span style="color:#3fb950">₹' + sellPrice.toFixed(2) + ' (+' + sellTgt + '%)</span></div>';
+    html += '<div class="etf-ideal-row"><span>Avg Down @</span><span style="color:#f0a500">₹' + (r.cmp * (1 - avgTrig/100)).toFixed(2) + ' (-' + avgTrig + '%)</span></div>';
+
+    if(isHeld){
+      html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
+      html += '<div class="etf-ideal-row"><span>Your Avg</span><span>₹' + h.avgPrice.toFixed(2) + '</span></div>';
+      html += '<div class="etf-ideal-row"><span>Your Qty</span><span>' + h.qty + '</span></div>';
+      html += '<div class="etf-ideal-row"><span>Invested</span><span>₹' + etfFmt(Math.round(h.totalInvested)) + '</span></div>';
+      html += '<div class="etf-ideal-row"><span>P&L</span><span class="' + (pnl>=0?'g':'r') + '">' + (pnlPct>=0?'+':'') + pnlPct.toFixed(2) + '% (₹' + etfFmt(Math.round(pnl)) + ')</span></div>';
+      if(hitTarget) html += '<div style="font-size:11px;font-weight:700;color:#3fb950;margin-top:6px">✓ SELL TARGET HIT — book profit</div>';
+      else if(avgDown) html += '<div style="font-size:11px;font-weight:700;color:#f0a500;margin-top:6px">↓ AVG DOWN — price fallen ' + ((h.lastBuyPrice-cmp)/h.lastBuyPrice*100).toFixed(1) + '% from last buy</div>';
+      else html += '<div style="font-size:11px;color:var(--muted);margin-top:6px">Holding · Wait for target or avg-down trigger</div>';
+      html += '</div>';
+    } else {
+      html += '<div style="margin-top:10px;padding:6px 0;border-top:1px solid var(--border);font-size:11px;font-weight:600;color:var(--page)">↑ BUY SIGNAL — not yet in portfolio</div>';
+    }
+
+    html += '</div>'; /* card */
+  });
+
+  html += '</div>'; /* grid */
+
   body.innerHTML = html;
 }
 
@@ -9558,7 +9893,7 @@ function etfBuildPortfolio(){
   /* Stats strip */
   var totalInvested = ETF_HOLDINGS.reduce(function(s,h){ return s + h.totalInvested; }, 0);
   var totalCurrent  = ETF_HOLDINGS.reduce(function(s,h){
-    var cmp = ETF_DATA ? (etfGetLastPrice(h.ticker) || h.avgPrice) : h.avgPrice;
+    var cmp = etfGetLiveCmp(h.ticker) || h.avgPrice;
     return s + cmp * h.qty;
   }, 0);
   var unrealisedPnL = totalCurrent - totalInvested;
@@ -9569,7 +9904,7 @@ function etfBuildPortfolio(){
   html += etfStatBox('Current Value', '₹' + etfFmt(Math.round(totalCurrent)));
   html += etfStatBox('Unrealised P&L', '<span class="' + (unrealisedPnL>=0?'g':'r') + '">₹' + etfFmt(Math.round(unrealisedPnL)) + '</span>');
   html += etfStatBox('Realised P&L', '<span class="' + (realisedPnL>=0?'g':'r') + '">₹' + etfFmt(Math.round(realisedPnL)) + '</span>');
-  html += etfStatBox('Positions', ETF_HOLDINGS.length + '/5');
+  html += etfStatBox('Positions', ETF_HOLDINGS.length + '/' + etfCfgMaxH());
   html += etfStatBox('Trades Closed', ETF_TRADES.length + '');
   html += '</div>';
 
@@ -9598,10 +9933,10 @@ function etfBuildPortfolio(){
     html += '<th>ETF</th><th>Avg Price</th><th>Last Price</th><th>Qty</th><th>Invested</th><th>P&L</th><th>P&L%</th><th></th>';
     html += '</tr></thead><tbody>';
     ETF_HOLDINGS.forEach(function(h, idx){
-      var cmp    = ETF_DATA ? (etfGetLastPrice(h.ticker) || h.avgPrice) : h.avgPrice;
+      var cmp    = etfGetLiveCmp(h.ticker) || h.avgPrice;
       var pnl    = (cmp - h.avgPrice) * h.qty;
       var pnlPct = (cmp - h.avgPrice) / h.avgPrice * 100;
-      var hitTarget = pnlPct >= 6;
+      var hitTarget = pnlPct >= etfCfgSellTgt();
       html += '<tr' + (hitTarget ? ' style="background:color-mix(in srgb,#3fb950 8%,transparent)"' : '') + '>';
       html += '<td><strong>' + h.ticker.replace('.NS','') + '</strong>' + (hitTarget ? ' <span style="font-size:10px;color:#3fb950;font-weight:700">SELL ✓</span>' : '') + '</td>';
       html += '<td>₹' + h.avgPrice.toFixed(2) + '</td>';
@@ -9681,7 +10016,7 @@ function etfRecordBuy(){
 function etfRecordSell(idx){
   var h       = ETF_HOLDINGS[idx];
   if(!h) return;
-  var cmp     = ETF_DATA ? (etfGetLastPrice(h.ticker) || h.avgPrice) : h.avgPrice;
+  var cmp     = etfGetLiveCmp(h.ticker) || h.avgPrice;
   var sellPrice = parseFloat(prompt('Sell price for ' + h.ticker.replace('.NS','') + '? (Last: ₹' + cmp.toFixed(2) + ')', cmp.toFixed(2)));
   if(isNaN(sellPrice) || sellPrice <= 0) return;
   var pnl = (sellPrice - h.avgPrice) * h.qty;
@@ -9722,12 +10057,12 @@ function etfBuildBacktest(){
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px">';
   html += etfCfgInput('etfCfgStart','Start Date','date', ETF_DATA ? (ETF_DATA.meta||{}).start_date || '2021-01-01' : '2021-01-01');
   html += etfCfgInput('etfCfgEnd','End Date','date', ETF_DATA ? (ETF_DATA.meta||{}).end_date || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
-  html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number','500000');
-  html += etfCfgInput('etfCfgTrade','Per Trade (₹)','number','25000');
-  html += etfCfgInput('etfCfgSell','Sell Target (%)','number','6');
-  html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number','2.5');
+  html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number', etfCfgCapital());
+  html += etfCfgInput('etfCfgTrade','Per Trade (₹)','number', etfCfgPerTrade());
+  html += etfCfgInput('etfCfgSell','Sell Target (%)','number', etfCfgSellTgt());
+  html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number', etfCfgAvgTrig());
   html += etfCfgInput('etfCfgMinDrop','Min % Below 20 DMA to Buy','number','0');
-  html += etfCfgInput('etfCfgMaxH','Max Concurrent Holdings','number','5');
+  html += etfCfgInput('etfCfgMaxH','Max Concurrent Holdings','number', etfCfgMaxH());
   html += '</div>';
   html += '<button class="etf-action-btn" onclick="etfRunBacktest()"' + (ETF_DATA?'':' disabled style="opacity:.4"') + '>▶ Run Backtest</button>';
   html += ' <span id="etfBtStatus" style="font-size:12px;color:var(--muted);margin-left:10px"></span>';
@@ -9827,6 +10162,7 @@ function etfRunBacktest(){
       ETF_BT_RESULT = etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, startDate, endDate);
       ETF_BT_RESULT.capital = capital;
       status.textContent = '✓ Done — ' + ETF_BT_RESULT.trades.length + ' trades';
+      etfSaveCfg();
       etfBuildBacktest();
     }catch(e){
       status.textContent = '⚠ Error: ' + e.message;
@@ -9868,6 +10204,9 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
   var equityCurve = [];
   var monthlyPnL = {};
   var etfPnL = {};
+  var realisedPnL = 0;
+  /* parts = capital / tradeSize — fixed ratio, but tradeSize grows with portfolio */
+  var parts = tradeSize > 0 ? Math.round(capital / tradeSize) : 60;
 
   tradingDays.forEach(function(date){
     var dp = priceIdx[date] || {};
@@ -9879,6 +10218,7 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
       if((cmp - h.avgPrice)/h.avgPrice >= sellTarget){
         var profit = cmp*h.qty - h.totalInvested;
         cash += cmp*h.qty;
+        realisedPnL += profit;
         trades.push({date,ticker,action:'SELL',price:cmp,qty:h.qty,pnl:profit});
         var mo = date.slice(0,7);
         monthlyPnL[mo] = (monthlyPnL[mo]||0) + profit;
@@ -9886,6 +10226,16 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
         delete holdings[ticker];
       }
     });
+
+    /* Compounding: recalculate tradeSize based on current total portfolio value */
+    var hVal0 = 0;
+    Object.keys(holdings).forEach(function(t){
+      var p=dp[t]; hVal0 += p ? p*holdings[t].qty : holdings[t].totalInvested;
+    });
+    var portfolioNow = cash + hVal0;
+    var dynamicTradeSize = parts > 0 ? Math.floor(portfolioNow / parts) : tradeSize;
+    /* Never let it fall below the original tradeSize (don't shrink on drawdown) */
+    var effectiveTradeSize = Math.max(tradeSize, dynamicTradeSize);
 
     /* Rank */
     var ranking = [];
@@ -9899,10 +10249,10 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
     var top = ranking.slice(0,maxH);
     var held = Object.keys(holdings);
 
-    if(cash >= tradeSize){
+    if(cash >= effectiveTradeSize){
       var newE = top.find(function(r){ return !held.includes(r.ticker); });
       if(newE){
-        var qty = Math.floor(tradeSize/newE.cmp);
+        var qty = Math.floor(effectiveTradeSize/newE.cmp);
         if(qty>0){
           var cost = qty*newE.cmp; cash -= cost;
           holdings[newE.ticker]={qty,avgPrice:newE.cmp,lastBuyPrice:newE.cmp,totalInvested:cost};
@@ -9915,7 +10265,7 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
         });
         if(avgC){
           var ah = holdings[avgC.ticker];
-          var aqty = Math.floor(tradeSize/avgC.cmp);
+          var aqty = Math.floor(effectiveTradeSize/avgC.cmp);
           if(aqty>0){
             var acost=aqty*avgC.cmp; cash-=acost;
             var nq=ah.qty+aqty, ni=ah.totalInvested+acost;
