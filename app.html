@@ -3688,6 +3688,7 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
 .recb-c2 .trio-bars{flex:1;display:flex;flex-direction:column;min-height:0}
 .recb-c2 .yb{min-height:230px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="s-light">
 
@@ -10098,15 +10099,15 @@ function etfBuildBacktest(){
 
     /* Equity curve */
     html += '<div class="etf-bt-wrap"><h4>Portfolio Value Over Time</h4>';
-    html += '<canvas id="etfEqChart" style="max-height:220px"></canvas></div>';
+    html += '<div style="position:relative;height:240px"><canvas id="etfEqChart"></canvas></div></div>';
 
     /* Monthly PnL */
-    html += '<div class="etf-bt-wrap"><h4>Monthly Realised P&L</h4>';
-    html += '<canvas id="etfMoChart" style="max-height:180px"></canvas></div>';
+    html += '<div class="etf-bt-wrap"><h4>Monthly Realised P&amp;L</h4>';
+    html += '<div style="position:relative;height:200px"><canvas id="etfMoChart"></canvas></div></div>';
 
     /* Top ETFs */
     html += '<div class="etf-bt-wrap"><h4>Top ETFs by Realised Profit</h4>';
-    html += '<canvas id="etfTopChart" style="max-height:180px"></canvas></div>';
+    html += '<div style="position:relative;height:280px"><canvas id="etfTopChart"></canvas></div></div>';
 
     /* Trade log */
     html += '<div class="etf-bt-wrap"><h4>Trade Log (last 100)</h4>';
@@ -10320,42 +10321,98 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
 function etfDrawCharts(){
   var r = ETF_BT_RESULT;
   if(!r) return;
-  if(typeof Chart === 'undefined') return;
+  if(typeof Chart === 'undefined'){
+    /* retry once after 500ms in case CDN still loading */
+    setTimeout(etfDrawCharts, 500);
+    return;
+  }
   if(ETF_CHART_INST){ try{ ETF_CHART_INST.forEach(function(c){ c.destroy(); }); }catch(e){} }
   ETF_CHART_INST = [];
 
-  var step = Math.max(1,Math.floor(r.equityCurve.length/400));
+  /* theme-aware colors */
+  var isDark = document.body.classList.contains('s-dark');
+  var mutedClr  = isDark ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.45)';
+  var gridClr   = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.07)';
+  var textClr   = isDark ? '#e6edf3' : '#1c2128';
+
+  function baseOpts(extraY){
+    return {
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{
+        backgroundColor: isDark?'#1c2128':'#fff',
+        titleColor:textClr, bodyColor:textClr,
+        borderColor: isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.12)', borderWidth:1
+      }},
+      scales:{
+        x:{ ticks:{color:mutedClr,maxTicksLimit:8,font:{size:11}}, grid:{color:gridClr} },
+        y:{ ticks:{color:mutedClr,font:{size:11},callback: extraY || function(v){return v;}}, grid:{color:gridClr} }
+      }
+    };
+  }
+
+  /* 1. Equity Curve */
+  var step = Math.max(1, Math.floor(r.equityCurve.length/400));
   var eqD  = r.equityCurve.filter(function(_,i){ return i%step===0; });
-  var defs = { responsive:true, plugins:{legend:{display:false}},
-    scales:{ x:{ticks:{color:'var(--muted)',maxTicksLimit:8},grid:{color:'rgba(255,255,255,.06)'}},
-             y:{ticks:{color:'var(--muted)'},grid:{color:'rgba(255,255,255,.06)'}} }};
-
   var ec = document.getElementById('etfEqChart');
-  if(ec) ETF_CHART_INST.push(new Chart(ec.getContext('2d'),{type:'line',data:{
-    labels:eqD.map(function(d){return d.date;}),
-    datasets:[{data:eqD.map(function(d){return d.value;}),
-      borderColor:'#0EA8A8',backgroundColor:'rgba(14,168,168,.08)',
-      borderWidth:1.5,pointRadius:0,fill:true,tension:.3}]},
-    options:{...defs,scales:{x:defs.scales.x,y:{...defs.scales.y,ticks:{color:'var(--muted)',callback:function(v){return '₹'+(v/100000).toFixed(1)+'L';}}}}}
-  }));
+  if(ec){
+    var opts = baseOpts(function(v){ return '₹'+(v/100000).toFixed(1)+'L'; });
+    ETF_CHART_INST.push(new Chart(ec.getContext('2d'),{
+      type:'line',
+      data:{
+        labels: eqD.map(function(d){return d.date;}),
+        datasets:[{
+          data: eqD.map(function(d){return d.value;}),
+          borderColor:'#0EA8A8', backgroundColor:'rgba(14,168,168,.10)',
+          borderWidth:2, pointRadius:0, fill:true, tension:.3
+        }]
+      },
+      options: opts
+    }));
+  }
 
+  /* 2. Monthly P&L bars */
   var months = Object.keys(r.monthlyPnL).sort();
   var mc = document.getElementById('etfMoChart');
-  if(mc) ETF_CHART_INST.push(new Chart(mc.getContext('2d'),{type:'bar',data:{
-    labels:months,
-    datasets:[{data:months.map(function(m){return r.monthlyPnL[m];}),
-      backgroundColor:months.map(function(m){return r.monthlyPnL[m]>=0?'rgba(63,185,80,.75)':'rgba(248,81,73,.75)';}),borderRadius:3}]},
-    options:{...defs,scales:{x:{...defs.scales.x,ticks:{color:'var(--muted)',maxTicksLimit:12}},y:{...defs.scales.y,ticks:{color:'var(--muted)',callback:function(v){return '₹'+(v/1000).toFixed(0)+'k';}}}}}}
-  ));
+  if(mc){
+    var opts2 = baseOpts(function(v){ return '₹'+(v/1000).toFixed(0)+'k'; });
+    opts2.scales.x.ticks.maxTicksLimit = 14;
+    ETF_CHART_INST.push(new Chart(mc.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels: months,
+        datasets:[{
+          data: months.map(function(m){return r.monthlyPnL[m];}),
+          backgroundColor: months.map(function(m){return r.monthlyPnL[m]>=0?'rgba(63,185,80,.8)':'rgba(248,81,73,.8)';}),
+          borderRadius:3
+        }]
+      },
+      options: opts2
+    }));
+  }
 
-  var topE = Object.entries(r.etfPnL).filter(function(e){return e[1]!==0;}).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+  /* 3. Top ETFs by P&L (horizontal bar) */
+  var topE = Object.entries(r.etfPnL)
+    .filter(function(e){return e[1]!==0;})
+    .sort(function(a,b){return b[1]-a[1];})
+    .slice(0,12);
   var tc = document.getElementById('etfTopChart');
-  if(tc) ETF_CHART_INST.push(new Chart(tc.getContext('2d'),{type:'bar',data:{
-    labels:topE.map(function(e){return e[0].replace('.NS','');}),
-    datasets:[{data:topE.map(function(e){return e[1];}),
-      backgroundColor:topE.map(function(e){return e[1]>=0?'rgba(63,185,80,.75)':'rgba(248,81,73,.75)';}),borderRadius:3}]},
-    options:{...defs,indexAxis:'y',scales:{x:{...defs.scales.x,ticks:{color:'var(--muted)',callback:function(v){return '₹'+(v/1000).toFixed(0)+'k';}}},y:{...defs.scales.y}}}
-  }));
+  if(tc){
+    var opts3 = baseOpts(function(v){ return '₹'+(v/1000).toFixed(0)+'k'; });
+    opts3.indexAxis = 'y';
+    ETF_CHART_INST.push(new Chart(tc.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels: topE.map(function(e){return e[0].replace('.NS','');}),
+        datasets:[{
+          data: topE.map(function(e){return e[1];}),
+          backgroundColor: topE.map(function(e){return e[1]>=0?'rgba(63,185,80,.8)':'rgba(248,81,73,.8)';}),
+          borderRadius:3
+        }]
+      },
+      options: opts3
+    }));
+  }
 }
 
 function etfFmt(n){ return (n||0).toLocaleString('en-IN'); }
