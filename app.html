@@ -4100,7 +4100,7 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
           </div>
           <div class="etf-cfg-item">
             <label>Per Trade (% of Capital)</label>
-            <input id="etfPerTradeInput" type="number" value="1.67" min="0.1" max="50" step="0.1" oninput="etfOnCapChange()">
+            <input id="etfPerTradeInput" type="number" value="1.67" min="0.01" step="0.1" oninput="etfOnCapChange()">
           </div>
           <div class="etf-cfg-item">
             <label>Max Holdings</label>
@@ -10075,7 +10075,7 @@ function etfBuildBacktest(){
   html += etfCfgInput('etfCfgStart','Start Date','date', ETF_DATA ? (ETF_DATA.meta||{}).start_date || '2021-01-01' : '2021-01-01');
   html += etfCfgInput('etfCfgEnd','End Date','date', ETF_DATA ? (ETF_DATA.meta||{}).end_date || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
   html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number', etfCfgCapital());
-  html += etfCfgInput('etfCfgTrade','Per Trade (% of Capital)','number', etfCfgPerTradePct(), '0.1', '0.1', '50');
+  html += etfCfgInput('etfCfgTrade','Per Trade (% of Capital)','number', etfCfgPerTradePct(), '0.1', '0.01');
   html += etfCfgInput('etfCfgSell','Sell Target (%)','number', etfCfgSellTgt());
   html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number', etfCfgAvgTrig());
   html += etfCfgInput('etfCfgMinDrop','Min % Below 20 DMA to Buy','number','0');
