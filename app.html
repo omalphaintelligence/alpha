@@ -10088,38 +10088,92 @@ function etfBuildBacktest(){
   /* Results (if available) */
   if(ETF_BT_RESULT){
     var r = ETF_BT_RESULT;
-    html += '<div class="etf-stat-strip">';
-    html += etfStatBox('Final Value','<span class="' + (r.finalVal>=r.capital?'g':'r') + '">₹' + etfFmt(Math.round(r.finalVal)) + '</span>');
-    html += etfStatBox('Total Return','<span class="' + (r.totalRet>=0?'g':'r') + '">' + r.totalRet.toFixed(2) + '%</span>');
-    html += etfStatBox('CAGR','<span class="' + (r.cagr>=0?'g':'r') + '">' + r.cagr.toFixed(2) + '%</span>');
-    html += etfStatBox('Max Drawdown','<span class="r">' + r.maxDD.toFixed(2) + '%</span>');
-    html += etfStatBox('Win Rate','<span style="color:var(--page)">' + r.winRate.toFixed(1) + '%</span>');
-    html += etfStatBox('Total Trades',r.trades.length + '');
-    html += '</div>';
+    function G(v){ return '<span class="g">'+v+'</span>'; }
+    function R(v){ return '<span class="r">'+v+'</span>'; }
+    function GR(n,v){ return n>=0?G(v):R(v); }
+    function rupee(n){ return '₹'+etfFmt(Math.round(n)); }
 
-    /* Equity curve */
+    /* ── Row 1: Returns ── */
+    html += '<div class="etf-bt-wrap">';
+    html += '<h4>Returns</h4>';
+    html += '<div class="etf-stat-strip" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">';
+    html += etfStatBox('Final Value', GR(r.finalVal-r.capital, rupee(r.finalVal)));
+    html += etfStatBox('Total Return', GR(r.totalRet, r.totalRet.toFixed(2)+'%'));
+    html += etfStatBox('CAGR', GR(r.cagr, r.cagr.toFixed(2)+'%'));
+    html += etfStatBox('Realised P&amp;L', GR(r.realisedPnL, rupee(r.realisedPnL)));
+    html += etfStatBox('Best Month', G(rupee(r.bestMonth)));
+    html += etfStatBox('Worst Month', R(rupee(r.worstMonth)));
+    html += '</div></div>';
+
+    /* ── Row 2: Risk ── */
+    html += '<div class="etf-bt-wrap">';
+    html += '<h4>Risk</h4>';
+    html += '<div class="etf-stat-strip" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">';
+    html += etfStatBox('Max Drawdown', R(r.maxDD.toFixed(2)+'%'));
+    html += etfStatBox('MDD Period', r.maxDDStart?'<span style="font-size:13px">'+r.maxDDStart+'<br>→ '+r.maxDDEnd+'</span>':'—');
+    html += etfStatBox('Sortino Ratio', r.sortino!=null?GR(r.sortino,r.sortino.toFixed(2)):'—');
+    html += etfStatBox('Profit Factor', r.profitFactor!=null?GR(r.profitFactor-1,r.profitFactor.toFixed(2)):'—');
+    html += etfStatBox('Expectancy / Trade', GR(r.expectancy, rupee(r.expectancy)));
+    html += etfStatBox('Avg Trades/Month', r.avgTradesPerMonth.toFixed(1));
+    html += '</div></div>';
+
+    /* ── Row 3: Trade stats ── */
+    html += '<div class="etf-bt-wrap">';
+    html += '<h4>Trade Statistics</h4>';
+    html += '<div class="etf-stat-strip" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">';
+    html += etfStatBox('Total Trades', r.totalTrades+'');
+    html += etfStatBox('Win Rate', r.winRate.toFixed(1)+'%');
+    html += etfStatBox('Avg Win', G(rupee(r.avgWin)));
+    html += etfStatBox('Avg Loss', R(rupee(r.avgLoss)));
+    html += etfStatBox('Max Win', G(rupee(r.maxWin)));
+    html += etfStatBox('Max Loss', R(rupee(r.maxLoss)));
+    html += etfStatBox('Max Win Streak', r.maxWinStreak+' trades');
+    html += etfStatBox('Max Loss Streak', r.maxLossStreak+' trades');
+    html += '</div></div>';
+
+    /* ── Equity curve ── */
     html += '<div class="etf-bt-wrap"><h4>Portfolio Value Over Time</h4>';
-    html += '<div style="position:relative;height:240px"><canvas id="etfEqChart"></canvas></div></div>';
+    html += '<div style="position:relative;height:260px"><canvas id="etfEqChart"></canvas></div></div>';
 
-    /* Monthly PnL */
+    /* ── Monthly P&L bars ── */
     html += '<div class="etf-bt-wrap"><h4>Monthly Realised P&amp;L</h4>';
     html += '<div style="position:relative;height:200px"><canvas id="etfMoChart"></canvas></div></div>';
 
-    /* Top ETFs */
+    /* ── Monthly breakdown table (Stockmock-style) ── */
+    html += '<div class="etf-bt-wrap"><h4>Monthly Breakdown</h4>';
+    html += '<div style="overflow-x:auto"><table class="etf-rank-tbl" style="font-size:12px">';
+    html += '<thead><tr><th>Year</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>Total</th></tr></thead><tbody>';
+    var MOS=['01','02','03','04','05','06','07','08','09','10','11','12'];
+    Object.keys(r.monthlyBreakdown).sort().forEach(function(yr){
+      var row=r.monthlyBreakdown[yr]; var ytd=0;
+      html += '<tr><td style="font-weight:600">'+yr+'</td>';
+      MOS.forEach(function(m){
+        var v=row[m]||null;
+        if(v!=null) ytd+=v;
+        html += '<td class="'+(v==null?'':v>=0?'g':'r')+'">'+(v==null?'—':rupee(v))+'</td>';
+      });
+      html += '<td class="'+(ytd>=0?'g':'r')+'" style="font-weight:600">'+rupee(ytd)+'</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    /* ── Top ETFs ── */
     html += '<div class="etf-bt-wrap"><h4>Top ETFs by Realised Profit</h4>';
     html += '<div style="position:relative;height:280px"><canvas id="etfTopChart"></canvas></div></div>';
 
-    /* Trade log */
-    html += '<div class="etf-bt-wrap"><h4>Trade Log (last 100)</h4>';
-    html += '<div style="overflow-x:auto;max-height:280px"><table class="etf-rank-tbl"><thead><tr>';
-    html += '<th>Date</th><th>ETF</th><th>Action</th><th>Price</th><th>Qty</th><th>P&L</th></tr></thead><tbody>';
-    r.trades.slice(-100).reverse().forEach(function(t){
-      html += '<tr><td>' + t.date + '</td><td>' + t.ticker.replace('.NS','') + '</td>';
-      html += '<td><span style="padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;background:' +
-              (t.action==='BUY'?'rgba(63,185,80,.15)':t.action==='SELL'?'rgba(248,81,73,.15)':'rgba(88,166,255,.15)') +
-              ';color:' + (t.action==='BUY'?'#3fb950':t.action==='SELL'?'#f85149':'#58a6ff') + '">' + t.action + '</span></td>';
-      html += '<td>₹' + t.price.toFixed(2) + '</td><td>' + t.qty + '</td>';
-      html += '<td class="' + (t.pnl==null?'':t.pnl>=0?'g':'r') + '">' + (t.pnl==null?'—':'₹'+etfFmt(Math.round(t.pnl))) + '</td></tr>';
+    /* ── Trade log ── */
+    html += '<div class="etf-bt-wrap"><h4>Trade Log (last 200)</h4>';
+    html += '<div style="overflow-x:auto;max-height:320px"><table class="etf-rank-tbl"><thead><tr>';
+    html += '<th>Date</th><th>ETF</th><th>Action</th><th>Price</th><th>Qty</th><th>Invested</th><th>P&amp;L</th></tr></thead><tbody>';
+    r.trades.slice(-200).reverse().forEach(function(t){
+      var invested = t.price*t.qty;
+      var pnlPct = t.pnl!=null&&invested>0 ? ' ('+((t.pnl/invested)*100).toFixed(1)+'%)' : '';
+      html += '<tr><td>'+t.date+'</td><td style="font-weight:600">'+t.ticker.replace('.NS','')+'</td>';
+      html += '<td><span style="padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;background:'+
+        (t.action==='BUY'?'rgba(63,185,80,.15)':t.action==='SELL'?'rgba(248,81,73,.15)':'rgba(88,166,255,.15)')+
+        ';color:'+(t.action==='BUY'?'#3fb950':t.action==='SELL'?'#f85149':'#58a6ff')+'">'+t.action+'</span></td>';
+      html += '<td>₹'+t.price.toFixed(2)+'</td><td>'+t.qty+'</td>';
+      html += '<td>'+rupee(invested)+'</td>';
+      html += '<td class="'+(t.pnl==null?'':t.pnl>=0?'g':'r')+'">'+(t.pnl==null?'—':rupee(t.pnl)+pnlPct)+'</td></tr>';
     });
     html += '</tbody></table></div></div>';
   }
@@ -10309,13 +10363,80 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
   var totalRet = (finalVal-capital)/capital*100;
   var years = tradingDays.length/252;
   var cagr = (Math.pow(finalVal/capital,1/Math.max(years,.01))-1)*100;
-  var peak=capital,maxDD=0;
-  equityCurve.forEach(function(d){ if(d.value>peak)peak=d.value; var dd=(peak-d.value)/peak; if(dd>maxDD)maxDD=dd; });
+
+  /* Drawdown + recovery */
+  var peak=capital, maxDD=0, maxDDStart='', maxDDEnd='', maxDDRecDate='', inDD=false, ddStart='';
+  var currentDD=0, currentDDStart='';
+  equityCurve.forEach(function(d){
+    if(d.value>peak){ peak=d.value; if(inDD){ inDD=false; } }
+    var dd=(peak-d.value)/peak;
+    if(dd>maxDD){ maxDD=dd; maxDDStart=ddStart; maxDDEnd=d.date; }
+    if(dd>0 && !inDD){ inDD=true; ddStart=d.date; }
+    currentDD=dd; currentDDStart=ddStart;
+  });
+
+  /* Trade stats */
   var sells=trades.filter(function(t){return t.action==='SELL';});
   var wins=sells.filter(function(t){return t.pnl>0;});
+  var losses=sells.filter(function(t){return t.pnl<=0;});
   var winRate=sells.length?wins.length/sells.length*100:0;
+  var avgWin=wins.length?wins.reduce(function(s,t){return s+t.pnl;},0)/wins.length:0;
+  var avgLoss=losses.length?losses.reduce(function(s,t){return s+t.pnl;},0)/losses.length:0;
+  var maxWin=sells.length?Math.max.apply(null,sells.map(function(t){return t.pnl;})):0;
+  var maxLoss=sells.length?Math.min.apply(null,sells.map(function(t){return t.pnl;})):0;
+  var profitFactor=losses.length&&losses.reduce(function(s,t){return s+Math.abs(t.pnl);},0)>0
+    ? wins.reduce(function(s,t){return s+t.pnl;},0) / Math.abs(losses.reduce(function(s,t){return s+t.pnl;},0))
+    : null;
+  var expectancy=sells.length?(wins.reduce(function(s,t){return s+t.pnl;},0)+losses.reduce(function(s,t){return s+t.pnl;},0))/sells.length:0;
 
-  return {trades,equityCurve,monthlyPnL,etfPnL,finalVal,totalRet,cagr,maxDD:maxDD*100,winRate,validETFs:Object.keys(rawData).length};
+  /* Streaks */
+  var maxWinStreak=0, maxLossStreak=0, curW=0, curL=0;
+  sells.forEach(function(t){
+    if(t.pnl>0){ curW++; curL=0; maxWinStreak=Math.max(maxWinStreak,curW); }
+    else{ curL++; curW=0; maxLossStreak=Math.max(maxLossStreak,curL); }
+  });
+
+  /* Monthly breakdown */
+  var monthlyBreakdown={};
+  Object.keys(monthlyPnL).forEach(function(m){
+    var yr=m.slice(0,4), mo=m.slice(5,7);
+    if(!monthlyBreakdown[yr]) monthlyBreakdown[yr]={};
+    monthlyBreakdown[yr][mo]=monthlyPnL[m];
+  });
+
+  /* Weekly P&L */
+  var weeklyPnL={};
+  sells.forEach(function(t){
+    var d=new Date(t.date), day=d.getDay();
+    var mon=new Date(d); mon.setDate(d.getDate()-(day===0?6:day-1));
+    var wk=mon.toISOString().slice(0,10);
+    weeklyPnL[wk]=(weeklyPnL[wk]||0)+t.pnl;
+  });
+
+  /* Best/worst month */
+  var allMoPnL=Object.values(monthlyPnL);
+  var bestMonth=allMoPnL.length?Math.max.apply(null,allMoPnL):0;
+  var worstMonth=allMoPnL.length?Math.min.apply(null,allMoPnL):0;
+
+  /* Avg trades per month */
+  var avgTradesPerMonth=sells.length&&Object.keys(monthlyPnL).length
+    ? sells.length/Object.keys(monthlyPnL).length : 0;
+
+  /* Sortino — downside deviation */
+  var rets=[];
+  for(var i=1;i<equityCurve.length;i++){
+    rets.push((equityCurve[i].value-equityCurve[i-1].value)/equityCurve[i-1].value);
+  }
+  var negRets=rets.filter(function(r){return r<0;});
+  var downDev=negRets.length?Math.sqrt(negRets.reduce(function(s,r){return s+r*r;},0)/negRets.length)*Math.sqrt(252):0;
+  var annRet=(finalVal/capital-1)/Math.max(years,0.01);
+  var sortino=downDev>0?annRet/downDev:null;
+
+  return {trades,equityCurve,monthlyPnL,monthlyBreakdown,weeklyPnL,etfPnL,
+    finalVal,totalRet,cagr,maxDD:maxDD*100,maxDDStart,maxDDEnd,
+    winRate,avgWin,avgLoss,maxWin,maxLoss,profitFactor,expectancy,
+    maxWinStreak,maxLossStreak,bestMonth,worstMonth,avgTradesPerMonth,sortino,
+    totalTrades:sells.length,realisedPnL,validETFs:Object.keys(rawData).length};
 }
 
 function etfDrawCharts(){
