@@ -9559,17 +9559,21 @@ function etfComputeRanking(){
 /* ── Live ranking from Apps Script (preferred) or ETF_DATA fallback ── */
 function etfLiveRanking(){
   if(ETF_LIVE && ETF_LIVE.etfs && ETF_LIVE.etfs.length){
-    /* Apps Script already returns sorted list; just map to expected shape */
-    return ETF_LIVE.etfs.map(function(e){
+    /* Recompute pct as (dma20 - cmp)/dma20*100 — positive = below DMA = buy candidate */
+    var mapped = ETF_LIVE.etfs.map(function(e){
+      var pct = e.dma20 > 0 ? (e.dma20 - e.cmp) / e.dma20 * 100 : e.pct;
       return {
         ticker: e.sym + '.NS',
         sym:    e.sym,
         cmp:    e.cmp,
         dma20:  e.dma20,
-        pct:    e.pct,
+        pct:    pct,   /* positive = below DMA */
         name:   e.name
       };
     });
+    /* Sort: most below DMA first (highest positive pct first) */
+    mapped.sort(function(a,b){ return b.pct - a.pct; });
+    return mapped;
   }
   /* Fallback to historical file */
   return etfComputeRanking();
@@ -9796,7 +9800,7 @@ function etfBuildRanking(){
   ranking.forEach(function(r, i){
     var sym = r.ticker.replace('.NS','');
     var held = heldTickers.includes(r.ticker);
-    var isAbove = r.pct < 0;
+    var isBelow = r.pct > 0; /* positive pct = below DMA = buy candidate */
     var qty = Math.floor(etfCfgPerTrade() / r.cmp);
     html += '<tr>';
     html += '<td><span class="etf-rank-num" style="' + (i < maxH ? '' : 'background:var(--border);color:var(--muted)') + '">' + (i+1) + '</span></td>';
@@ -9804,7 +9808,7 @@ function etfBuildRanking(){
     html += '<td style="font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (ETF_NAME_MAP[sym]||'') + '</td>';
     html += '<td>₹' + r.cmp.toFixed(2) + '</td>';
     html += '<td>₹' + r.dma20.toFixed(2) + '</td>';
-    html += '<td class="' + (isAbove ? 'g' : 'r') + '" style="font-weight:600">' + (isAbove ? '+' : '-') + Math.abs(r.pct).toFixed(2) + '%</td>';
+    html += '<td class="' + (isBelow ? 'g' : 'r') + '" style="font-weight:600">' + (isBelow ? '-' : '+') + Math.abs(r.pct).toFixed(2) + '%</td>';
     html += '<td style="color:var(--muted);font-size:12px">' + qty + '</td>';
     html += '<td>' + (held ? '<span class="etf-hold-badge">Holding</span>' : (i < maxH ? '<span style="font-size:11px;color:var(--page);font-weight:600">Eligible</span>' : '')) + '</td>';
     html += '</tr>';
@@ -9880,7 +9884,7 @@ function etfBuildIdeal(){
     html += '<div class="etf-ideal-rank">#' + (i+1) + '</div>';
     html += '<div class="etf-ideal-ticker">' + sym + '</div>';
     html += '<div class="etf-ideal-name">' + (ETF_NAME_MAP[sym]||sym) + '</div>';
-    html += '<div class="etf-ideal-pct">' + (r.pct < 0 ? '+' : '-') + Math.abs(r.pct).toFixed(2) + '% vs 20 DMA</div>';
+    html += '<div class="etf-ideal-pct">' + (r.pct > 0 ? '-' : '+') + Math.abs(r.pct).toFixed(2) + '% vs 20 DMA</div>';
     html += '<div class="etf-ideal-row"><span>CMP</span><span>₹' + r.cmp.toFixed(2) + '</span></div>';
     html += '<div class="etf-ideal-row"><span>20 DMA</span><span>₹' + r.dma20.toFixed(2) + '</span></div>';
     html += '<div class="etf-ideal-row"><span>Ideal Buy</span><span>₹' + etfFmt(perTrade) + ' → ' + qty + ' units</span></div>';
@@ -10076,17 +10080,28 @@ function etfBuildBacktest(){
     html += '<button class="etf-action-btn ghost" style="margin-bottom:16px;font-size:12px" onclick="document.getElementById(\'etfJsonInput2\').click()">↺ Replace Data File <input type="file" id="etfJsonInput2" accept=".json" style="display:none" onchange="etfLoadFile(this.files[0])"></button> ';
   }
 
+  /* Restore last-used backtest params if available, else use config strip values */
+  var bp = (ETF_BT_RESULT && ETF_BT_RESULT._btParams) || {};
+  var btStart   = bp.startDate  || (ETF_DATA ? (ETF_DATA.meta||{}).start_date || '2021-01-01' : '2021-01-01');
+  var btEnd     = bp.endDate    || (ETF_DATA ? (ETF_DATA.meta||{}).end_date   || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
+  var btCap     = bp.capital    || etfCfgCapital();
+  var btTrade   = bp.tradePct   || etfCfgPerTradePct();
+  var btSell    = bp.sellTarget != null ? bp.sellTarget : etfCfgSellTgt();
+  var btAvg     = bp.avgTrigger != null ? bp.avgTrigger : etfCfgAvgTrig();
+  var btMinDrop = bp.minDrop    != null ? bp.minDrop    : 0;
+  var btMaxH    = bp.maxH       || etfCfgMaxH();
+
   /* Config */
   html += '<div class="etf-bt-wrap"><h4>Backtest Parameters</h4>';
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px">';
-  html += etfCfgInput('etfCfgStart','Start Date','date', ETF_DATA ? (ETF_DATA.meta||{}).start_date || '2021-01-01' : '2021-01-01');
-  html += etfCfgInput('etfCfgEnd','End Date','date', ETF_DATA ? (ETF_DATA.meta||{}).end_date || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
-  html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number', etfCfgCapital());
-  html += etfCfgInput('etfCfgTrade','Per Trade (% of Capital)','number', etfCfgPerTradePct(), '0.1', '0.01');
-  html += etfCfgInput('etfCfgSell','Sell Target (%)','number', etfCfgSellTgt());
-  html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number', etfCfgAvgTrig());
-  html += etfCfgInput('etfCfgMinDrop','Min % Below 20 DMA to Buy','number','0');
-  html += etfCfgInput('etfCfgMaxH','Max Concurrent Holdings','number', etfCfgMaxH());
+  html += etfCfgInput('etfCfgStart','Start Date','date', btStart);
+  html += etfCfgInput('etfCfgEnd','End Date','date', btEnd);
+  html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number', btCap);
+  html += etfCfgInput('etfCfgTrade','Per Trade (% of Capital)','number', btTrade, '0.1', '0.01');
+  html += etfCfgInput('etfCfgSell','Sell Target (%)','number', btSell);
+  html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number', btAvg);
+  html += etfCfgInput('etfCfgMinDrop','Min % Below 20 DMA to Buy','number', btMinDrop);
+  html += etfCfgInput('etfCfgMaxH','Max Concurrent Holdings','number', btMaxH);
   html += '</div>';
   html += '<button class="etf-action-btn" onclick="etfRunBacktest()"' + (ETF_DATA?'':' disabled style="opacity:.4"') + '>▶ Run Backtest</button>';
   html += ' <span id="etfBtStatus" style="font-size:12px;color:var(--muted);margin-left:10px"></span>';
@@ -10230,6 +10245,7 @@ function etfRunBacktest(){
   var status = document.getElementById('etfBtStatus');
   status.textContent = 'Running…';
 
+  /* Capture all values BEFORE rebuild wipes the DOM */
   var capital    = parseFloat(document.getElementById('etfCfgCapital').value);
   var tradePct   = parseFloat(document.getElementById('etfCfgTrade').value) || 1.67;
   var tradeSize  = Math.round(capital * tradePct / 100);
@@ -10240,10 +10256,16 @@ function etfRunBacktest(){
   var startDate  = document.getElementById('etfCfgStart').value;
   var endDate    = document.getElementById('etfCfgEnd').value;
 
+  /* Persist so rebuild restores them */
+  var saved = { capital:capital, tradePct:tradePct, sellTarget:sellTarget*100,
+                avgTrigger:avgTrigger*100, minDrop:minDrop*100, maxH:maxH,
+                startDate:startDate, endDate:endDate };
+
   setTimeout(function(){
     try{
       ETF_BT_RESULT = etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, startDate, endDate);
       ETF_BT_RESULT.capital = capital;
+      ETF_BT_RESULT._btParams = saved; /* store for restore */
       status.textContent = '✓ Done — ' + ETF_BT_RESULT.trades.length + ' trades';
       etfSaveCfg();
       etfBuildBacktest();
@@ -16794,3 +16816,4 @@ if('serviceWorker' in navigator){
 
 
 </body></html>
+     
