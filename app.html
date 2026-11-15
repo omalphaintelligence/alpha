@@ -4098,8 +4098,8 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
             <input id="etfCapInput" type="number" value="300000" min="10000" step="10000" oninput="etfOnCapChange()">
           </div>
           <div class="etf-cfg-item">
-            <label>Per Trade (₹)</label>
-            <input id="etfPerTradeInput" type="number" value="5000" min="1000" step="500" oninput="etfOnCapChange()">
+            <label>Per Trade (% of Capital)</label>
+            <input id="etfPerTradeInput" type="number" value="1.67" min="0.1" max="50" step="0.1" oninput="etfOnCapChange()">
           </div>
           <div class="etf-cfg-item">
             <label>Max Holdings</label>
@@ -9402,19 +9402,21 @@ var ETF_LIST_ALL = [
 
 /* ── Config helpers ── */
 function etfCfgCapital(){ return parseFloat((document.getElementById('etfCapInput')||{value:'300000'}).value)||300000; }
-function etfCfgPerTrade(){ return parseFloat((document.getElementById('etfPerTradeInput')||{value:'5000'}).value)||5000; }
+function etfCfgPerTradePct(){ return parseFloat((document.getElementById('etfPerTradeInput')||{value:'1.67'}).value)||1.67; }
+function etfCfgPerTrade(){ return Math.round(etfCfgCapital() * etfCfgPerTradePct() / 100); }
 function etfCfgMaxH(){ return parseInt((document.getElementById('etfMaxHInput')||{value:'10'}).value)||10; }
 function etfCfgSellTgt(){ return parseFloat((document.getElementById('etfSellTgtInput')||{value:'6'}).value)||6; }
 function etfCfgAvgTrig(){ return parseFloat((document.getElementById('etfAvgTrigInput')||{value:'2.5'}).value)||2.5; }
 
 function etfOnCapChange(){
   var cap = etfCfgCapital();
+  var pct = etfCfgPerTradePct();
   var per = etfCfgPerTrade();
   var maxH = etfCfgMaxH();
   var parts = per > 0 ? Math.floor(cap/per) : 0;
   var maxDep = per * maxH;
   var d = document.getElementById('etfCfgDerived');
-  if(d) d.textContent = 'Parts: ' + parts + '  ·  Max concurrent deployed: ₹' + etfFmt(maxDep) + '  ·  Remaining cash: ₹' + etfFmt(Math.max(0, cap - maxDep));
+  if(d) d.textContent = 'Per trade: ' + pct.toFixed(2) + '% = ₹' + etfFmt(per) + '  ·  Parts: ' + parts + '  ·  Max deployed: ₹' + etfFmt(maxDep);
   /* Refresh active pane */
   if(ETF_ACTIVE_SUB === 'signal')   etfBuildSignal();
   if(ETF_ACTIVE_SUB === 'ideal')    etfBuildIdeal();
@@ -9439,7 +9441,7 @@ function etfInitCfg(){
 function etfSaveCfg(){
   try{
     localStorage.setItem('ai_etf_cfg', JSON.stringify({
-      capital: etfCfgCapital(), perTrade: etfCfgPerTrade(),
+      capital: etfCfgCapital(), perTrade: etfCfgPerTradePct(),
       maxH: etfCfgMaxH(), sellTgt: etfCfgSellTgt(), avgTrig: etfCfgAvgTrig()
     }));
   }catch(e){}
