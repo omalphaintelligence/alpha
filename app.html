@@ -9431,7 +9431,14 @@ function etfInitCfg(){
   try{
     var s = JSON.parse(localStorage.getItem('ai_etf_cfg')||'{}');
     if(s.capital)   { var el=document.getElementById('etfCapInput'); if(el) el.value=s.capital; }
-    if(s.perTrade)  { var el=document.getElementById('etfPerTradeInput'); if(el) el.value=s.perTrade; }
+    if(s.perTrade){
+      /* old config stored ₹ amount (e.g. 5000); new stores % (e.g. 1.67)
+         detect: if value > 100 it's the old ₹ format — convert to % */
+      var pv = parseFloat(s.perTrade);
+      var cap = parseFloat(s.capital) || 300000;
+      if(pv > 100) pv = Math.round(pv / cap * 10000) / 100; /* ₹ → % */
+      var el=document.getElementById('etfPerTradeInput'); if(el) el.value=pv;
+    }
     if(s.maxH)      { var el=document.getElementById('etfMaxHInput'); if(el) el.value=s.maxH; }
     if(s.sellTgt)   { var el=document.getElementById('etfSellTgtInput'); if(el) el.value=s.sellTgt; }
     if(s.avgTrig)   { var el=document.getElementById('etfAvgTrigInput'); if(el) el.value=s.avgTrig; }
