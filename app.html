@@ -10099,8 +10099,8 @@ function etfBuildBacktest(){
   html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number', btCap);
   html += etfCfgInput('etfCfgTrade','Per Trade (% of Capital)','number', btTrade, '0.1', '0.01');
   html += etfCfgInput('etfCfgSell','Sell Target (%)','number', btSell);
-  html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number', btAvg);
-  html += etfCfgInput('etfCfgMinDrop','Min % Below 20 DMA to Buy','number', btMinDrop);
+  html += etfCfgInput('etfCfgAvg','Avg Up Trigger (%)','number', btAvg);
+  html += etfCfgInput('etfCfgMinDrop','Min % Above 20 DMA to Buy','number', btMinDrop);
   html += etfCfgInput('etfCfgMaxH','Max Concurrent Holdings','number', btMaxH);
   html += '</div>';
   html += '<button class="etf-action-btn" onclick="etfRunBacktest()"' + (ETF_DATA?'':' disabled style="opacity:.4"') + '>▶ Run Backtest</button>';
@@ -10320,6 +10320,8 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
     Object.keys(holdings).forEach(function(ticker){
       var cmp = dp[ticker]; if(!cmp) return;
       var h = holdings[ticker];
+      /* Skip obvious data errors: price jumped >5x from buy price in one go */
+      if(cmp > h.avgPrice * 5) return;
       if((cmp - h.avgPrice)/h.avgPrice >= sellTarget){
         var profit = cmp*h.qty - h.totalInvested;
         cash += cmp*h.qty;
@@ -10347,9 +10349,13 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
     Object.keys(rawData).forEach(function(ticker){
       var cmp = dp[ticker]; var dma20 = dmaCache[ticker]&&dmaCache[ticker][date];
       if(!cmp||!dma20) return;
-      var pct = (dma20-cmp)/dma20;
+      /* Skip data errors: price deviates >80% from 20DMA (split/bonus artifact) */
+      if(cmp > dma20 * 5 || cmp < dma20 * 0.2) return;
+      /* REVERSED: buy ETFs most ABOVE 20DMA (momentum strategy) */
+      var pct = (cmp-dma20)/dma20;
       if(pct>=minDrop) ranking.push({ticker,pct,cmp});
     });
+    /* Most above DMA first */
     ranking.sort(function(a,b){ return b.pct-a.pct; });
     var top = ranking.slice(0,maxH);
     var held = Object.keys(holdings);
@@ -10366,7 +10372,8 @@ function etfSimulate(capital, tradeSize, sellTarget, avgTrigger, minDrop, maxH, 
       } else {
         var avgC = top.find(function(r){
           if(!holdings[r.ticker]) return false;
-          return (holdings[r.ticker].lastBuyPrice-r.cmp)/holdings[r.ticker].lastBuyPrice >= avgTrigger;
+          /* REVERSED: avg UP — price rose by avgTrigger% from last buy */
+          return (r.cmp-holdings[r.ticker].lastBuyPrice)/holdings[r.ticker].lastBuyPrice >= avgTrigger;
         });
         if(avgC){
           var ah = holdings[avgC.ticker];
