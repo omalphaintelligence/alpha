@@ -10074,7 +10074,7 @@ function etfBuildBacktest(){
   html += etfCfgInput('etfCfgStart','Start Date','date', ETF_DATA ? (ETF_DATA.meta||{}).start_date || '2021-01-01' : '2021-01-01');
   html += etfCfgInput('etfCfgEnd','End Date','date', ETF_DATA ? (ETF_DATA.meta||{}).end_date || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
   html += etfCfgInput('etfCfgCapital','Starting Capital (₹)','number', etfCfgCapital());
-  html += etfCfgInput('etfCfgTrade','Per Trade (₹)','number', etfCfgPerTrade());
+  html += etfCfgInput('etfCfgTrade','Per Trade (% of Capital)','number', etfCfgPerTradePct(), '0.1', '0.1', '50');
   html += etfCfgInput('etfCfgSell','Sell Target (%)','number', etfCfgSellTgt());
   html += etfCfgInput('etfCfgAvg','Avg Down Trigger (%)','number', etfCfgAvgTrig());
   html += etfCfgInput('etfCfgMinDrop','Min % Below 20 DMA to Buy','number','0');
@@ -10129,9 +10129,13 @@ function etfBuildBacktest(){
   if(ETF_BT_RESULT) setTimeout(etfDrawCharts, 50);
 }
 
-function etfCfgInput(id, label, type, val){
+function etfCfgInput(id, label, type, val, step, min, max){
+  var attrs = '';
+  if(step) attrs += ' step="'+step+'"';
+  if(min)  attrs += ' min="'+min+'"';
+  if(max)  attrs += ' max="'+max+'"';
   return '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">' + label + '</label>' +
-    '<input id="' + id + '" type="' + type + '" value="' + val + '" style="width:100%;background:var(--panel-2,var(--panel));border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+    '<input id="' + id + '" type="' + type + '" value="' + val + '"' + attrs + ' style="width:100%;background:var(--panel-2,var(--panel));border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
 }
 
 function etfHandleDrop(e){
@@ -10165,7 +10169,8 @@ function etfRunBacktest(){
   status.textContent = 'Running…';
 
   var capital    = parseFloat(document.getElementById('etfCfgCapital').value);
-  var tradeSize  = parseFloat(document.getElementById('etfCfgTrade').value);
+  var tradePct   = parseFloat(document.getElementById('etfCfgTrade').value) || 1.67;
+  var tradeSize  = Math.round(capital * tradePct / 100);
   var sellTarget = parseFloat(document.getElementById('etfCfgSell').value) / 100;
   var avgTrigger = parseFloat(document.getElementById('etfCfgAvg').value) / 100;
   var minDrop    = parseFloat(document.getElementById('etfCfgMinDrop').value) / 100;
