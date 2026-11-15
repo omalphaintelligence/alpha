@@ -4088,8 +4088,7 @@ body.s-light .eng-card{box-shadow:0 1px 2px rgba(16,26,45,.05),0 10px 26px -18px
       <div class="wrap-x">
         <div class="sec-head">
           <div class="sec-tag">ETF Strategy</div>
-          <h2>FIRE ETF — 20 DMA mean reversion, <em>systematic.</em></h2>
-          <p>66 high-volume NSE ETFs ranked by distance below 20 DMA. Ideal positions auto-calculated from your capital — max 10 concurrent holdings, ₹5000/trade. No manual entry needed.</p>
+          <h2>20 DMA mean reversion, <em>one ETF at a time.</em></h2>
         </div>
 
         <!-- Capital config strip -->
@@ -9342,6 +9341,7 @@ function rebuildTabs(){
    ETF STRATEGY TAB
    ================================================================ */
 var ETF_DATA = null;         /* backtest file (etf_data.json) — historical */
+var ETF_JSON_URL = 'etf_data.json'; /* same repo mein rakh do — auto-load hoga */
 var ETF_LIVE = null;         /* live data from Apps Script Web App */
 var ETF_LIVE_FETCHING = false;
 var ETF_HOLDINGS = [];
@@ -9480,9 +9480,23 @@ function etfSubTab(name, btn){
 function buildEtfTab(){
   etfInitCfg();
   etfSubTab(ETF_ACTIVE_SUB, document.querySelector('.etf-sub-btn.on'));
-  /* Auto-fetch live data on tab open if URL is set and no fresh data yet */
+  /* Auto-fetch live data */
   if(ETF_LIVE_URL && !ETF_LIVE){
     setTimeout(function(){ fetchEtfLive(); }, 200);
+  }
+  /* Auto-load etf_data.json from same repo if not already loaded */
+  if(!ETF_DATA){
+    fetch(ETF_JSON_URL)
+      .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
+      .then(function(json){
+        if(!json.data) throw new Error('invalid');
+        ETF_DATA = json;
+        etfBuildBacktest();
+        if(ETF_ACTIVE_SUB === 'signal')  etfBuildSignal();
+        if(ETF_ACTIVE_SUB === 'ranking') etfBuildRanking();
+        if(ETF_ACTIVE_SUB === 'ideal')   etfBuildIdeal();
+      })
+      .catch(function(){ /* file nahi mili — upload zone dikha */ });
   }
 }
 
@@ -9913,14 +9927,14 @@ function etfBuildPortfolio(){
   html += '<h4>Record a Buy / Average Down</h4>';
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px">';
   html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">ETF Ticker</label>';
-  html += '<input id="etfBuyTicker" list="etfTickerList" placeholder="e.g. NIFTYBEES" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit">';
+  html += '<input id="etfBuyTicker" list="etfTickerList" placeholder="e.g. NIFTYBEES" style="width:100%;background:var(--panel-2,var(--panel));border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit">';
   html += '<datalist id="etfTickerList">' + ETF_LIST_ALL.map(function(t){ return '<option value="' + t.replace('.NS','') + '">'; }).join('') + '</datalist></div>';
   html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Buy Price (₹)</label>';
-  html += '<input id="etfBuyPrice" type="number" placeholder="0.00" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+  html += '<input id="etfBuyPrice" type="number" placeholder="0.00" style="width:100%;background:var(--panel-2,var(--panel));border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
   html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Quantity</label>';
-  html += '<input id="etfBuyQty" type="number" placeholder="0" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+  html += '<input id="etfBuyQty" type="number" placeholder="0" style="width:100%;background:var(--panel-2,var(--panel));border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
   html += '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Date</label>';
-  html += '<input id="etfBuyDate" type="date" value="' + new Date().toISOString().slice(0,10) + '" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+  html += '<input id="etfBuyDate" type="date" value="' + new Date().toISOString().slice(0,10) + '" style="width:100%;background:var(--panel-2,var(--panel));border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
   html += '</div>';
   html += '<button class="etf-action-btn" onclick="etfRecordBuy()">+ Record Buy</button>';
   html += ' <span id="etfBuyMsg" style="font-size:12px;color:var(--muted);margin-left:10px"></span>';
@@ -10115,7 +10129,7 @@ function etfBuildBacktest(){
 
 function etfCfgInput(id, label, type, val){
   return '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">' + label + '</label>' +
-    '<input id="' + id + '" type="' + type + '" value="' + val + '" style="width:100%;background:var(--surface,#1c2128);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
+    '<input id="' + id + '" type="' + type + '" value="' + val + '" style="width:100%;background:var(--panel-2,var(--panel));border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit"></div>';
 }
 
 function etfHandleDrop(e){
